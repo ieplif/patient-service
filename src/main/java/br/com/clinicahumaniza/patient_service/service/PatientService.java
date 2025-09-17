@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.PatientUpdateDTO;
 import br.com.clinicahumaniza.patient_service.mapper.PatientMapper;
 
 
@@ -49,7 +50,28 @@ public class PatientService {
     }
 
     public List<Patient> getAllPatients() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAllPatients'");
+        return patientRepository.findAll();
+    }
+
+    @Transactional
+    public Optional<Patient> updatePatient(UUID id, PatientUpdateDTO patientUpdateDTO) {
+        // 1. Encontrar o paciente existente pelo ID.
+        Optional<Patient> optionalPatient = patientRepository.findById(id);
+
+        if (optionalPatient.isEmpty()) {
+            return Optional.empty(); // Retorna um Optional vazio se o paciente não for encontrado.
+        }
+
+        // 2. Obter a entidade do Optional.
+        Patient existingPatient = optionalPatient.get();
+
+        // 3. Usar o mapper para aplicar as atualizações do DTO na entidade.
+        patientMapper.updateEntityFromDto(patientUpdateDTO, existingPatient);
+
+        // 4. Salvar a entidade atualizada. O JPA/Hibernate é inteligente e executará um UPDATE.
+        // A anotação @PreUpdate na entidade Patient cuidará de atualizar o campo `updatedAt`.
+        Patient updatedPatient = patientRepository.save(existingPatient);
+
+        return Optional.of(updatedPatient);
     }
 }

@@ -2,6 +2,7 @@ package br.com.clinicahumaniza.patient_service.controller;
 
 import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientResponseDTO;
+import br.com.clinicahumaniza.patient_service.dto.PatientUpdateDTO;
 import br.com.clinicahumaniza.patient_service.mapper.PatientMapper;
 import br.com.clinicahumaniza.patient_service.model.Patient;
 import br.com.clinicahumaniza.patient_service.service.PatientService;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -55,5 +57,17 @@ public class PatientController {
                 .map(patientMapper::toResponseDTO) // Converte a entidade para DTO
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}") // 1. Mapeia requisições HTTP PUT para este método.
+    public ResponseEntity<PatientResponseDTO> updatePatient(
+            @PathVariable UUID id, // 2. Pega o ID da URL.
+            @RequestBody PatientUpdateDTO patientUpdateDTO) { // 3. Pega os dados de atualização do corpo da requisição.
+
+        Optional<Patient> updatedPatientOptional = patientService.updatePatient(id, patientUpdateDTO);
+
+        return updatedPatientOptional
+                .map(patient -> ResponseEntity.ok(patientMapper.toResponseDTO(patient))) // 4. Se a atualização foi bem-sucedida, retorna 200 OK com o DTO de resposta.
+                .orElse(ResponseEntity.notFound().build()); // 5. Se o paciente não foi encontrado, retorna 404 Not Found.
     }
 }
