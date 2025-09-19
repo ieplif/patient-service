@@ -70,4 +70,18 @@ public class PatientController {
                 .map(patient -> ResponseEntity.ok(patientMapper.toResponseDTO(patient))) // 4. Se a atualização foi bem-sucedida, retorna 200 OK com o DTO de resposta.
                 .orElse(ResponseEntity.notFound().build()); // 5. Se o paciente não foi encontrado, retorna 404 Not Found.
     }
+
+    @DeleteMapping("/{id}") // 1. Mapeia requisições HTTP DELETE.
+    public ResponseEntity<Void> deletePatient(@PathVariable UUID id) { // 2. Retorna ResponseEntity<Void> para indicar um corpo vazio.
+        boolean wasDeleted = patientService.deletePatient(id);
+
+        if (wasDeleted) {
+            // 3. Se a exclusão foi bem-sucedida, retorna 204 No Content.
+            // Este é o status padrão para indicar sucesso em uma operação de DELETE sem retorno de conteúdo.
+            return ResponseEntity.noContent().build();
+        } else {
+            // 4. Se o recurso não foi encontrado para ser deletado, retorna 404 Not Found.
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

@@ -74,4 +74,26 @@ public class PatientService {
 
         return Optional.of(updatedPatient);
     }
+
+
+    @Transactional
+public boolean deletePatient(UUID id) {
+    // 1. Encontrar o paciente. Note que findById já vai respeitar a cláusula @Where,
+    // então ele só encontrará um paciente se ele já estiver ativo.
+    Optional<Patient> optionalPatient = patientRepository.findById(id);
+
+    if (optionalPatient.isEmpty()) {
+        // O paciente não existe ou já está inativo.
+        return false;
+    }
+
+    // 2. Obter a entidade e alterar o status.
+    Patient patient = optionalPatient.get();
+    patient.setStatusAtivo(false);
+
+    // 3. Salvar a entidade. O JPA executará um UPDATE.
+    patientRepository.save(patient);
+
+    return true;
+    }
 }
