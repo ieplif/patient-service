@@ -77,7 +77,7 @@ public class PatientService {
 
 
     @Transactional
-public boolean deletePatient(UUID id) {
+    public boolean deletePatient(UUID id) {
     // 1. Encontrar o paciente. Note que findById já vai respeitar a cláusula @Where,
     // então ele só encontrará um paciente se ele já estiver ativo.
     Optional<Patient> optionalPatient = patientRepository.findById(id);
