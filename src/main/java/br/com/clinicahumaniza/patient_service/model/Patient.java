@@ -4,14 +4,14 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import org.hibernate.annotations.Where; // Importe esta anotação
+import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity // 1. Informa ao JPA que esta classe é uma entidade e deve ser mapeada para uma tabela.
 @Table(name = "patients") // 2. (Opcional) Especifica o nome da tabela no banco. Se omitido, o nome da classe seria usado.
-@Where(clause = "status_ativo = true") // <--- ADICIONE ESTA LINHA
+@SQLRestriction("status_ativo = true")
 @Data // 3. Anotação do Lombok: gera automaticamente getters, setters, toString(), equals() e hashCode().
 @NoArgsConstructor // 4. Anotação do Lombok: gera um construtor sem argumentos (requerido pelo JPA).
 @AllArgsConstructor // 5. Anotação do Lombok: gera um construtor com todos os argumentos.

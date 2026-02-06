@@ -14,10 +14,9 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> { // 2. 
 
     // 3. O Spring Data JPA criará automaticamente a implementação para este método.
     //    Ele entende "findByCpf" como "SELECT * FROM patients WHERE cpf = ?".
-    Patient findByCpf(String cpf);
+    Optional<Patient> findByCpf(String cpf);
 
-    //    Da mesma forma, ele entende "findByEmail".
-    Patient findByEmail(String email);
+    Optional<Patient> findByEmail(String email);
 
     @Query(value = "SELECT * FROM patients", nativeQuery = true)
     List<Patient> findAllIncludingInactive();

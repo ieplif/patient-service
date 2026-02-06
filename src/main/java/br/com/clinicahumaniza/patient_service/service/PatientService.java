@@ -30,17 +30,20 @@ public class PatientService {
     public Patient createPatient(PatientRequestDTO patientDTO) {
         Patient patient = patientMapper.toEntity(patientDTO);
 
-        if (patientRepository.findByCpf(patient.getCpf()) != null) {
+        patientRepository.findByCpf(patient.getCpf()).ifPresent(p -> {
             throw new DuplicateResourceException("CPF", patient.getCpf());
-        }
-        if (patientRepository.findByEmail(patient.getEmail()) != null) {
+        });
+        patientRepository.findByEmail(patient.getEmail()).ifPresent(p -> {
             throw new DuplicateResourceException("E-mail", patient.getEmail());
-        }
+        });
 
         return patientRepository.save(patient);
     }
 
     public Patient getPatientById(UUID id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Patient ID cannot be null");
+        }
         return patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
@@ -51,16 +54,24 @@ public class PatientService {
 
     @Transactional
     public Patient updatePatient(UUID id, PatientUpdateDTO patientUpdateDTO) {
+        if (id == null) {
+            throw new IllegalArgumentException("Patient ID cannot be null");
+        }
         Patient existingPatient = patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));
 
-        patientMapper.updateEntityFromDto(patientUpdateDTO, existingPatient);
-
-        return patientRepository.save(existingPatient);
+        if (existingPatient != null) {
+            patientMapper.updateEntityFromDto(patientUpdateDTO, existingPatient);
+            return patientRepository.save(existingPatient);
+        }
+        throw new PatientNotFoundException(id);
     }
 
     @Transactional
     public void deletePatient(UUID id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Patient ID cannot be null");
+        }
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));
 
