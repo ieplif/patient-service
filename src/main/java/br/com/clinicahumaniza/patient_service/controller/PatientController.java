@@ -6,22 +6,22 @@ import br.com.clinicahumaniza.patient_service.dto.PatientUpdateDTO;
 import br.com.clinicahumaniza.patient_service.mapper.PatientMapper;
 import br.com.clinicahumaniza.patient_service.model.Patient;
 import br.com.clinicahumaniza.patient_service.service.PatientService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/patients" )
+@RequestMapping("/api/v1/patients")
 public class PatientController {
 
     private final PatientService patientService;
-    private final PatientMapper patientMapper; // Injeta o mapper
+    private final PatientMapper patientMapper;
 
     @Autowired
     public PatientController(PatientService patientService, PatientMapper patientMapper) {
@@ -30,21 +30,15 @@ public class PatientController {
     }
 
     @PostMapping
-    public ResponseEntity<PatientResponseDTO> createPatient(@RequestBody PatientRequestDTO patientDTO) {
-        try {
-            Patient createdPatient = patientService.createPatient(patientDTO);
-            // Converte a entidade salva para o DTO de resposta antes de enviar
-            PatientResponseDTO responseDTO = patientMapper.toResponseDTO(createdPatient);
-            return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<PatientResponseDTO> createPatient(@Valid @RequestBody PatientRequestDTO patientDTO) {
+        Patient createdPatient = patientService.createPatient(patientDTO);
+        PatientResponseDTO responseDTO = patientMapper.toResponseDTO(createdPatient);
+        return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
 
     @GetMapping
     public ResponseEntity<List<PatientResponseDTO>> getAllPatients() {
         List<Patient> patients = patientService.getAllPatients();
-        // Converte a lista de entidades para uma lista de DTOs
         List<PatientResponseDTO> responseDTOs = patients.stream()
                 .map(patientMapper::toResponseDTO)
                 .collect(Collectors.toList());
@@ -53,35 +47,21 @@ public class PatientController {
 
     @GetMapping("/{id}")
     public ResponseEntity<PatientResponseDTO> getPatientById(@PathVariable UUID id) {
-        return patientService.getPatientById(id)
-                .map(patientMapper::toResponseDTO) // Converte a entidade para DTO
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Patient patient = patientService.getPatientById(id);
+        return ResponseEntity.ok(patientMapper.toResponseDTO(patient));
     }
 
-    @PutMapping("/{id}") // 1. Mapeia requisições HTTP PUT para este método.
+    @PutMapping("/{id}")
     public ResponseEntity<PatientResponseDTO> updatePatient(
-            @PathVariable UUID id, // 2. Pega o ID da URL.
-            @RequestBody PatientUpdateDTO patientUpdateDTO) { // 3. Pega os dados de atualização do corpo da requisição.
-
-        Optional<Patient> updatedPatientOptional = patientService.updatePatient(id, patientUpdateDTO);
-
-        return updatedPatientOptional
-                .map(patient -> ResponseEntity.ok(patientMapper.toResponseDTO(patient))) // 4. Se a atualização foi bem-sucedida, retorna 200 OK com o DTO de resposta.
-                .orElse(ResponseEntity.notFound().build()); // 5. Se o paciente não foi encontrado, retorna 404 Not Found.
+            @PathVariable UUID id,
+            @Valid @RequestBody PatientUpdateDTO patientUpdateDTO) {
+        Patient updatedPatient = patientService.updatePatient(id, patientUpdateDTO);
+        return ResponseEntity.ok(patientMapper.toResponseDTO(updatedPatient));
     }
 
-    @DeleteMapping("/{id}") // 1. Mapeia requisições HTTP DELETE.
-    public ResponseEntity<Void> deletePatient(@PathVariable UUID id) { // 2. Retorna ResponseEntity<Void> para indicar um corpo vazio.
-        boolean wasDeleted = patientService.deletePatient(id);
-
-        if (wasDeleted) {
-            // 3. Se a exclusão foi bem-sucedida, retorna 204 No Content.
-            // Este é o status padrão para indicar sucesso em uma operação de DELETE sem retorno de conteúdo.
-            return ResponseEntity.noContent().build();
-        } else {
-            // 4. Se o recurso não foi encontrado para ser deletado, retorna 404 Not Found.
-            return ResponseEntity.notFound().build();
-        }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePatient(@PathVariable UUID id) {
+        patientService.deletePatient(id);
+        return ResponseEntity.noContent().build();
     }
 }
