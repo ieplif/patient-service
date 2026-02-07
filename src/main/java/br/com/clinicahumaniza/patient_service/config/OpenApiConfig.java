@@ -17,7 +17,7 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("Clínica Humaniza - Patient Service API")
                         .version("1.0")
-                        .description("API para gestão de pacientes da Clínica Humaniza RJ"))
+                        .description("API para gestão de pacientes e serviços da Clínica Humaniza RJ"))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new Components()
                         .addSecuritySchemes("bearerAuth",
