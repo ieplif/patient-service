@@ -155,11 +155,56 @@
 
 ---
 
+## Sessao 5 — Modulos Atividade, Plano, Servico e Assinatura
+**Data:** 06-07/02/2026
+
+### Fase 1: Atividade, Plano e Servico (CRUD completo)
+- Criacao das entidades `Atividade`, `Plano` e `Servico` com soft delete (`@SQLRestriction`)
+- Servico usa `@ManyToOne` para Atividade e Plano com `@UniqueConstraint`
+- DTOs (Request, Response, Update), Mappers e Services para cada modulo
+- Controllers REST com Swagger annotations:
+  - `GET/POST/PUT/DELETE /api/v1/atividades`
+  - `GET/POST/PUT/DELETE /api/v1/planos`
+  - `GET/POST/PUT/DELETE /api/v1/servicos` (+ filtros por atividade e plano)
+- `ResourceNotFoundException` generica para reutilizar em todos os modulos
+- Testes unitarios, controller e integracao para cada modulo
+
+### Fase 2: Modulo de Assinaturas
+- Criacao do enum `StatusAssinatura` (ATIVO, CANCELADO, VENCIDO, FINALIZADO)
+- Criacao da entidade `Assinatura` com `@ManyToOne` para Patient e Servico
+- DTOs: `AssinaturaRequestDTO`, `AssinaturaResponseDTO` (com `sessoesRestantes` calculado), `AssinaturaUpdateDTO`, `AssinaturaStatusDTO`
+- `AssinaturaMapper` com `servicoDescricao = atividade.nome + " - " + plano.nome`
+- `AssinaturaService` com logica de negocio:
+  - Criacao com calculo automatico de `dataVencimento` (dataInicio + plano.validadeDias)
+  - Listagem por paciente e por servico
+  - Atualizacao parcial
+  - Alteracao de status (bloqueia se FINALIZADO)
+  - Registro de sessao (incrementa sessoesRealizadas, finaliza automaticamente ao atingir limite)
+  - Soft delete
+- `AssinaturaController` com 9 endpoints:
+  - CRUD padrao + `PATCH /{id}/status` + `PATCH /{id}/registrar-sessao`
+- `BusinessException` para regras de negocio (422 UNPROCESSABLE_ENTITY)
+- Handler adicionado no `GlobalExceptionHandler`
+
+### Fase 3: Testes
+- `AssinaturaServiceTest` (15 testes unitarios) — criacao, validacoes, sessoes, finalizacao automatica, regras de negocio
+- `AssinaturaControllerTest` (10 testes) — todos os endpoints + 401 sem auth
+- `AssinaturaIntegrationTest` (3 testes) — fluxo completo (paciente → atividade → plano → servico → assinatura → sessoes → finalizacao), 401 sem token, 404 paciente inexistente
+- Testes de Atividade, Plano e Servico (unitarios, controller, integracao)
+
+**Resultado:** 116 testes, 0 falhas, BUILD SUCCESS
+
+**Commits:**
+- `23eba3c` — Adicionar modulos Atividade, Plano, Servico e Assinatura com CRUD completo e testes
+
+---
+
 ## Resumo de Progresso
 
-| Sessao | Data       | Foco                          | Testes |
-|--------|------------|-------------------------------|--------|
-| 1      | 14/09/2025 | Setup, entidades, DTOs        | 0      |
-| 2      | 14-21/09   | CRUD completo, excecoes       | 0      |
-| 3      | 06/02/2026 | Correcoes                     | 0      |
-| 4      | 06/02/2026 | JWT, Swagger, testes          | 38     |
+| Sessao | Data       | Foco                                    | Testes |
+|--------|------------|-----------------------------------------|--------|
+| 1      | 14/09/2025 | Setup, entidades, DTOs                  | 0      |
+| 2      | 14-21/09   | CRUD completo, excecoes                 | 0      |
+| 3      | 06/02/2026 | Correcoes                               | 0      |
+| 4      | 06/02/2026 | JWT, Swagger, testes                    | 38     |
+| 5      | 06-07/02   | Atividade, Plano, Servico, Assinatura   | 116    |
