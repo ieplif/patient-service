@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "servicos", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"atividade_id", "plano_id", "tipo_atendimento", "modalidade_local"})
+        @UniqueConstraint(columnNames = {"atividade_id", "plano_id", "tipo_atendimento", "quantidade", "modalidade_local"})
 })
 @SQLRestriction("ativo = true")
 @Data
