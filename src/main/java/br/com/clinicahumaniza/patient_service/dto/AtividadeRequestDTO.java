@@ -18,4 +18,7 @@ public class AtividadeRequestDTO {
 
     @Min(value = 1, message = "Duração padrão deve ser no mínimo 1 minuto")
     private Integer duracaoPadrao;
+
+    @Min(value = 1, message = "Capacidade máxima deve ser no mínimo 1")
+    private Integer capacidadeMaxima = 1;
 }

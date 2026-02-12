@@ -14,6 +14,9 @@ public class AtividadeMapper {
         atividade.setNome(dto.getNome());
         atividade.setDescricao(dto.getDescricao());
         atividade.setDuracaoPadrao(dto.getDuracaoPadrao());
+        if (dto.getCapacidadeMaxima() != null) {
+            atividade.setCapacidadeMaxima(dto.getCapacidadeMaxima());
+        }
         return atividade;
     }
 
@@ -23,6 +26,7 @@ public class AtividadeMapper {
         dto.setNome(entity.getNome());
         dto.setDescricao(entity.getDescricao());
         dto.setDuracaoPadrao(entity.getDuracaoPadrao());
+        dto.setCapacidadeMaxima(entity.getCapacidadeMaxima());
         dto.setAtivo(entity.isAtivo());
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;
@@ -37,6 +41,9 @@ public class AtividadeMapper {
         }
         if (dto.getDuracaoPadrao() != null) {
             entity.setDuracaoPadrao(dto.getDuracaoPadrao());
+        }
+        if (dto.getCapacidadeMaxima() != null) {
+            entity.setCapacidadeMaxima(dto.getCapacidadeMaxima());
         }
     }
 }

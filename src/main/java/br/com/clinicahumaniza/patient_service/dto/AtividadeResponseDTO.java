@@ -16,6 +16,7 @@ public class AtividadeResponseDTO {
     private String nome;
     private String descricao;
     private Integer duracaoPadrao;
+    private Integer capacidadeMaxima;
     private boolean ativo;
     private LocalDateTime createdAt;
 }

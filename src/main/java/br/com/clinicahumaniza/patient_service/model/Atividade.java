@@ -28,6 +28,9 @@ public class Atividade {
 
     private Integer duracaoPadrao;
 
+    @Column(name = "capacidade_maxima")
+    private Integer capacidadeMaxima = 1;
+
     private boolean ativo = true;
 
     @Column(updatable = false)
