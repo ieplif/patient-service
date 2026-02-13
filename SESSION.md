@@ -199,12 +199,148 @@
 
 ---
 
+## Sessao 6 — Profissional, Horario Disponivel, Agendamento e Google Calendar
+**Data:** 07-12/02/2026
+
+### Fase 1: Modulo de Profissionais
+- Criacao da entidade `Profissional` com `@OneToOne` para User e `@ManyToMany` para Atividades
+- Campo `googleCalendarId` para integracao com Google Calendar
+- DTOs: `ProfissionalRequestDTO`, `ProfissionalResponseDTO`, `ProfissionalUpdateDTO`
+- `ProfissionalService` com CRUD, validacao de User/Atividades, soft delete
+- `ProfissionalController` com 6 endpoints:
+  - CRUD padrao + `GET /atividade/{atividadeId}` para listar por atividade
+- Testes unitarios, controller e integracao
+
+### Fase 2: Modulo de Horarios Disponiveis
+- Criacao da entidade `HorarioDisponivel` com `DayOfWeek`, `LocalTime` inicio/fim
+- DTOs: `HorarioDisponivelRequestDTO`, `HorarioDisponivelResponseDTO`, `HorarioDisponivelUpdateDTO`
+- `HorarioDisponivelService` com CRUD e validacao de sobreposicao de horarios
+- `HorarioDisponivelController` com 6 endpoints em `/api/v1/disponibilidades`
+- Testes unitarios, controller e integracao
+
+### Fase 3: Modulo de Agendamentos
+- Criacao da entidade `Agendamento` com relacionamentos para Patient, Profissional, Servico, Assinatura
+- Enum `StatusAgendamento`: AGENDADO, CONFIRMADO, REALIZADO, CANCELADO, NAO_COMPARECEU
+- DTOs: `AgendamentoRequestDTO`, `AgendamentoResponseDTO`, `AgendamentoUpdateDTO`, `AgendamentoStatusDTO`
+- `AgendamentoService` com logica complexa:
+  - Validacao de profissional atende atividade
+  - Validacao de assinatura ativa com sessoes restantes
+  - Validacao dentro do horario disponivel do profissional
+  - Validacao de conflito de horario (respeita capacidade maxima da atividade)
+  - Transicoes de status com regras (AGENDADO->CONFIRMADO/CANCELADO, CONFIRMADO->REALIZADO/CANCELADO/NAO_COMPARECEU)
+  - Registro automatico de sessao na assinatura ao marcar como REALIZADO
+  - Consulta de slots disponiveis por profissional/data
+  - Integracao opcional com Google Calendar (criar/atualizar/deletar eventos)
+- `AgendamentoController` com 10 endpoints incluindo `GET /slots-disponiveis`
+- Testes unitarios (35 testes), controller e integracao
+
+### Fase 4: Integracao Google Calendar
+- `GoogleCalendarConfig` com configuracao condicional (propriedade `google.calendar.enabled`)
+- `AsyncConfig` para execucao assincrona de chamadas ao Google Calendar
+- `GoogleCalendarService` com metodos para criar, atualizar e deletar eventos
+  - Suporte a calendario do profissional (`googleCalendarId`)
+  - Tratamento de erros sem impactar o agendamento
+- 6 testes unitarios para Google Calendar
+
+**Resultado:** 215 testes, 0 falhas, BUILD SUCCESS
+
+---
+
+## Sessao 7 — Modulo de Pagamentos
+**Data:** 13/02/2026
+
+### Fase 1: Enums e Entidades
+- Criacao dos enums `FormaPagamento` (PIX, CARTAO_CREDITO, CARTAO_DEBITO, DINHEIRO), `StatusPagamento` (PENDENTE, PARCIALMENTE_PAGO, PAGO, CANCELADO, REEMBOLSADO), `StatusParcela` (PENDENTE, PAGO, ATRASADO, CANCELADO)
+- Criacao da entidade `Pagamento` com:
+  - `@ManyToOne` para Patient (obrigatorio), Assinatura (opcional), Agendamento (opcional)
+  - `@OneToMany` para Parcelas (cascade ALL, orphanRemoval)
+  - Campos para gateway futuro: `gatewayId`, `gatewayStatus`
+  - BigDecimal(precision=10, scale=2) para valores monetarios
+- Criacao da entidade `Parcela` com `@ManyToOne` para Pagamento
+
+### Fase 2: Repositories
+- `PagamentoRepository` com queries: findByPacienteId, findByAssinaturaId, findByAgendamentoId, findByStatus, findByDataVencimentoBetween, findAllIncludingInactive
+- `ParcelaRepository` com queries: findByPagamentoId, findByStatus, findByDataVencimentoBeforeAndStatus
+
+### Fase 3: DTOs
+- `PagamentoRequestDTO` com validacoes (@NotNull, @DecimalMin, @Min)
+- `PagamentoResponseDTO` com campos calculados (pacienteNome, assinaturaDescricao, agendamentoDescricao, lista de parcelas)
+- `PagamentoUpdateDTO` (formaPagamento, dataVencimento, observacoes)
+- `PagamentoStatusDTO` e `ParcelaStatusDTO` com validacoes
+- `ParcelaResponseDTO` com campos da parcela
+
+### Fase 4: Mapper
+- `PagamentoMapper` com metodos:
+  - `toEntity()` — converte DTO + entidades relacionadas para Pagamento
+  - `toResponseDTO()` — inclui descricoes de assinatura/agendamento e lista de parcelas
+  - `toParcelaResponseDTO()` — converte parcela individual
+  - `updateEntityFromDto()` — atualizacao parcial com null checks
+
+### Fase 5: Service
+- `PagamentoService` com logica de negocio:
+  - Criacao com validacao: ao menos uma assinatura ou agendamento deve ser informado
+  - Geracao automatica de parcelas: divide valor por numeroParcelas, datas mensais, ultima parcela absorve arredondamento
+  - Consultas por paciente, assinatura, agendamento e periodo
+  - Atualizacao parcial e transicoes de status validadas:
+    - PENDENTE -> PAGO/CANCELADO
+    - PARCIALMENTE_PAGO -> PAGO/CANCELADO
+    - PAGO -> REEMBOLSADO
+  - Pagamento de parcela com auto-atualizacao de status do pagamento:
+    - Se todas as parcelas PAGO -> Pagamento = PAGO
+    - Se alguma parcela PAGO e alguma PENDENTE -> PARCIALMENTE_PAGO
+  - Soft delete
+
+### Fase 6: Controller
+- `PagamentoController` com 11 endpoints REST em `/api/v1/pagamentos`:
+  - `POST /` — Criar pagamento (201)
+  - `GET /` — Listar pagamentos (200)
+  - `GET /{id}` — Buscar por ID (200)
+  - `GET /paciente/{pacienteId}` — Listar por paciente (200)
+  - `GET /assinatura/{assinaturaId}` — Listar por assinatura (200)
+  - `GET /agendamento/{agendamentoId}` — Listar por agendamento (200)
+  - `GET /periodo?inicio=...&fim=...` — Listar por periodo (200)
+  - `PUT /{id}` — Atualizar pagamento (200)
+  - `PATCH /{id}/status` — Alterar status (200)
+  - `PATCH /{id}/parcelas/{parcelaId}/status` — Alterar status da parcela (200)
+  - `DELETE /{id}` — Desativar (204)
+- Swagger: `@Tag(name = "Pagamentos")`, `@Operation` e `@ApiResponses` em cada endpoint
+
+### Fase 7: Testes
+- `PagamentoServiceTest` (29 testes unitarios):
+  - Criacao com assinatura, com agendamento, sem vinculo (erro)
+  - Validacao de entidades inexistentes
+  - Geracao de parcelas: 1x, 3x, 6x com arredondamento
+  - Verificacao de datas mensais
+  - Transicoes de status validas e invalidas
+  - Pagamento de parcela com auto-atualizacao (PARCIALMENTE_PAGO, PAGO)
+  - Soft delete
+- `PagamentoControllerTest` (13 testes):
+  - Todos os endpoints com @WebMvcTest + @Import(SecurityConfig)
+  - Validacao de DTOs (400), Not Found (404)
+  - Autenticacao (401 sem token)
+
+**Resultado:** 257 testes, 0 falhas, BUILD SUCCESS
+
+**Arquivos criados (14):**
+- model/FormaPagamento.java, StatusPagamento.java, StatusParcela.java, Pagamento.java, Parcela.java
+- repository/PagamentoRepository.java, ParcelaRepository.java
+- dto/PagamentoRequestDTO.java, PagamentoResponseDTO.java, PagamentoUpdateDTO.java, PagamentoStatusDTO.java, ParcelaResponseDTO.java, ParcelaStatusDTO.java
+- mapper/PagamentoMapper.java
+- service/PagamentoService.java
+- controller/PagamentoController.java
+- test/service/PagamentoServiceTest.java
+- test/controller/PagamentoControllerTest.java
+
+---
+
 ## Resumo de Progresso
 
-| Sessao | Data       | Foco                                    | Testes |
-|--------|------------|-----------------------------------------|--------|
-| 1      | 14/09/2025 | Setup, entidades, DTOs                  | 0      |
-| 2      | 14-21/09   | CRUD completo, excecoes                 | 0      |
-| 3      | 06/02/2026 | Correcoes                               | 0      |
-| 4      | 06/02/2026 | JWT, Swagger, testes                    | 38     |
-| 5      | 06-07/02   | Atividade, Plano, Servico, Assinatura   | 116    |
+| Sessao | Data       | Foco                                          | Testes |
+|--------|------------|-----------------------------------------------|--------|
+| 1      | 14/09/2025 | Setup, entidades, DTOs                        | 0      |
+| 2      | 14-21/09   | CRUD completo, excecoes                       | 0      |
+| 3      | 06/02/2026 | Correcoes                                     | 0      |
+| 4      | 06/02/2026 | JWT, Swagger, testes                          | 38     |
+| 5      | 06-07/02   | Atividade, Plano, Servico, Assinatura         | 116    |
+| 6      | 07-12/02   | Profissional, Horario, Agendamento, Calendar  | 215    |
+| 7      | 13/02/2026 | Pagamentos (parcelas, status, gateway futuro) | 257    |

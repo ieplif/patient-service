@@ -16,34 +16,34 @@ Microsservico para gestao de pacientes da Clinica Humaniza, com autenticacao JWT
 ```
 src/main/java/br/com/clinicahumaniza/patient_service/
 ├── config/
-│   └── OpenApiConfig.java              # Configuracao Swagger/OpenAPI com JWT Bearer
+│   ├── OpenApiConfig.java              # Configuracao Swagger/OpenAPI com JWT Bearer
+│   ├── AsyncConfig.java                # Configuracao de execucao assincrona
+│   └── GoogleCalendarConfig.java       # Configuracao do Google Calendar
 ├── controller/
 │   ├── AuthController.java             # POST /api/auth/registrar, /api/auth/login
-│   ├── PatientController.java          # CRUD /api/v1/patients (protegido)
-│   ├── AtividadeController.java        # CRUD /api/v1/atividades (protegido)
-│   ├── PlanoController.java            # CRUD /api/v1/planos (protegido)
-│   ├── ServicoController.java          # CRUD /api/v1/servicos (protegido)
-│   └── AssinaturaController.java       # CRUD + sessoes /api/v1/assinaturas (protegido)
+│   ├── PatientController.java          # CRUD /api/v1/patients
+│   ├── AtividadeController.java        # CRUD /api/v1/atividades
+│   ├── PlanoController.java            # CRUD /api/v1/planos
+│   ├── ServicoController.java          # CRUD /api/v1/servicos
+│   ├── ProfissionalController.java     # CRUD /api/v1/profissionais
+│   ├── AssinaturaController.java       # CRUD + sessoes /api/v1/assinaturas
+│   ├── HorarioDisponivelController.java# CRUD /api/v1/disponibilidades
+│   ├── AgendamentoController.java      # CRUD + status + slots /api/v1/agendamentos
+│   └── PagamentoController.java        # CRUD + parcelas /api/v1/pagamentos
 ├── dto/
 │   ├── AuthResponseDTO.java            # Resposta de auth (token, tipo, nome, email, role)
 │   ├── LoginRequestDTO.java            # Request de login (email, senha)
 │   ├── RegisterRequestDTO.java         # Request de registro (nome, email, senha)
-│   ├── PatientRequestDTO.java          # Request de criacao de paciente
-│   ├── PatientResponseDTO.java         # Resposta de paciente (sem CPF por seguranca)
-│   ├── PatientUpdateDTO.java           # Request de atualizacao parcial
-│   ├── AtividadeRequestDTO.java        # Request de criacao de atividade
-│   ├── AtividadeResponseDTO.java       # Resposta de atividade
-│   ├── AtividadeUpdateDTO.java         # Request de atualizacao de atividade
-│   ├── PlanoRequestDTO.java            # Request de criacao de plano
-│   ├── PlanoResponseDTO.java           # Resposta de plano
-│   ├── PlanoUpdateDTO.java             # Request de atualizacao de plano
-│   ├── ServicoRequestDTO.java          # Request de criacao de servico
-│   ├── ServicoResponseDTO.java         # Resposta de servico
-│   ├── ServicoUpdateDTO.java           # Request de atualizacao de servico
-│   ├── AssinaturaRequestDTO.java       # Request de criacao de assinatura
-│   ├── AssinaturaResponseDTO.java      # Resposta de assinatura (com sessoesRestantes)
-│   ├── AssinaturaUpdateDTO.java        # Request de atualizacao de assinatura
-│   └── AssinaturaStatusDTO.java        # Request de alteracao de status
+│   ├── Patient*DTO.java                # Request, Response, Update de paciente
+│   ├── Atividade*DTO.java              # Request, Response, Update de atividade
+│   ├── Plano*DTO.java                  # Request, Response, Update de plano
+│   ├── Servico*DTO.java                # Request, Response, Update de servico
+│   ├── Profissional*DTO.java           # Request, Response, Update de profissional
+│   ├── Assinatura*DTO.java             # Request, Response, Update, Status de assinatura
+│   ├── HorarioDisponivel*DTO.java      # Request, Response, Update de horario
+│   ├── Agendamento*DTO.java            # Request, Response, Update, Status de agendamento
+│   ├── Pagamento*DTO.java              # Request, Response, Update, Status de pagamento
+│   └── Parcela*DTO.java                # Response, Status de parcela
 ├── exception/
 │   ├── BusinessException.java          # 422 - erro de regra de negocio
 │   ├── DuplicateResourceException.java # 409 - recurso duplicado
@@ -55,7 +55,11 @@ src/main/java/br/com/clinicahumaniza/patient_service/
 │   ├── AtividadeMapper.java            # Conversao Atividade Entity <-> DTO
 │   ├── PlanoMapper.java                # Conversao Plano Entity <-> DTO
 │   ├── ServicoMapper.java              # Conversao Servico Entity <-> DTO
-│   └── AssinaturaMapper.java           # Conversao Assinatura Entity <-> DTO
+│   ├── ProfissionalMapper.java         # Conversao Profissional Entity <-> DTO
+│   ├── AssinaturaMapper.java           # Conversao Assinatura Entity <-> DTO
+│   ├── HorarioDisponivelMapper.java    # Conversao HorarioDisponivel Entity <-> DTO
+│   ├── AgendamentoMapper.java          # Conversao Agendamento Entity <-> DTO
+│   └── PagamentoMapper.java            # Conversao Pagamento/Parcela Entity <-> DTO
 ├── model/
 │   ├── Patient.java                    # Entidade paciente (soft delete, LGPD)
 │   ├── Role.java                       # Enum: ROLE_USER, ROLE_ADMIN
@@ -63,15 +67,29 @@ src/main/java/br/com/clinicahumaniza/patient_service/
 │   ├── Atividade.java                  # Entidade atividade (ex: Pilates, Fisioterapia)
 │   ├── Plano.java                      # Entidade plano (ex: Mensal, Trimestral)
 │   ├── Servico.java                    # Entidade servico (atividade + plano + valor)
+│   ├── Profissional.java               # Entidade profissional (com atividades e Google Calendar)
+│   ├── StatusAssinatura.java           # Enum: ATIVO, CANCELADO, VENCIDO, FINALIZADO
 │   ├── Assinatura.java                 # Entidade assinatura (paciente + servico + sessoes)
-│   └── StatusAssinatura.java           # Enum: ATIVO, CANCELADO, VENCIDO, FINALIZADO
+│   ├── HorarioDisponivel.java          # Entidade horario disponivel do profissional
+│   ├── StatusAgendamento.java          # Enum: AGENDADO, CONFIRMADO, REALIZADO, CANCELADO, NAO_COMPARECEU
+│   ├── Agendamento.java                # Entidade agendamento (paciente + profissional + servico)
+│   ├── FormaPagamento.java             # Enum: PIX, CARTAO_CREDITO, CARTAO_DEBITO, DINHEIRO
+│   ├── StatusPagamento.java            # Enum: PENDENTE, PARCIALMENTE_PAGO, PAGO, CANCELADO, REEMBOLSADO
+│   ├── StatusParcela.java              # Enum: PENDENTE, PAGO, ATRASADO, CANCELADO
+│   ├── Pagamento.java                  # Entidade pagamento (vinculo com assinatura/agendamento)
+│   └── Parcela.java                    # Entidade parcela (vinculo com pagamento)
 ├── repository/
 │   ├── PatientRepository.java          # JPA Repository de pacientes
 │   ├── UserRepository.java             # JPA Repository de usuarios
 │   ├── AtividadeRepository.java        # JPA Repository de atividades
 │   ├── PlanoRepository.java            # JPA Repository de planos
 │   ├── ServicoRepository.java          # JPA Repository de servicos
-│   └── AssinaturaRepository.java       # JPA Repository de assinaturas
+│   ├── ProfissionalRepository.java     # JPA Repository de profissionais
+│   ├── AssinaturaRepository.java       # JPA Repository de assinaturas
+│   ├── HorarioDisponivelRepository.java# JPA Repository de horarios disponiveis
+│   ├── AgendamentoRepository.java      # JPA Repository de agendamentos
+│   ├── PagamentoRepository.java        # JPA Repository de pagamentos
+│   └── ParcelaRepository.java          # JPA Repository de parcelas
 ├── security/
 │   ├── JwtAuthenticationFilter.java    # Filtro JWT (OncePerRequestFilter)
 │   ├── JwtService.java                 # Geracao e validacao de tokens JWT
@@ -83,7 +101,12 @@ src/main/java/br/com/clinicahumaniza/patient_service/
     ├── AtividadeService.java           # Logica de CRUD de atividades
     ├── PlanoService.java               # Logica de CRUD de planos
     ├── ServicoService.java             # Logica de CRUD de servicos
-    └── AssinaturaService.java          # Logica de assinaturas, sessoes e status
+    ├── ProfissionalService.java        # Logica de CRUD de profissionais
+    ├── AssinaturaService.java          # Logica de assinaturas, sessoes e status
+    ├── HorarioDisponivelService.java   # Logica de horarios disponiveis
+    ├── AgendamentoService.java         # Logica de agendamentos, validacoes e slots
+    ├── GoogleCalendarService.java      # Integracao com Google Calendar (opcional)
+    └── PagamentoService.java           # Logica de pagamentos, parcelas e status
 ```
 
 ## Como Executar
@@ -95,7 +118,7 @@ src/main/java/br/com/clinicahumaniza/patient_service/
 # Rodar a aplicacao (porta 8080)
 ./mvnw spring-boot:run
 
-# Rodar testes (116 testes)
+# Rodar testes (257 testes)
 ./mvnw test
 ```
 
@@ -194,6 +217,17 @@ POST /api/v1/patients
 | PUT    | `/api/v1/servicos/{id}`                   | Atualizar servico        | 200    |
 | DELETE | `/api/v1/servicos/{id}`                   | Desativar (soft delete)  | 204    |
 
+### Profissionais (requer JWT)
+
+| Metodo | Endpoint                                            | Descricao                       | Status |
+|--------|-----------------------------------------------------|---------------------------------|--------|
+| POST   | `/api/v1/profissionais`                             | Criar profissional              | 201    |
+| GET    | `/api/v1/profissionais`                             | Listar profissionais ativos     | 200    |
+| GET    | `/api/v1/profissionais/{id}`                        | Buscar por ID                   | 200    |
+| GET    | `/api/v1/profissionais/atividade/{atividadeId}`     | Listar por atividade            | 200    |
+| PUT    | `/api/v1/profissionais/{id}`                        | Atualizar profissional          | 200    |
+| DELETE | `/api/v1/profissionais/{id}`                        | Desativar (soft delete)         | 204    |
+
 ### Assinaturas (requer JWT)
 
 | Metodo | Endpoint                                       | Descricao                       | Status |
@@ -221,18 +255,107 @@ POST /api/v1/assinaturas
 }
 ```
 
-**Alterar status:**
+### Horarios Disponiveis (requer JWT)
+
+| Metodo | Endpoint                                                      | Descricao                          | Status |
+|--------|---------------------------------------------------------------|------------------------------------|--------|
+| POST   | `/api/v1/disponibilidades`                                    | Criar horario disponivel           | 201    |
+| GET    | `/api/v1/disponibilidades`                                    | Listar horarios disponiveis        | 200    |
+| GET    | `/api/v1/disponibilidades/{id}`                               | Buscar por ID                      | 200    |
+| GET    | `/api/v1/disponibilidades/profissional/{profissionalId}`      | Listar por profissional            | 200    |
+| PUT    | `/api/v1/disponibilidades/{id}`                               | Atualizar horario                  | 200    |
+| DELETE | `/api/v1/disponibilidades/{id}`                               | Excluir horario                    | 204    |
+
+### Agendamentos (requer JWT)
+
+| Metodo | Endpoint                                                             | Descricao                       | Status |
+|--------|----------------------------------------------------------------------|---------------------------------|--------|
+| POST   | `/api/v1/agendamentos`                                               | Criar agendamento               | 201    |
+| GET    | `/api/v1/agendamentos`                                               | Listar agendamentos             | 200    |
+| GET    | `/api/v1/agendamentos/{id}`                                          | Buscar por ID                   | 200    |
+| GET    | `/api/v1/agendamentos/paciente/{pacienteId}`                         | Listar por paciente             | 200    |
+| GET    | `/api/v1/agendamentos/profissional/{profissionalId}`                 | Listar por profissional         | 200    |
+| GET    | `/api/v1/agendamentos/data?inicio=...&fim=...`                       | Listar por periodo              | 200    |
+| GET    | `/api/v1/agendamentos/profissional/{id}/slots-disponiveis?data=...`  | Consultar slots disponiveis     | 200    |
+| PUT    | `/api/v1/agendamentos/{id}`                                          | Atualizar agendamento           | 200    |
+| PATCH  | `/api/v1/agendamentos/{id}/status`                                   | Alterar status                  | 200    |
+| DELETE | `/api/v1/agendamentos/{id}`                                          | Excluir agendamento             | 204    |
+
+**Criar agendamento:**
 ```json
-PATCH /api/v1/assinaturas/{id}/status
+POST /api/v1/agendamentos
 {
-  "status": "CANCELADO"
+  "pacienteId": "uuid-do-paciente",
+  "profissionalId": "uuid-do-profissional",
+  "servicoId": "uuid-do-servico",
+  "assinaturaId": "uuid-da-assinatura (opcional)",
+  "dataHora": "2025-02-15T10:00:00",
+  "duracaoMinutos": 50
 }
 ```
 
-**Registrar sessao (sem body):**
+### Pagamentos (requer JWT)
+
+| Metodo | Endpoint                                                    | Descricao                          | Status |
+|--------|-------------------------------------------------------------|------------------------------------|--------|
+| POST   | `/api/v1/pagamentos`                                        | Criar pagamento                    | 201    |
+| GET    | `/api/v1/pagamentos`                                        | Listar pagamentos                  | 200    |
+| GET    | `/api/v1/pagamentos/{id}`                                   | Buscar por ID                      | 200    |
+| GET    | `/api/v1/pagamentos/paciente/{pacienteId}`                  | Listar por paciente                | 200    |
+| GET    | `/api/v1/pagamentos/assinatura/{assinaturaId}`              | Listar por assinatura              | 200    |
+| GET    | `/api/v1/pagamentos/agendamento/{agendamentoId}`            | Listar por agendamento             | 200    |
+| GET    | `/api/v1/pagamentos/periodo?inicio=...&fim=...`             | Listar por periodo                 | 200    |
+| PUT    | `/api/v1/pagamentos/{id}`                                   | Atualizar pagamento                | 200    |
+| PATCH  | `/api/v1/pagamentos/{id}/status`                            | Alterar status do pagamento        | 200    |
+| PATCH  | `/api/v1/pagamentos/{id}/parcelas/{parcelaId}/status`       | Alterar status da parcela          | 200    |
+| DELETE | `/api/v1/pagamentos/{id}`                                   | Desativar (soft delete)            | 204    |
+
+**Criar pagamento (parcelado em 3x vinculado a assinatura):**
+```json
+POST /api/v1/pagamentos
+{
+  "pacienteId": "uuid-do-paciente",
+  "assinaturaId": "uuid-da-assinatura",
+  "valor": 300.00,
+  "formaPagamento": "CARTAO_CREDITO",
+  "numeroParcelas": 3,
+  "dataVencimento": "2025-03-15",
+  "observacoes": "Pagamento mensal"
+}
 ```
-PATCH /api/v1/assinaturas/{id}/registrar-sessao
+
+**Criar pagamento avulso (1x via PIX vinculado a agendamento):**
+```json
+POST /api/v1/pagamentos
+{
+  "pacienteId": "uuid-do-paciente",
+  "agendamentoId": "uuid-do-agendamento",
+  "valor": 150.00,
+  "formaPagamento": "PIX",
+  "numeroParcelas": 1,
+  "dataVencimento": "2025-03-15"
+}
 ```
+
+**Pagar parcela:**
+```json
+PATCH /api/v1/pagamentos/{id}/parcelas/{parcelaId}/status
+{
+  "status": "PAGO",
+  "dataPagamento": "2025-03-15T14:30:00"
+}
+```
+
+**Formas de pagamento:** `PIX`, `CARTAO_CREDITO`, `CARTAO_DEBITO`, `DINHEIRO`
+
+**Status do pagamento:** `PENDENTE` -> `PARCIALMENTE_PAGO` -> `PAGO` -> `REEMBOLSADO` | `CANCELADO`
+
+**Regras de negocio:**
+- Ao menos uma assinatura ou agendamento deve ser informado
+- Parcelas sao geradas automaticamente (valor dividido, datas mensais)
+- Ultima parcela absorve diferenca de arredondamento
+- Ao pagar parcela: se todas PAGO -> Pagamento = PAGO; se alguma PAGO -> PARCIALMENTE_PAGO
+- Transicoes validas: PENDENTE->PAGO/CANCELADO, PARCIALMENTE_PAGO->PAGO/CANCELADO, PAGO->REEMBOLSADO
 
 ### Documentacao e Ferramentas (publico)
 
@@ -287,15 +410,16 @@ Representa os pacientes atendidos. Gerenciado pelos Users autenticados.
 ### Atividade (atividades da clinica)
 Representa as atividades oferecidas (ex: Pilates, Fisioterapia, Yoga).
 
-| Campo         | Tipo     | Descricao                        |
-|---------------|----------|----------------------------------|
-| id            | UUID     | Chave primaria                   |
-| nome          | String   | Nome da atividade (unico)        |
-| descricao     | String   | Descricao da atividade           |
-| duracaoPadrao | Integer  | Duracao padrao em minutos        |
-| ativo         | boolean  | Soft delete flag                 |
-| createdAt     | DateTime | Data de criacao                  |
-| updatedAt     | DateTime | Data de atualizacao              |
+| Campo            | Tipo     | Descricao                          |
+|------------------|----------|------------------------------------|
+| id               | UUID     | Chave primaria                     |
+| nome             | String   | Nome da atividade (unico)          |
+| descricao        | String   | Descricao da atividade             |
+| duracaoPadrao    | Integer  | Duracao padrao em minutos          |
+| capacidadeMaxima | Integer  | Capacidade maxima de atendimentos  |
+| ativo            | boolean  | Soft delete flag                   |
+| createdAt        | DateTime | Data de criacao                    |
+| updatedAt        | DateTime | Data de atualizacao                |
 
 ### Plano (planos da clinica)
 Representa os planos oferecidos (ex: Mensal, Trimestral, Avulso).
@@ -330,6 +454,21 @@ Combina uma Atividade com um Plano, definindo valor e modalidade.
 | createdAt       | DateTime   | Data de criacao                    |
 | updatedAt       | DateTime   | Data de atualizacao                |
 
+### Profissional (profissionais da clinica)
+Representa os profissionais que atendem na clinica.
+
+| Campo            | Tipo           | Descricao                              |
+|------------------|----------------|----------------------------------------|
+| id               | UUID           | Chave primaria                         |
+| nome             | String         | Nome do profissional                   |
+| telefone         | String         | Telefone                               |
+| user             | User           | FK OneToOne (vinculo com login)        |
+| atividades       | Set<Atividade> | ManyToMany (atividades que atende)     |
+| googleCalendarId | String         | ID do Google Calendar (opcional)       |
+| ativo            | boolean        | Soft delete flag                       |
+| createdAt        | DateTime       | Data de criacao                        |
+| updatedAt        | DateTime       | Data de atualizacao                    |
+
 ### Assinatura (assinaturas de pacientes)
 Vincula um Paciente a um Servico com controle de vigencia, sessoes e status.
 
@@ -349,39 +488,115 @@ Vincula um Paciente a um Servico com controle de vigencia, sessoes e status.
 | createdAt          | DateTime         | Data de criacao                          |
 | updatedAt          | DateTime         | Data de atualizacao                      |
 
-**Campo calculado (no response):** `sessoesRestantes = sessoesContratadas - sessoesRealizadas`
+### HorarioDisponivel (disponibilidade dos profissionais)
+Define os horarios em que um profissional esta disponivel para atendimento.
 
-**Regras de negocio:**
-- Ao registrar sessao, se `sessoesRealizadas >= sessoesContratadas`, status muda para FINALIZADO automaticamente
-- Nao e possivel registrar sessao em assinatura com status diferente de ATIVO
-- Nao e possivel alterar status de assinatura FINALIZADA
-- Se `dataVencimento` nao for informada na criacao, e calculada a partir de `dataInicio + plano.validadeDias`
+| Campo        | Tipo          | Descricao                       |
+|--------------|---------------|---------------------------------|
+| id           | UUID          | Chave primaria                  |
+| profissional | Profissional  | FK ManyToOne                    |
+| diaSemana    | DayOfWeek     | Dia da semana (MONDAY..FRIDAY)  |
+| horaInicio   | LocalTime     | Hora de inicio                  |
+| horaFim      | LocalTime     | Hora de fim                     |
+| ativo        | boolean       | Soft delete flag                |
+| createdAt    | DateTime      | Data de criacao                 |
+| updatedAt    | DateTime      | Data de atualizacao             |
+
+### Agendamento (agendamentos de sessoes)
+Registra uma sessao agendada vinculando paciente, profissional e servico.
+
+| Campo                  | Tipo              | Descricao                                     |
+|------------------------|-------------------|-----------------------------------------------|
+| id                     | UUID              | Chave primaria                                |
+| paciente               | Patient           | FK ManyToOne                                  |
+| profissional           | Profissional      | FK ManyToOne                                  |
+| servico                | Servico           | FK ManyToOne                                  |
+| assinatura             | Assinatura        | FK ManyToOne (opcional)                       |
+| dataHora               | LocalDateTime     | Data e hora do agendamento                    |
+| duracaoMinutos         | Integer           | Duracao em minutos                            |
+| status                 | StatusAgendamento | AGENDADO, CONFIRMADO, REALIZADO, etc.         |
+| observacoes            | String            | Anotacoes livres                              |
+| googleCalendarEventId  | String            | ID do evento no Google Calendar               |
+| ativo                  | boolean           | Soft delete flag                              |
+| createdAt              | DateTime          | Data de criacao                               |
+| updatedAt              | DateTime          | Data de atualizacao                           |
+
+### Pagamento (pagamentos de assinaturas e sessoes)
+Registra pagamentos vinculados a assinaturas e/ou agendamentos avulsos, com suporte a parcelamento.
+
+| Campo          | Tipo            | Descricao                                       |
+|----------------|-----------------|-------------------------------------------------|
+| id             | UUID            | Chave primaria                                  |
+| paciente       | Patient         | FK ManyToOne                                    |
+| assinatura     | Assinatura      | FK ManyToOne (opcional - pagamento de plano)     |
+| agendamento    | Agendamento     | FK ManyToOne (opcional - pagamento avulso)        |
+| valor          | BigDecimal      | Valor total (precision=10, scale=2)             |
+| formaPagamento | FormaPagamento  | PIX, CARTAO_CREDITO, CARTAO_DEBITO, DINHEIRO   |
+| status         | StatusPagamento | PENDENTE, PARCIALMENTE_PAGO, PAGO, etc.        |
+| numeroParcelas | Integer         | Numero de parcelas (default 1)                  |
+| dataPagamento  | LocalDateTime   | Data em que foi totalmente pago                 |
+| dataVencimento | LocalDate       | Vencimento da 1a parcela ou pagamento unico     |
+| observacoes    | String          | Anotacoes livres                                |
+| gatewayId      | String          | Reservado para integracao futura com gateway    |
+| gatewayStatus  | String          | Reservado para integracao futura com gateway    |
+| parcelas       | List<Parcela>   | OneToMany (cascade ALL, orphanRemoval)          |
+| ativo          | boolean         | Soft delete flag                                |
+| createdAt      | DateTime        | Data de criacao                                 |
+| updatedAt      | DateTime        | Data de atualizacao                             |
+
+### Parcela (parcelas de pagamentos)
+Representa cada parcela de um pagamento parcelado.
+
+| Campo          | Tipo          | Descricao                              |
+|----------------|---------------|----------------------------------------|
+| id             | UUID          | Chave primaria                         |
+| pagamento      | Pagamento     | FK ManyToOne                           |
+| numero         | Integer       | Numero da parcela (1, 2, 3...)         |
+| valor          | BigDecimal    | Valor da parcela (precision=10, scale=2)|
+| dataVencimento | LocalDate     | Data de vencimento da parcela          |
+| dataPagamento  | LocalDateTime | Data em que foi efetivamente paga      |
+| status         | StatusParcela | PENDENTE, PAGO, ATRASADO, CANCELADO   |
+| ativo          | boolean       | Soft delete flag                       |
+| createdAt      | DateTime      | Data de criacao                        |
+| updatedAt      | DateTime      | Data de atualizacao                    |
 
 ## Testes
 
-116 testes organizados em categorias:
+257 testes organizados em categorias:
 
-| Categoria                | Arquivo                       | Testes | Tipo        |
-|--------------------------|-------------------------------|--------|-------------|
-| Service - Pacientes      | PatientServiceTest.java       | 9      | Unitario    |
-| Service - Auth           | AuthServiceTest.java          | 4      | Unitario    |
-| Service - Atividades     | AtividadeServiceTest.java     | 7      | Unitario    |
-| Service - Planos         | PlanoServiceTest.java         | 7      | Unitario    |
-| Service - Servicos       | ServicoServiceTest.java       | 10     | Unitario    |
-| Service - Assinaturas    | AssinaturaServiceTest.java    | 15     | Unitario    |
-| Security - JWT           | JwtServiceTest.java           | 5      | Unitario    |
-| Controller - Pacientes   | PatientControllerTest.java    | 8      | WebMvcTest  |
-| Controller - Auth        | AuthControllerTest.java       | 5      | WebMvcTest  |
-| Controller - Atividades  | AtividadeControllerTest.java  | 7      | WebMvcTest  |
-| Controller - Planos      | PlanoControllerTest.java      | 7      | WebMvcTest  |
-| Controller - Servicos    | ServicoControllerTest.java    | 8      | WebMvcTest  |
-| Controller - Assinaturas | AssinaturaControllerTest.java | 10     | WebMvcTest  |
-| Integracao - Auth        | AuthIntegrationTest.java      | 3      | SpringBoot  |
-| Integracao - Pacientes   | PatientIntegrationTest.java   | 3      | SpringBoot  |
-| Integracao - Atividades  | AtividadeIntegrationTest.java | 3      | SpringBoot  |
-| Integracao - Servicos    | ServicoIntegrationTest.java   | 3      | SpringBoot  |
-| Integracao - Assinaturas | AssinaturaIntegrationTest.java| 3      | SpringBoot  |
-| Contexto                 | PatientServiceApplicationTests| 1      | SpringBoot  |
+| Categoria                    | Arquivo                           | Testes | Tipo        |
+|------------------------------|-----------------------------------|--------|-------------|
+| Service - Pacientes          | PatientServiceTest.java           | 9      | Unitario    |
+| Service - Auth               | AuthServiceTest.java              | 4      | Unitario    |
+| Service - Atividades         | AtividadeServiceTest.java         | 7      | Unitario    |
+| Service - Planos             | PlanoServiceTest.java             | 7      | Unitario    |
+| Service - Servicos           | ServicoServiceTest.java           | 10     | Unitario    |
+| Service - Profissionais      | ProfissionalServiceTest.java      | 10     | Unitario    |
+| Service - Assinaturas        | AssinaturaServiceTest.java        | 15     | Unitario    |
+| Service - Horarios           | HorarioDisponivelServiceTest.java | 10     | Unitario    |
+| Service - Agendamentos       | AgendamentoServiceTest.java       | 35     | Unitario    |
+| Service - Google Calendar    | GoogleCalendarServiceTest.java    | 6      | Unitario    |
+| Service - Pagamentos         | PagamentoServiceTest.java         | 29     | Unitario    |
+| Security - JWT               | JwtServiceTest.java               | 5      | Unitario    |
+| Controller - Pacientes       | PatientControllerTest.java        | 8      | WebMvcTest  |
+| Controller - Auth            | AuthControllerTest.java           | 5      | WebMvcTest  |
+| Controller - Atividades      | AtividadeControllerTest.java      | 7      | WebMvcTest  |
+| Controller - Planos          | PlanoControllerTest.java          | 7      | WebMvcTest  |
+| Controller - Servicos        | ServicoControllerTest.java        | 8      | WebMvcTest  |
+| Controller - Profissionais   | ProfissionalControllerTest.java   | 7      | WebMvcTest  |
+| Controller - Assinaturas     | AssinaturaControllerTest.java     | 10     | WebMvcTest  |
+| Controller - Horarios        | HorarioDisponivelControllerTest.java| 7    | WebMvcTest  |
+| Controller - Agendamentos    | AgendamentoControllerTest.java    | 10     | WebMvcTest  |
+| Controller - Pagamentos      | PagamentoControllerTest.java      | 13     | WebMvcTest  |
+| Integracao - Auth            | AuthIntegrationTest.java          | 3      | SpringBoot  |
+| Integracao - Pacientes       | PatientIntegrationTest.java       | 3      | SpringBoot  |
+| Integracao - Atividades      | AtividadeIntegrationTest.java     | 3      | SpringBoot  |
+| Integracao - Servicos        | ServicoIntegrationTest.java       | 3      | SpringBoot  |
+| Integracao - Profissionais   | ProfissionalIntegrationTest.java  | 3      | SpringBoot  |
+| Integracao - Assinaturas     | AssinaturaIntegrationTest.java    | 3      | SpringBoot  |
+| Integracao - Horarios        | HorarioDisponivelIntegrationTest.java| 3   | SpringBoot  |
+| Integracao - Agendamentos    | AgendamentoIntegrationTest.java   | 3      | SpringBoot  |
+| Contexto                     | PatientServiceApplicationTests    | 1      | SpringBoot  |
 
 ## Configuracao
 
