@@ -20,6 +20,7 @@ public class ProfissionalMapper {
         profissional.setTelefone(dto.getTelefone());
         profissional.setUser(user);
         profissional.setAtividades(atividades);
+        profissional.setGoogleCalendarId(dto.getGoogleCalendarId());
         return profissional;
     }
 
@@ -34,6 +35,7 @@ public class ProfissionalMapper {
                         .map(a -> new ProfissionalResponseDTO.AtividadeSimpleDTO(a.getId(), a.getNome()))
                         .collect(Collectors.toList())
         );
+        dto.setGoogleCalendarId(entity.getGoogleCalendarId());
         dto.setAtivo(entity.isAtivo());
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;
@@ -48,6 +50,9 @@ public class ProfissionalMapper {
         }
         if (atividades != null) {
             entity.setAtividades(atividades);
+        }
+        if (dto.getGoogleCalendarId() != null) {
+            entity.setGoogleCalendarId(dto.getGoogleCalendarId());
         }
     }
 }

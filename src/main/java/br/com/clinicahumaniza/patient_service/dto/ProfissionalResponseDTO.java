@@ -18,6 +18,7 @@ public class ProfissionalResponseDTO {
     private String telefone;
     private String email;
     private List<AtividadeSimpleDTO> atividades;
+    private String googleCalendarId;
     private boolean ativo;
     private LocalDateTime createdAt;
 

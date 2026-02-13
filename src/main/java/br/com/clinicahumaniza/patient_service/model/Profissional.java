@@ -41,6 +41,9 @@ public class Profissional {
     )
     private Set<Atividade> atividades = new HashSet<>();
 
+    @Column(name = "google_calendar_id")
+    private String googleCalendarId;
+
     private boolean ativo = true;
 
     @Column(updatable = false)

@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -32,6 +33,7 @@ public class AgendamentoService {
     private final HorarioDisponivelRepository horarioDisponivelRepository;
     private final AgendamentoMapper agendamentoMapper;
     private final AssinaturaService assinaturaService;
+    private final Optional<GoogleCalendarService> googleCalendarService;
 
     @Autowired
     public AgendamentoService(AgendamentoRepository agendamentoRepository,
@@ -41,7 +43,8 @@ public class AgendamentoService {
                                AssinaturaRepository assinaturaRepository,
                                HorarioDisponivelRepository horarioDisponivelRepository,
                                AgendamentoMapper agendamentoMapper,
-                               AssinaturaService assinaturaService) {
+                               AssinaturaService assinaturaService,
+                               Optional<GoogleCalendarService> googleCalendarService) {
         this.agendamentoRepository = agendamentoRepository;
         this.patientRepository = patientRepository;
         this.profissionalRepository = profissionalRepository;
@@ -50,6 +53,7 @@ public class AgendamentoService {
         this.horarioDisponivelRepository = horarioDisponivelRepository;
         this.agendamentoMapper = agendamentoMapper;
         this.assinaturaService = assinaturaService;
+        this.googleCalendarService = googleCalendarService;
     }
 
     @Transactional
@@ -95,7 +99,9 @@ public class AgendamentoService {
         Agendamento agendamento = agendamentoMapper.toEntity(dto, paciente, profissional, servico, assinatura);
         agendamento.setStatus(StatusAgendamento.AGENDADO);
 
-        return agendamentoRepository.save(agendamento);
+        Agendamento saved = agendamentoRepository.save(agendamento);
+        googleCalendarService.ifPresent(g -> g.createEvent(saved));
+        return saved;
     }
 
     public Agendamento getAgendamentoById(UUID id) {
@@ -141,7 +147,9 @@ public class AgendamentoService {
         }
 
         agendamentoMapper.updateEntityFromDto(dto, agendamento);
-        return agendamentoRepository.save(agendamento);
+        Agendamento saved = agendamentoRepository.save(agendamento);
+        googleCalendarService.ifPresent(g -> g.updateEvent(saved));
+        return saved;
     }
 
     @Transactional
@@ -158,13 +166,21 @@ public class AgendamentoService {
             assinaturaService.registrarSessao(agendamento.getAssinatura().getId());
         }
 
-        return agendamentoRepository.save(agendamento);
+        Agendamento saved = agendamentoRepository.save(agendamento);
+
+        // Se cancelado, remover evento do Google Calendar
+        if (dto.getStatus() == StatusAgendamento.CANCELADO) {
+            googleCalendarService.ifPresent(g -> g.deleteEvent(saved));
+        }
+
+        return saved;
     }
 
     @Transactional
     public void deleteAgendamento(UUID id) {
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
+        googleCalendarService.ifPresent(g -> g.deleteEvent(agendamento));
         agendamento.setAtivo(false);
         agendamentoRepository.save(agendamento);
     }

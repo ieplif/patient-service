@@ -56,7 +56,6 @@ class AgendamentoServiceTest {
     @Mock
     private AssinaturaService assinaturaService;
 
-    @InjectMocks
     private AgendamentoService agendamentoService;
 
     private Agendamento agendamento;
@@ -76,6 +75,11 @@ class AgendamentoServiceTest {
 
     @BeforeEach
     void setUp() {
+        agendamentoService = new AgendamentoService(
+                agendamentoRepository, patientRepository, profissionalRepository,
+                servicoRepository, assinaturaRepository, horarioDisponivelRepository,
+                agendamentoMapper, assinaturaService, Optional.empty());
+
         agendamentoId = UUID.randomUUID();
         pacienteId = UUID.randomUUID();
         profissionalId = UUID.randomUUID();

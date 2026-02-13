@@ -34,4 +34,6 @@ public class ProfissionalRequestDTO {
 
     @NotEmpty(message = "Pelo menos uma atividade é obrigatória")
     private Set<UUID> atividadeIds;
+
+    private String googleCalendarId;
 }

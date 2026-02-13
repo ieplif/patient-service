@@ -20,4 +20,6 @@ public class ProfissionalUpdateDTO {
     private String telefone;
 
     private Set<UUID> atividadeIds;
+
+    private String googleCalendarId;
 }

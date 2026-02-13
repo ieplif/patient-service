@@ -50,6 +50,9 @@ public class Agendamento {
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 
+    @Column(name = "google_calendar_event_id")
+    private String googleCalendarEventId;
+
     private boolean ativo = true;
 
     @Column(updatable = false)
