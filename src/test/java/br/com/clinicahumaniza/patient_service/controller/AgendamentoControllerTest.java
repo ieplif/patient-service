@@ -1,14 +1,12 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoResponseDTO;
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoStatusDTO;
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoUpdateDTO;
+import br.com.clinicahumaniza.patient_service.dto.*;
 import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
 import br.com.clinicahumaniza.patient_service.model.*;
 import br.com.clinicahumaniza.patient_service.security.JwtAuthenticationFilter;
 import br.com.clinicahumaniza.patient_service.security.JwtService;
 import br.com.clinicahumaniza.patient_service.security.SecurityConfig;
+import br.com.clinicahumaniza.patient_service.service.AgendamentoRecorrenteService;
 import br.com.clinicahumaniza.patient_service.service.AgendamentoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -46,6 +44,9 @@ class AgendamentoControllerTest {
 
     @MockitoBean
     private AgendamentoService agendamentoService;
+
+    @MockitoBean
+    private AgendamentoRecorrenteService recorrenteService;
 
     @MockitoBean
     private AgendamentoMapper agendamentoMapper;
@@ -277,6 +278,124 @@ class AgendamentoControllerTest {
     @DisplayName("Deve retornar 401 sem autenticação")
     void getAllAgendamentos_Unauthenticated_401() throws Exception {
         mockMvc.perform(get("/api/v1/agendamentos"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // --- Testes de recorrência ---
+
+    @Test
+    @DisplayName("Deve criar recorrência com autenticação - 201")
+    @WithMockUser
+    void createRecorrente_Authenticated_201() throws Exception {
+        AgendamentoRecorrenteRequestDTO requestDTO = new AgendamentoRecorrenteRequestDTO();
+        requestDTO.setPacienteId(pacienteId);
+        requestDTO.setProfissionalId(profissionalId);
+        requestDTO.setServicoId(servicoId);
+        requestDTO.setFrequencia(FrequenciaRecorrencia.SEMANAL);
+        requestDTO.setDiasSemana(List.of(java.time.DayOfWeek.MONDAY, java.time.DayOfWeek.WEDNESDAY));
+        requestDTO.setHoraInicio(java.time.LocalTime.of(10, 0));
+        requestDTO.setTotalSessoes(4);
+
+        AgendamentoRecorrenteResponseDTO recorrenteResponse = new AgendamentoRecorrenteResponseDTO();
+        recorrenteResponse.setId(UUID.randomUUID());
+        recorrenteResponse.setPacienteId(pacienteId);
+        recorrenteResponse.setPacienteNome("Maria Santos");
+        recorrenteResponse.setFrequencia(FrequenciaRecorrencia.SEMANAL);
+        recorrenteResponse.setAgendamentosCriados(List.of(responseDTO));
+        recorrenteResponse.setDatasIgnoradas(List.of());
+
+        when(recorrenteService.createRecorrente(any(AgendamentoRecorrenteRequestDTO.class)))
+                .thenReturn(recorrenteResponse);
+
+        mockMvc.perform(post("/api/v1/agendamentos/recorrente")
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.pacienteNome").value("Maria Santos"))
+                .andExpect(jsonPath("$.agendamentosCriados").isArray())
+                .andExpect(jsonPath("$.datasIgnoradas").isArray());
+    }
+
+    @Test
+    @DisplayName("Deve criar recorrência com datas ignoradas - 201")
+    @WithMockUser
+    void createRecorrente_ComDatasIgnoradas_201() throws Exception {
+        AgendamentoRecorrenteRequestDTO requestDTO = new AgendamentoRecorrenteRequestDTO();
+        requestDTO.setPacienteId(pacienteId);
+        requestDTO.setProfissionalId(profissionalId);
+        requestDTO.setServicoId(servicoId);
+        requestDTO.setFrequencia(FrequenciaRecorrencia.SEMANAL);
+        requestDTO.setDiasSemana(List.of(java.time.DayOfWeek.MONDAY));
+        requestDTO.setHoraInicio(java.time.LocalTime.of(10, 0));
+        requestDTO.setTotalSessoes(4);
+
+        AgendamentoRecorrenteResponseDTO recorrenteResponse = new AgendamentoRecorrenteResponseDTO();
+        recorrenteResponse.setId(UUID.randomUUID());
+        recorrenteResponse.setAgendamentosCriados(List.of(responseDTO));
+        recorrenteResponse.setDatasIgnoradas(List.of(
+                new DataIgnoradaDTO(LocalDate.of(2025, 6, 9), "Conflito de horário")));
+
+        when(recorrenteService.createRecorrente(any(AgendamentoRecorrenteRequestDTO.class)))
+                .thenReturn(recorrenteResponse);
+
+        mockMvc.perform(post("/api/v1/agendamentos/recorrente")
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.datasIgnoradas[0].motivo").value("Conflito de horário"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 sem campos obrigatórios na recorrência")
+    @WithMockUser
+    void createRecorrente_SemCamposObrigatorios_400() throws Exception {
+        AgendamentoRecorrenteRequestDTO requestDTO = new AgendamentoRecorrenteRequestDTO();
+        // Sem campos obrigatórios
+
+        mockMvc.perform(post("/api/v1/agendamentos/recorrente")
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve cancelar recorrência com cancelarFuturos=true - 200")
+    @WithMockUser
+    void cancelarRecorrencia_CancelarFuturos_200() throws Exception {
+        when(recorrenteService.cancelarRecorrencia(eq(agendamentoId), eq(true)))
+                .thenReturn(List.of(responseDTO));
+
+        mockMvc.perform(delete("/api/v1/agendamentos/{id}/recorrencia", agendamentoId)
+                        .with(csrf())
+                        .param("cancelarFuturos", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    @DisplayName("Deve cancelar recorrência com cancelarFuturos=false - 200")
+    @WithMockUser
+    void cancelarRecorrencia_SomenteUm_200() throws Exception {
+        when(recorrenteService.cancelarRecorrencia(eq(agendamentoId), eq(false)))
+                .thenReturn(List.of(responseDTO));
+
+        mockMvc.perform(delete("/api/v1/agendamentos/{id}/recorrencia", agendamentoId)
+                        .with(csrf())
+                        .param("cancelarFuturos", "false"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 401 ao criar recorrência sem autenticação")
+    void createRecorrente_Unauthenticated_401() throws Exception {
+        mockMvc.perform(post("/api/v1/agendamentos/recorrente")
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content("{}"))
                 .andExpect(status().isUnauthorized());
     }
 }

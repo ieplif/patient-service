@@ -1,11 +1,9 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoResponseDTO;
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoStatusDTO;
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoUpdateDTO;
+import br.com.clinicahumaniza.patient_service.dto.*;
 import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
 import br.com.clinicahumaniza.patient_service.model.Agendamento;
+import br.com.clinicahumaniza.patient_service.service.AgendamentoRecorrenteService;
 import br.com.clinicahumaniza.patient_service.service.AgendamentoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -31,12 +29,15 @@ import java.util.stream.Collectors;
 public class AgendamentoController {
 
     private final AgendamentoService agendamentoService;
+    private final AgendamentoRecorrenteService recorrenteService;
     private final AgendamentoMapper agendamentoMapper;
 
     @Autowired
     public AgendamentoController(AgendamentoService agendamentoService,
+                                  AgendamentoRecorrenteService recorrenteService,
                                   AgendamentoMapper agendamentoMapper) {
         this.agendamentoService = agendamentoService;
+        this.recorrenteService = recorrenteService;
         this.agendamentoMapper = agendamentoMapper;
     }
 
@@ -162,5 +163,33 @@ public class AgendamentoController {
         List<LocalDateTime> slots = agendamentoService.getAvailableSlots(profissionalId, data,
                 duracaoMinutos, capacidadeMaxima);
         return ResponseEntity.ok(slots);
+    }
+
+    @PostMapping("/recorrente")
+    @Operation(summary = "Criar agendamentos recorrentes", description = "Cria uma série de agendamentos com base em um padrão de recorrência")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Recorrência criada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+            @ApiResponse(responseCode = "404", description = "Recurso não encontrado"),
+            @ApiResponse(responseCode = "422", description = "Erro de regra de negócio")
+    })
+    public ResponseEntity<AgendamentoRecorrenteResponseDTO> createRecorrente(
+            @Valid @RequestBody AgendamentoRecorrenteRequestDTO dto) {
+        AgendamentoRecorrenteResponseDTO response = recorrenteService.createRecorrente(dto);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/{id}/recorrencia")
+    @Operation(summary = "Cancelar agendamento da recorrência", description = "Cancela um agendamento ou todos os futuros da mesma recorrência")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Agendamento(s) cancelado(s) com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Agendamento não encontrado"),
+            @ApiResponse(responseCode = "422", description = "Erro de regra de negócio")
+    })
+    public ResponseEntity<List<AgendamentoResponseDTO>> cancelarRecorrencia(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "false") boolean cancelarFuturos) {
+        List<AgendamentoResponseDTO> cancelados = recorrenteService.cancelarRecorrencia(id, cancelarFuturos);
+        return ResponseEntity.ok(cancelados);
     }
 }

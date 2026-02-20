@@ -4,18 +4,18 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "agendamentos")
-@SQLRestriction("ativo = true")
+@Table(name = "agendamentos_recorrentes")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Agendamento {
+public class AgendamentoRecorrente {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -37,25 +37,27 @@ public class Agendamento {
     @JoinColumn(name = "assinatura_id")
     private Assinatura assinatura;
 
-    @Column(name = "data_hora", nullable = false)
-    private LocalDateTime dataHora;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private FrequenciaRecorrencia frequencia;
+
+    @Column(name = "dias_semana", nullable = false)
+    private String diasSemana;
+
+    @Column(name = "hora_inicio", nullable = false)
+    private LocalTime horaInicio;
 
     @Column(name = "duracao_minutos", nullable = false)
     private Integer duracaoMinutos;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private StatusAgendamento status = StatusAgendamento.AGENDADO;
+    @Column(name = "total_sessoes")
+    private Integer totalSessoes;
+
+    @Column(name = "data_fim")
+    private LocalDate dataFim;
 
     @Column(columnDefinition = "TEXT")
     private String observacoes;
-
-    @ManyToOne
-    @JoinColumn(name = "agendamento_recorrente_id")
-    private AgendamentoRecorrente agendamentoRecorrente;
-
-    @Column(name = "google_calendar_event_id")
-    private String googleCalendarEventId;
 
     private boolean ativo = true;
 
