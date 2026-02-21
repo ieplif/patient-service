@@ -53,7 +53,6 @@ public class AgendamentoRecorrenteService {
         this.agendamentoMapper = agendamentoMapper;
     }
 
-    @Transactional
     public AgendamentoRecorrenteResponseDTO createRecorrente(AgendamentoRecorrenteRequestDTO dto) {
         if (dto.getTotalSessoes() == null && dto.getDataFim() == null) {
             throw new BusinessException("É necessário informar totalSessoes ou dataFim");
