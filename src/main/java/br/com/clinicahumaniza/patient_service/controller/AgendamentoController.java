@@ -3,6 +3,7 @@ package br.com.clinicahumaniza.patient_service.controller;
 import br.com.clinicahumaniza.patient_service.dto.*;
 import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
 import br.com.clinicahumaniza.patient_service.model.Agendamento;
+import br.com.clinicahumaniza.patient_service.model.StatusAgendamento;
 import br.com.clinicahumaniza.patient_service.service.AgendamentoRecorrenteService;
 import br.com.clinicahumaniza.patient_service.service.AgendamentoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,8 +12,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,13 +63,33 @@ public class AgendamentoController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar agendamentos", description = "Retorna todos os agendamentos ativos")
-    @ApiResponse(responseCode = "200", description = "Lista de agendamentos retornada com sucesso")
-    public ResponseEntity<List<AgendamentoResponseDTO>> getAllAgendamentos() {
-        List<AgendamentoResponseDTO> responseDTOs = agendamentoService.getAllAgendamentos().stream()
-                .map(agendamentoMapper::toResponseDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responseDTOs);
+    @Operation(summary = "Listar agendamentos", description = "Retorna agendamentos ativos com paginação e filtros opcionais")
+    @ApiResponse(responseCode = "200", description = "Lista paginada de agendamentos retornada com sucesso")
+    public ResponseEntity<Page<AgendamentoResponseDTO>> getAllAgendamentos(
+            @RequestParam(required = false) StatusAgendamento status,
+            @RequestParam(required = false) UUID pacienteId,
+            @RequestParam(required = false) UUID profissionalId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
+            @PageableDefault(size = 20, sort = "dataHora", direction = Sort.Direction.DESC) Pageable pageable) {
+        LocalDateTime dtInicio = dataInicio != null ? dataInicio.atStartOfDay() : null;
+        LocalDateTime dtFim = dataFim != null ? dataFim.atTime(LocalTime.MAX) : null;
+        return ResponseEntity.ok(agendamentoService.getAllAgendamentos(status, pacienteId, profissionalId,
+                dtInicio, dtFim, pageable).map(agendamentoMapper::toResponseDTO));
+    }
+
+    @GetMapping("/export/csv")
+    @Operation(summary = "Exportar agendamentos em CSV")
+    @ApiResponse(responseCode = "200", description = "CSV de agendamentos gerado com sucesso")
+    public ResponseEntity<byte[]> exportCsv(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @RequestParam(required = false) StatusAgendamento status) {
+        byte[] csv = agendamentoService.exportCsv(inicio, fim, status);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=agendamentos.csv")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(csv);
     }
 
     @GetMapping("/{id}")

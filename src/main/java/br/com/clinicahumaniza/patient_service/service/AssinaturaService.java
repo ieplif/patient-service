@@ -13,7 +13,11 @@ import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
 import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
 import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
 import br.com.clinicahumaniza.patient_service.repository.ServicoRepository;
+import br.com.clinicahumaniza.patient_service.spec.AssinaturaSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,8 +67,11 @@ public class AssinaturaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
     }
 
-    public List<Assinatura> getAllAssinaturas() {
-        return assinaturaRepository.findAll();
+    public Page<Assinatura> getAllAssinaturas(StatusAssinatura status, UUID pacienteId, Pageable pageable) {
+        Specification<Assinatura> spec = Specification
+                .where(AssinaturaSpecification.hasStatus(status))
+                .and(AssinaturaSpecification.hasPaciente(pacienteId));
+        return assinaturaRepository.findAll(spec, pageable);
     }
 
     public List<Assinatura> getAssinaturasByPaciente(UUID pacienteId) {

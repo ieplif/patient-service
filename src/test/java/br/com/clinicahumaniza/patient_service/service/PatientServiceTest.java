@@ -15,6 +15,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -128,12 +134,14 @@ class PatientServiceTest {
     @Test
     @DisplayName("Deve listar todos os pacientes")
     void getAllPatients_Success() {
-        when(patientRepository.findAll()).thenReturn(List.of(patient));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(patientRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(patient)));
 
-        List<Patient> result = patientService.getAllPatients();
+        Page<Patient> result = patientService.getAllPatients(null, null, null, pageable);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getNomeCompleto()).isEqualTo("João Silva");
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getNomeCompleto()).isEqualTo("João Silva");
     }
 
     @Test

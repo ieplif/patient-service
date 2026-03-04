@@ -18,6 +18,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -153,11 +158,13 @@ class ServicoServiceTest {
     @Test
     @DisplayName("Deve listar todos os serviços")
     void getAllServicos_Success() {
-        when(servicoRepository.findAll()).thenReturn(List.of(servico));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(servicoRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(servico)));
 
-        List<Servico> result = servicoService.getAllServicos();
+        Page<Servico> result = servicoService.getAllServicos(pageable);
 
-        assertThat(result).hasSize(1);
+        assertThat(result.getContent()).hasSize(1);
     }
 
     @Test

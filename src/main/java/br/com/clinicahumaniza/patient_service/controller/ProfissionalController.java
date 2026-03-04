@@ -12,6 +12,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,13 +51,11 @@ public class ProfissionalController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar profissionais", description = "Retorna todos os profissionais ativos")
-    @ApiResponse(responseCode = "200", description = "Lista de profissionais retornada com sucesso")
-    public ResponseEntity<List<ProfissionalResponseDTO>> getAllProfissionais() {
-        List<ProfissionalResponseDTO> responseDTOs = profissionalService.getAllProfissionais().stream()
-                .map(profissionalMapper::toResponseDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responseDTOs);
+    @Operation(summary = "Listar profissionais", description = "Retorna todos os profissionais ativos com paginação")
+    @ApiResponse(responseCode = "200", description = "Lista paginada de profissionais retornada com sucesso")
+    public ResponseEntity<Page<ProfissionalResponseDTO>> getAllProfissionais(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(profissionalService.getAllProfissionais(pageable).map(profissionalMapper::toResponseDTO));
     }
 
     @GetMapping("/{id}")

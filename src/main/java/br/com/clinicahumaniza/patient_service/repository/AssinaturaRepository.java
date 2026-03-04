@@ -3,6 +3,7 @@ package br.com.clinicahumaniza.patient_service.repository;
 import br.com.clinicahumaniza.patient_service.model.Assinatura;
 import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface AssinaturaRepository extends JpaRepository<Assinatura, UUID> {
+public interface AssinaturaRepository extends JpaRepository<Assinatura, UUID>, JpaSpecificationExecutor<Assinatura> {
 
     List<Assinatura> findByPacienteId(UUID pacienteId);
 

@@ -2,7 +2,9 @@ package br.com.clinicahumaniza.patient_service.controller;
 
 import br.com.clinicahumaniza.patient_service.dto.*;
 import br.com.clinicahumaniza.patient_service.mapper.PagamentoMapper;
+import br.com.clinicahumaniza.patient_service.model.FormaPagamento;
 import br.com.clinicahumaniza.patient_service.model.Pagamento;
+import br.com.clinicahumaniza.patient_service.model.StatusPagamento;
 import br.com.clinicahumaniza.patient_service.service.PagamentoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -10,8 +12,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,13 +56,31 @@ public class PagamentoController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar pagamentos", description = "Retorna todos os pagamentos ativos")
-    @ApiResponse(responseCode = "200", description = "Lista de pagamentos retornada com sucesso")
-    public ResponseEntity<List<PagamentoResponseDTO>> getAllPagamentos() {
-        List<PagamentoResponseDTO> responseDTOs = pagamentoService.getAllPagamentos().stream()
-                .map(pagamentoMapper::toResponseDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responseDTOs);
+    @Operation(summary = "Listar pagamentos", description = "Retorna pagamentos ativos com paginação e filtros opcionais")
+    @ApiResponse(responseCode = "200", description = "Lista paginada de pagamentos retornada com sucesso")
+    public ResponseEntity<Page<PagamentoResponseDTO>> getAllPagamentos(
+            @RequestParam(required = false) StatusPagamento status,
+            @RequestParam(required = false) FormaPagamento formaPagamento,
+            @RequestParam(required = false) UUID pacienteId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(pagamentoService.getAllPagamentos(status, formaPagamento, pacienteId,
+                inicio, fim, pageable).map(pagamentoMapper::toResponseDTO));
+    }
+
+    @GetMapping("/export/csv")
+    @Operation(summary = "Exportar pagamentos em CSV")
+    @ApiResponse(responseCode = "200", description = "CSV de pagamentos gerado com sucesso")
+    public ResponseEntity<byte[]> exportCsv(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @RequestParam(required = false) StatusPagamento status) {
+        byte[] csv = pagamentoService.exportCsv(inicio, fim, status);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=pagamentos.csv")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(csv);
     }
 
     @GetMapping("/{id}")

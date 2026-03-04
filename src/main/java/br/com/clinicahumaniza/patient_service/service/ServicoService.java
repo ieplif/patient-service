@@ -11,6 +11,8 @@ import br.com.clinicahumaniza.patient_service.repository.AtividadeRepository;
 import br.com.clinicahumaniza.patient_service.repository.PlanoRepository;
 import br.com.clinicahumaniza.patient_service.repository.ServicoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,8 +54,8 @@ public class ServicoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
     }
 
-    public List<Servico> getAllServicos() {
-        return servicoRepository.findAll();
+    public Page<Servico> getAllServicos(Pageable pageable) {
+        return servicoRepository.findAll(pageable);
     }
 
     public List<Servico> getServicosByAtividade(UUID atividadeId) {

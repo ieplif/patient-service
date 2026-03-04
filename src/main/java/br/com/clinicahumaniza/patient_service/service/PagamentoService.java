@@ -12,12 +12,17 @@ import br.com.clinicahumaniza.patient_service.repository.AgendamentoRepository;
 import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
 import br.com.clinicahumaniza.patient_service.repository.PagamentoRepository;
 import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
+import br.com.clinicahumaniza.patient_service.spec.PagamentoSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -79,8 +84,44 @@ public class PagamentoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Pagamento", id));
     }
 
-    public List<Pagamento> getAllPagamentos() {
-        return pagamentoRepository.findAll();
+    public Page<Pagamento> getAllPagamentos(StatusPagamento status, FormaPagamento formaPagamento,
+                                            UUID pacienteId, LocalDate inicio, LocalDate fim,
+                                            Pageable pageable) {
+        Specification<Pagamento> spec = Specification
+                .where(PagamentoSpecification.hasStatus(status))
+                .and(PagamentoSpecification.hasFormaPagamento(formaPagamento))
+                .and(PagamentoSpecification.hasPaciente(pacienteId))
+                .and(PagamentoSpecification.betweenVencimento(inicio, fim));
+        return pagamentoRepository.findAll(spec, pageable);
+    }
+
+    public byte[] exportCsv(LocalDate inicio, LocalDate fim, StatusPagamento status) {
+        Specification<Pagamento> spec = Specification
+                .where(PagamentoSpecification.hasStatus(status))
+                .and(PagamentoSpecification.betweenVencimento(inicio, fim));
+        List<Pagamento> pagamentos = pagamentoRepository.findAll(spec);
+        StringBuilder csv = new StringBuilder();
+        csv.append("ID,Paciente,Valor,FormaPagamento,Status,DataVencimento,DataPagamento\n");
+        for (Pagamento p : pagamentos) {
+            csv.append(String.join(",",
+                    p.getId().toString(),
+                    escapeCsv(p.getPaciente().getNomeCompleto()),
+                    p.getValor().toString(),
+                    p.getFormaPagamento().name(),
+                    p.getStatus().name(),
+                    p.getDataVencimento() != null ? p.getDataVencimento().toString() : "",
+                    p.getDataPagamento() != null ? p.getDataPagamento().toString() : ""
+            )).append("\n");
+        }
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
     public List<Pagamento> getPagamentosByPaciente(UUID pacienteId) {

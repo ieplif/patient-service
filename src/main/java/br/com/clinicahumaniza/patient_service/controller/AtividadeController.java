@@ -12,13 +12,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/atividades")
@@ -47,13 +49,11 @@ public class AtividadeController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar atividades", description = "Retorna todas as atividades ativas")
-    @ApiResponse(responseCode = "200", description = "Lista de atividades retornada com sucesso")
-    public ResponseEntity<List<AtividadeResponseDTO>> getAllAtividades() {
-        List<AtividadeResponseDTO> responseDTOs = atividadeService.getAllAtividades().stream()
-                .map(atividadeMapper::toResponseDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responseDTOs);
+    @Operation(summary = "Listar atividades", description = "Retorna todas as atividades ativas com paginação")
+    @ApiResponse(responseCode = "200", description = "Lista paginada de atividades retornada com sucesso")
+    public ResponseEntity<Page<AtividadeResponseDTO>> getAllAtividades(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(atividadeService.getAllAtividades(pageable).map(atividadeMapper::toResponseDTO));
     }
 
     @GetMapping("/{id}")

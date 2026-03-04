@@ -15,6 +15,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -110,12 +115,14 @@ class PlanoServiceTest {
     @Test
     @DisplayName("Deve listar todos os planos")
     void getAllPlanos_Success() {
-        when(planoRepository.findAll()).thenReturn(List.of(plano));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(planoRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(plano)));
 
-        List<Plano> result = planoService.getAllPlanos();
+        Page<Plano> result = planoService.getAllPlanos(pageable);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getNome()).isEqualTo("Mensal");
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getNome()).isEqualTo("Mensal");
     }
 
     @Test

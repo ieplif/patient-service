@@ -8,10 +8,11 @@ import br.com.clinicahumaniza.patient_service.mapper.AtividadeMapper;
 import br.com.clinicahumaniza.patient_service.model.Atividade;
 import br.com.clinicahumaniza.patient_service.repository.AtividadeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -40,8 +41,8 @@ public class AtividadeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Atividade", id));
     }
 
-    public List<Atividade> getAllAtividades() {
-        return atividadeRepository.findAll();
+    public Page<Atividade> getAllAtividades(Pageable pageable) {
+        return atividadeRepository.findAll(pageable);
     }
 
     @Transactional

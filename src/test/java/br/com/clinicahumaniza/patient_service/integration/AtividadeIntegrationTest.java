@@ -70,7 +70,7 @@ class AtividadeIntegrationTest {
         mockMvc.perform(get("/api/v1/atividades")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nome").value("Pilates"));
+                .andExpect(jsonPath("$.content[0].nome").value("Pilates"));
 
         // Buscar por ID
         mockMvc.perform(get("/api/v1/atividades/{id}", atividadeId)

@@ -22,6 +22,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -111,12 +115,13 @@ class PlanoControllerTest {
     @DisplayName("Deve listar planos com autenticação - 200")
     @WithMockUser
     void getAllPlanos_Authenticated_200() throws Exception {
-        when(planoService.getAllPlanos()).thenReturn(List.of(plano));
+        when(planoService.getAllPlanos(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(plano)));
         when(planoMapper.toResponseDTO(plano)).thenReturn(responseDTO);
 
         mockMvc.perform(get("/api/v1/planos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nome").value("Mensal"));
+                .andExpect(jsonPath("$.content[0].nome").value("Mensal"));
     }
 
     @Test

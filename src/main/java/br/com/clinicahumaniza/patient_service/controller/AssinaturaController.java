@@ -6,6 +6,7 @@ import br.com.clinicahumaniza.patient_service.dto.AssinaturaStatusDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaUpdateDTO;
 import br.com.clinicahumaniza.patient_service.mapper.AssinaturaMapper;
 import br.com.clinicahumaniza.patient_service.model.Assinatura;
+import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
 import br.com.clinicahumaniza.patient_service.service.AssinaturaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +14,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -48,13 +53,14 @@ public class AssinaturaController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar assinaturas", description = "Retorna todas as assinaturas ativas")
-    @ApiResponse(responseCode = "200", description = "Lista de assinaturas retornada com sucesso")
-    public ResponseEntity<List<AssinaturaResponseDTO>> getAllAssinaturas() {
-        List<AssinaturaResponseDTO> responseDTOs = assinaturaService.getAllAssinaturas().stream()
-                .map(assinaturaMapper::toResponseDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responseDTOs);
+    @Operation(summary = "Listar assinaturas", description = "Retorna assinaturas ativas com paginação e filtros opcionais")
+    @ApiResponse(responseCode = "200", description = "Lista paginada de assinaturas retornada com sucesso")
+    public ResponseEntity<Page<AssinaturaResponseDTO>> getAllAssinaturas(
+            @RequestParam(required = false) StatusAssinatura status,
+            @RequestParam(required = false) UUID pacienteId,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(assinaturaService.getAllAssinaturas(status, pacienteId, pageable)
+                .map(assinaturaMapper::toResponseDTO));
     }
 
     @GetMapping("/{id}")

@@ -24,6 +24,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -135,12 +139,13 @@ class ServicoControllerTest {
     @DisplayName("Deve listar serviços com autenticação - 200")
     @WithMockUser
     void getAllServicos_Authenticated_200() throws Exception {
-        when(servicoService.getAllServicos()).thenReturn(List.of(servico));
+        when(servicoService.getAllServicos(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(servico)));
         when(servicoMapper.toResponseDTO(servico)).thenReturn(responseDTO);
 
         mockMvc.perform(get("/api/v1/servicos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].atividadeNome").value("Pilates"));
+                .andExpect(jsonPath("$.content[0].atividadeNome").value("Pilates"));
     }
 
     @Test

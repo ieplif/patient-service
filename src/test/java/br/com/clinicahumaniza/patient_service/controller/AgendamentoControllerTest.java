@@ -21,6 +21,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -149,12 +153,13 @@ class AgendamentoControllerTest {
     @DisplayName("Deve listar agendamentos com autenticação - 200")
     @WithMockUser
     void getAllAgendamentos_Authenticated_200() throws Exception {
-        when(agendamentoService.getAllAgendamentos()).thenReturn(List.of(agendamento));
+        when(agendamentoService.getAllAgendamentos(any(), any(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(agendamento)));
         when(agendamentoMapper.toResponseDTO(agendamento)).thenReturn(responseDTO);
 
         mockMvc.perform(get("/api/v1/agendamentos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].pacienteNome").value("Maria Santos"));
+                .andExpect(jsonPath("$.content[0].pacienteNome").value("Maria Santos"));
     }
 
     @Test

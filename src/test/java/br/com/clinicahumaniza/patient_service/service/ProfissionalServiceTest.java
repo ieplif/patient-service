@@ -21,6 +21,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -153,12 +158,14 @@ class ProfissionalServiceTest {
     @Test
     @DisplayName("Deve listar todos os profissionais")
     void getAllProfissionais_Success() {
-        when(profissionalRepository.findAll()).thenReturn(List.of(profissional));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(profissionalRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(profissional)));
 
-        List<Profissional> result = profissionalService.getAllProfissionais();
+        Page<Profissional> result = profissionalService.getAllProfissionais(pageable);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getNome()).isEqualTo("Maria Silva");
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getNome()).isEqualTo("Maria Silva");
     }
 
     @Test

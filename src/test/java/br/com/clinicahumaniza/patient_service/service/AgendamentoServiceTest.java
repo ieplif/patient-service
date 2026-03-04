@@ -16,6 +16,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -456,11 +462,13 @@ class AgendamentoServiceTest {
     @Test
     @DisplayName("Deve listar todos os agendamentos")
     void getAllAgendamentos_Success() {
-        when(agendamentoRepository.findAll()).thenReturn(List.of(agendamento));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(agendamentoRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(agendamento)));
 
-        List<Agendamento> result = agendamentoService.getAllAgendamentos();
+        Page<Agendamento> result = agendamentoService.getAllAgendamentos(null, null, null, null, null, pageable);
 
-        assertThat(result).hasSize(1);
+        assertThat(result.getContent()).hasSize(1);
     }
 
     @Test

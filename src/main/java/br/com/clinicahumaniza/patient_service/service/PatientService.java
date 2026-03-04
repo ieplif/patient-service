@@ -7,11 +7,14 @@ import br.com.clinicahumaniza.patient_service.exception.PatientNotFoundException
 import br.com.clinicahumaniza.patient_service.mapper.PatientMapper;
 import br.com.clinicahumaniza.patient_service.model.Patient;
 import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
+import br.com.clinicahumaniza.patient_service.spec.PatientSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -48,8 +51,12 @@ public class PatientService {
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
-    public List<Patient> getAllPatients() {
-        return patientRepository.findAll();
+    public Page<Patient> getAllPatients(String nome, String email, String cpf, Pageable pageable) {
+        Specification<Patient> spec = Specification
+                .where(PatientSpecification.hasNome(nome))
+                .and(PatientSpecification.hasEmail(email))
+                .and(PatientSpecification.hasCpf(cpf));
+        return patientRepository.findAll(spec, pageable);
     }
 
     @Transactional

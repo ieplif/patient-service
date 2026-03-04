@@ -17,6 +17,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
@@ -149,11 +154,13 @@ class HorarioDisponivelServiceTest {
     @Test
     @DisplayName("Deve listar todos os horários")
     void getAllHorariosDisponiveis_Success() {
-        when(horarioDisponivelRepository.findAll()).thenReturn(List.of(horario));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(horarioDisponivelRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(horario)));
 
-        List<HorarioDisponivel> result = horarioDisponivelService.getAllHorariosDisponiveis();
+        Page<HorarioDisponivel> result = horarioDisponivelService.getAllHorariosDisponiveis(pageable);
 
-        assertThat(result).hasSize(1);
+        assertThat(result.getContent()).hasSize(1);
     }
 
     @Test

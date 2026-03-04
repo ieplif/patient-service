@@ -12,13 +12,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/planos")
@@ -47,13 +49,11 @@ public class PlanoController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar planos", description = "Retorna todos os planos ativos")
-    @ApiResponse(responseCode = "200", description = "Lista de planos retornada com sucesso")
-    public ResponseEntity<List<PlanoResponseDTO>> getAllPlanos() {
-        List<PlanoResponseDTO> responseDTOs = planoService.getAllPlanos().stream()
-                .map(planoMapper::toResponseDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responseDTOs);
+    @Operation(summary = "Listar planos", description = "Retorna todos os planos ativos com paginação")
+    @ApiResponse(responseCode = "200", description = "Lista paginada de planos retornada com sucesso")
+    public ResponseEntity<Page<PlanoResponseDTO>> getAllPlanos(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(planoService.getAllPlanos(pageable).map(planoMapper::toResponseDTO));
     }
 
     @GetMapping("/{id}")

@@ -22,6 +22,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -115,12 +119,13 @@ class ProfissionalControllerTest {
     @DisplayName("Deve listar profissionais com autenticação - 200")
     @WithMockUser
     void getAllProfissionais_Authenticated_200() throws Exception {
-        when(profissionalService.getAllProfissionais()).thenReturn(List.of(profissional));
+        when(profissionalService.getAllProfissionais(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(profissional)));
         when(profissionalMapper.toResponseDTO(profissional)).thenReturn(responseDTO);
 
         mockMvc.perform(get("/api/v1/profissionais"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nome").value("Maria Silva"));
+                .andExpect(jsonPath("$.content[0].nome").value("Maria Silva"));
     }
 
     @Test

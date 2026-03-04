@@ -12,6 +12,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -49,13 +53,12 @@ public class HorarioDisponivelController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar horários disponíveis", description = "Retorna todos os horários disponíveis ativos")
-    @ApiResponse(responseCode = "200", description = "Lista de horários retornada com sucesso")
-    public ResponseEntity<List<HorarioDisponivelResponseDTO>> getAllHorariosDisponiveis() {
-        List<HorarioDisponivelResponseDTO> responseDTOs = horarioDisponivelService.getAllHorariosDisponiveis().stream()
-                .map(horarioDisponivelMapper::toResponseDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responseDTOs);
+    @Operation(summary = "Listar horários disponíveis", description = "Retorna todos os horários disponíveis ativos com paginação")
+    @ApiResponse(responseCode = "200", description = "Lista paginada de horários retornada com sucesso")
+    public ResponseEntity<Page<HorarioDisponivelResponseDTO>> getAllHorariosDisponiveis(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(horarioDisponivelService.getAllHorariosDisponiveis(pageable)
+                .map(horarioDisponivelMapper::toResponseDTO));
     }
 
     @GetMapping("/{id}")

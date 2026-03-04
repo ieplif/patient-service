@@ -8,10 +8,15 @@ import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundExceptio
 import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
 import br.com.clinicahumaniza.patient_service.model.*;
 import br.com.clinicahumaniza.patient_service.repository.*;
+import br.com.clinicahumaniza.patient_service.spec.AgendamentoSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -109,8 +114,46 @@ public class AgendamentoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
     }
 
-    public List<Agendamento> getAllAgendamentos() {
-        return agendamentoRepository.findAll();
+    public Page<Agendamento> getAllAgendamentos(StatusAgendamento status, UUID pacienteId,
+                                                UUID profissionalId, LocalDateTime dataInicio,
+                                                LocalDateTime dataFim, Pageable pageable) {
+        Specification<Agendamento> spec = Specification
+                .where(AgendamentoSpecification.hasStatus(status))
+                .and(AgendamentoSpecification.hasPaciente(pacienteId))
+                .and(AgendamentoSpecification.hasProfissional(profissionalId))
+                .and(AgendamentoSpecification.betweenDatas(dataInicio, dataFim));
+        return agendamentoRepository.findAll(spec, pageable);
+    }
+
+    public byte[] exportCsv(LocalDate inicio, LocalDate fim, StatusAgendamento status) {
+        LocalDateTime dtInicio = inicio != null ? inicio.atStartOfDay() : null;
+        LocalDateTime dtFim = fim != null ? fim.atTime(LocalTime.MAX) : null;
+        Specification<Agendamento> spec = Specification
+                .where(AgendamentoSpecification.hasStatus(status))
+                .and(AgendamentoSpecification.betweenDatas(dtInicio, dtFim));
+        List<Agendamento> agendamentos = agendamentoRepository.findAll(spec);
+        StringBuilder csv = new StringBuilder();
+        csv.append("ID,Paciente,Profissional,Servico,DataHora,Status,DuracaoMinutos\n");
+        for (Agendamento a : agendamentos) {
+            csv.append(String.join(",",
+                    a.getId().toString(),
+                    escapeCsv(a.getPaciente().getNomeCompleto()),
+                    escapeCsv(a.getProfissional().getNome()),
+                    escapeCsv(a.getServico().getAtividade().getNome() + " - " + a.getServico().getPlano().getNome()),
+                    a.getDataHora() != null ? a.getDataHora().toString() : "",
+                    a.getStatus().name(),
+                    a.getDuracaoMinutos() != null ? a.getDuracaoMinutos().toString() : ""
+            )).append("\n");
+        }
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
     public List<Agendamento> getAgendamentosByPaciente(UUID pacienteId) {

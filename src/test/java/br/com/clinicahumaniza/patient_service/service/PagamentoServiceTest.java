@@ -20,6 +20,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -336,11 +342,13 @@ class PagamentoServiceTest {
     @Test
     @DisplayName("Deve listar todos os pagamentos")
     void getAllPagamentos_Success() {
-        when(pagamentoRepository.findAll()).thenReturn(List.of(pagamento));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(pagamentoRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(pagamento)));
 
-        List<Pagamento> result = pagamentoService.getAllPagamentos();
+        Page<Pagamento> result = pagamentoService.getAllPagamentos(null, null, null, null, null, pageable);
 
-        assertThat(result).hasSize(1);
+        assertThat(result.getContent()).hasSize(1);
     }
 
     @Test

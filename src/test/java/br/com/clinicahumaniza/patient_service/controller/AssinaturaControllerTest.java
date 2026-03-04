@@ -23,6 +23,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -146,12 +150,13 @@ class AssinaturaControllerTest {
     @DisplayName("Deve listar assinaturas com autenticação - 200")
     @WithMockUser
     void getAllAssinaturas_Authenticated_200() throws Exception {
-        when(assinaturaService.getAllAssinaturas()).thenReturn(List.of(assinatura));
+        when(assinaturaService.getAllAssinaturas(any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(assinatura)));
         when(assinaturaMapper.toResponseDTO(assinatura)).thenReturn(responseDTO);
 
         mockMvc.perform(get("/api/v1/assinaturas"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].pacienteNome").value("João Silva"));
+                .andExpect(jsonPath("$.content[0].pacienteNome").value("João Silva"));
     }
 
     @Test

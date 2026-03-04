@@ -12,6 +12,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,13 +51,11 @@ public class ServicoController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar serviços", description = "Retorna todos os serviços ativos")
-    @ApiResponse(responseCode = "200", description = "Lista de serviços retornada com sucesso")
-    public ResponseEntity<List<ServicoResponseDTO>> getAllServicos() {
-        List<ServicoResponseDTO> responseDTOs = servicoService.getAllServicos().stream()
-                .map(servicoMapper::toResponseDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responseDTOs);
+    @Operation(summary = "Listar serviços", description = "Retorna todos os serviços ativos com paginação")
+    @ApiResponse(responseCode = "200", description = "Lista paginada de serviços retornada com sucesso")
+    public ResponseEntity<Page<ServicoResponseDTO>> getAllServicos(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(servicoService.getAllServicos(pageable).map(servicoMapper::toResponseDTO));
     }
 
     @GetMapping("/{id}")

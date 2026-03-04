@@ -21,6 +21,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -151,12 +155,13 @@ class PagamentoControllerTest {
     @DisplayName("Deve listar pagamentos com autenticação - 200")
     @WithMockUser
     void getAllPagamentos_Authenticated_200() throws Exception {
-        when(pagamentoService.getAllPagamentos()).thenReturn(List.of(pagamento));
+        when(pagamentoService.getAllPagamentos(any(), any(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(pagamento)));
         when(pagamentoMapper.toResponseDTO(pagamento)).thenReturn(responseDTO);
 
         mockMvc.perform(get("/api/v1/pagamentos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].pacienteNome").value("João Silva"));
+                .andExpect(jsonPath("$.content[0].pacienteNome").value("João Silva"));
     }
 
     @Test

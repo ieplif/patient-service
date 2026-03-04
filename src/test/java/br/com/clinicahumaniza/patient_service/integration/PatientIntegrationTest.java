@@ -77,7 +77,7 @@ class PatientIntegrationTest {
         mockMvc.perform(get("/api/v1/patients")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nomeCompleto").value("Carlos Souza"));
+                .andExpect(jsonPath("$.content[0].nomeCompleto").value("Carlos Souza"));
 
         // Buscar por ID
         mockMvc.perform(get("/api/v1/patients/{id}", patientId)

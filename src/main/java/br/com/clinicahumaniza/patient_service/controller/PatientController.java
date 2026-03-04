@@ -12,13 +12,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/patients")
@@ -48,14 +50,15 @@ public class PatientController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar pacientes", description = "Retorna todos os pacientes ativos")
-    @ApiResponse(responseCode = "200", description = "Lista de pacientes retornada com sucesso")
-    public ResponseEntity<List<PatientResponseDTO>> getAllPatients() {
-        List<Patient> patients = patientService.getAllPatients();
-        List<PatientResponseDTO> responseDTOs = patients.stream()
-                .map(patientMapper::toResponseDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responseDTOs);
+    @Operation(summary = "Listar pacientes", description = "Retorna pacientes ativos com paginação e filtros opcionais")
+    @ApiResponse(responseCode = "200", description = "Lista paginada de pacientes retornada com sucesso")
+    public ResponseEntity<Page<PatientResponseDTO>> getAllPatients(
+            @RequestParam(required = false) String nome,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String cpf,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(patientService.getAllPatients(nome, email, cpf, pageable)
+                .map(patientMapper::toResponseDTO));
     }
 
     @GetMapping("/{id}")

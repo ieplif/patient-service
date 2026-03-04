@@ -111,7 +111,7 @@ class ServicoIntegrationTest {
         mockMvc.perform(get("/api/v1/servicos")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].atividadeNome").value("Pilates"));
+                .andExpect(jsonPath("$.content[0].atividadeNome").value("Pilates"));
     }
 
     @Test

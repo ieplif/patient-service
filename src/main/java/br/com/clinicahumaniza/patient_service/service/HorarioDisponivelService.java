@@ -10,6 +10,8 @@ import br.com.clinicahumaniza.patient_service.model.Profissional;
 import br.com.clinicahumaniza.patient_service.repository.HorarioDisponivelRepository;
 import br.com.clinicahumaniza.patient_service.repository.ProfissionalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,8 +51,8 @@ public class HorarioDisponivelService {
                 .orElseThrow(() -> new ResourceNotFoundException("Horário disponível", id));
     }
 
-    public List<HorarioDisponivel> getAllHorariosDisponiveis() {
-        return horarioDisponivelRepository.findAll();
+    public Page<HorarioDisponivel> getAllHorariosDisponiveis(Pageable pageable) {
+        return horarioDisponivelRepository.findAll(pageable);
     }
 
     public List<HorarioDisponivel> getHorariosByProfissional(UUID profissionalId) {

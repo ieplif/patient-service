@@ -23,6 +23,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -120,12 +124,13 @@ class HorarioDisponivelControllerTest {
     @DisplayName("Deve listar horários com autenticação - 200")
     @WithMockUser
     void getAllHorariosDisponiveis_Authenticated_200() throws Exception {
-        when(horarioDisponivelService.getAllHorariosDisponiveis()).thenReturn(List.of(horario));
+        when(horarioDisponivelService.getAllHorariosDisponiveis(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(horario)));
         when(horarioDisponivelMapper.toResponseDTO(horario)).thenReturn(responseDTO);
 
         mockMvc.perform(get("/api/v1/disponibilidades"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].profissionalNome").value("Dr. Ana"));
+                .andExpect(jsonPath("$.content[0].profissionalNome").value("Dr. Ana"));
     }
 
     @Test

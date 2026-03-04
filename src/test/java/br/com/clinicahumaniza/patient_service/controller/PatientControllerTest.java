@@ -23,6 +23,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -116,12 +120,13 @@ class PatientControllerTest {
     @DisplayName("Deve listar pacientes com autenticação - 200")
     @WithMockUser
     void getAllPatients_Authenticated_200() throws Exception {
-        when(patientService.getAllPatients()).thenReturn(List.of(patient));
+        when(patientService.getAllPatients(any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(patient)));
         when(patientMapper.toResponseDTO(patient)).thenReturn(responseDTO);
 
         mockMvc.perform(get("/api/v1/patients"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nomeCompleto").value("João Silva"));
+                .andExpect(jsonPath("$.content[0].nomeCompleto").value("João Silva"));
     }
 
     @Test

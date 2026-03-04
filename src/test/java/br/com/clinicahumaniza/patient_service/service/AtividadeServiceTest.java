@@ -15,6 +15,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -105,12 +110,14 @@ class AtividadeServiceTest {
     @Test
     @DisplayName("Deve listar todas as atividades")
     void getAllAtividades_Success() {
-        when(atividadeRepository.findAll()).thenReturn(List.of(atividade));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(atividadeRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(atividade)));
 
-        List<Atividade> result = atividadeService.getAllAtividades();
+        Page<Atividade> result = atividadeService.getAllAtividades(pageable);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getNome()).isEqualTo("Pilates");
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getNome()).isEqualTo("Pilates");
     }
 
     @Test
