@@ -58,6 +58,10 @@ public class AgendamentoRecorrenteService {
             throw new BusinessException("É necessário informar totalSessoes ou dataFim");
         }
 
+        if (dto.getTotalSessoes() != null && dto.getTotalSessoes() > MAX_DATAS) {
+            throw new BusinessException("Total de sessões não pode exceder " + MAX_DATAS);
+        }
+
         Patient paciente = patientRepository.findById(dto.getPacienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Paciente", dto.getPacienteId()));
 
@@ -162,18 +166,13 @@ public class AgendamentoRecorrenteService {
             }
 
             if (frequencia == FrequenciaRecorrencia.MENSAL) {
-                // Mensal: usa o mesmo dia do mês
-                if (diasSemana.contains(atual.getDayOfWeek()) || datas.isEmpty()) {
-                    // Para mensal, ignora diasSemana - usa a data diretamente
-                    datas.add(atual.atTime(horaInicio));
+                // Mensal: usa o mesmo dia do mês, ignora diasSemana
+                datas.add(atual.atTime(horaInicio));
 
-                    if (totalSessoes != null && datas.size() >= totalSessoes) break;
-                    if (dataFim != null && atual.plusMonths(1).isAfter(dataFim)) break;
+                if (totalSessoes != null && datas.size() >= totalSessoes) break;
+                if (dataFim != null && atual.plusMonths(1).isAfter(dataFim)) break;
 
-                    atual = atual.plusMonths(1);
-                    continue;
-                }
-                atual = atual.plusDays(1);
+                atual = atual.plusMonths(1);
             } else {
                 // Semanal ou Quinzenal
                 if (diasSemana.contains(atual.getDayOfWeek())) {

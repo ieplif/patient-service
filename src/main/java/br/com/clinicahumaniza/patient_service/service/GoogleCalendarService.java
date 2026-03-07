@@ -141,7 +141,8 @@ public class GoogleCalendarService {
         }
 
         ZonedDateTime start = agendamento.getDataHora().atZone(ZoneId.of(TIMEZONE));
-        ZonedDateTime end = start.plusMinutes(agendamento.getDuracaoMinutos());
+        int duracaoMinutos = agendamento.getDuracaoMinutos() != null ? agendamento.getDuracaoMinutos() : 60;
+        ZonedDateTime end = start.plusMinutes(duracaoMinutos);
 
         Event event = new Event();
         event.setSummary(title);

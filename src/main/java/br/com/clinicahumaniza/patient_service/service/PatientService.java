@@ -67,11 +67,8 @@ public class PatientService {
         Patient existingPatient = patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));
 
-        if (existingPatient != null) {
-            patientMapper.updateEntityFromDto(patientUpdateDTO, existingPatient);
-            return patientRepository.save(existingPatient);
-        }
-        throw new PatientNotFoundException(id);
+        patientMapper.updateEntityFromDto(patientUpdateDTO, existingPatient);
+        return patientRepository.save(existingPatient);
     }
 
     @Transactional

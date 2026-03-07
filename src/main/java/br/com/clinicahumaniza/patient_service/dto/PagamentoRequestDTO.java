@@ -2,6 +2,7 @@ package br.com.clinicahumaniza.patient_service.dto;
 
 import br.com.clinicahumaniza.patient_service.model.FormaPagamento;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -35,6 +36,7 @@ public class PagamentoRequestDTO {
     private Integer numeroParcelas = 1;
 
     @NotNull(message = "Data de vencimento é obrigatória")
+    @FutureOrPresent(message = "Data de vencimento não pode ser no passado")
     private LocalDate dataVencimento;
 
     private String observacoes;
