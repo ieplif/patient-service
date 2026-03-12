@@ -122,7 +122,7 @@ class PagamentoControllerTest {
         requestDTO.setValor(new BigDecimal("300.00"));
         requestDTO.setFormaPagamento(FormaPagamento.PIX);
         requestDTO.setNumeroParcelas(1);
-        requestDTO.setDataVencimento(LocalDate.of(2025, 2, 15));
+        requestDTO.setDataVencimento(LocalDate.now().plusDays(30));
 
         when(pagamentoService.createPagamento(any(PagamentoRequestDTO.class))).thenReturn(pagamento);
         when(pagamentoMapper.toResponseDTO(pagamento)).thenReturn(responseDTO);

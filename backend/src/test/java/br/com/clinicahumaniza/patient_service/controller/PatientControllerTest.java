@@ -78,7 +78,7 @@ class PatientControllerTest {
         patient.setId(patientId);
         patient.setNomeCompleto("João Silva");
         patient.setEmail("joao@email.com");
-        patient.setCpf("12345678901");
+        patient.setCpf("12345678909");
         patient.setDataNascimento(LocalDate.of(1990, 1, 1));
         patient.setTelefone("21999999999");
         patient.setStatusAtivo(true);
@@ -100,7 +100,7 @@ class PatientControllerTest {
         PatientRequestDTO requestDTO = new PatientRequestDTO();
         requestDTO.setNomeCompleto("João Silva");
         requestDTO.setEmail("joao@email.com");
-        requestDTO.setCpf("12345678901");
+        requestDTO.setCpf("12345678909");
         requestDTO.setDataNascimento(LocalDate.of(1990, 1, 1));
         requestDTO.setTelefone("21999999999");
 

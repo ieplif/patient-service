@@ -58,7 +58,7 @@ class AgendamentoIntegrationTest {
         PatientRequestDTO pacienteDTO = new PatientRequestDTO();
         pacienteDTO.setNomeCompleto("Maria Santos");
         pacienteDTO.setEmail("maria@email.com");
-        pacienteDTO.setCpf("12345678901");
+        pacienteDTO.setCpf("12345678909");
         pacienteDTO.setDataNascimento(LocalDate.of(1990, 5, 15));
         pacienteDTO.setTelefone("11999990000");
 
