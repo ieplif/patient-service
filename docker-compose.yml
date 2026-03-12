@@ -1,0 +1,24 @@
+services:
+  backend:
+    build: ./backend
+    container_name: humaniza-backend
+    ports:
+      - "8080:8080"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-Y2xpbmljYWh1bWFuaXphcmpzZWN1cml0eWtleWJhc2U2NDIwMjU=}
+    networks:
+      - humaniza-net
+
+  frontend:
+    build: ./frontend
+    container_name: humaniza-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - humaniza-net
+
+networks:
+  humaniza-net:
+    driver: bridge
