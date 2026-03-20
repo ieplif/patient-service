@@ -12,7 +12,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { useAuthStore } from "@/store/authStore"
 import { cn } from "@/lib/utils"
 
@@ -135,6 +135,7 @@ export function AppLayout() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
+              <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
               <SidebarContent onNavigate={() => setMobileOpen(false)} />
             </SheetContent>
           </Sheet>
