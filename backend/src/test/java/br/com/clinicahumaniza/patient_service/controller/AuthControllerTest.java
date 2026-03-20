@@ -20,6 +20,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.security.test.context.support.WithMockUser;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -50,6 +52,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("Deve registrar usuário com sucesso - 201")
     void registrar_Success_201() throws Exception {
         RegisterRequestDTO request = new RegisterRequestDTO("Maria Silva", "maria@email.com", "senha123");
@@ -83,6 +86,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("Deve retornar 400 com dados inválidos no registro")
     void registrar_InvalidData_400() throws Exception {
         RegisterRequestDTO invalidRequest = new RegisterRequestDTO("", "", "");
@@ -95,6 +99,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("Deve retornar 409 com e-mail duplicado")
     void registrar_DuplicateEmail_409() throws Exception {
         RegisterRequestDTO request = new RegisterRequestDTO("Maria Silva", "maria@email.com", "senha123");

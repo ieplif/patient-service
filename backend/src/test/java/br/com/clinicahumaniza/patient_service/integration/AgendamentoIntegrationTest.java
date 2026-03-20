@@ -45,12 +45,12 @@ class AgendamentoIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // Registrar e obter token
-        RegisterRequestDTO registerRequest = new RegisterRequestDTO("Admin", "admin@email.com", "senha123");
-        MvcResult authResult = mockMvc.perform(post("/api/auth/registrar")
+        // Login com admin seedado pelo DataInitializer (application-test.properties)
+        LoginRequestDTO loginRequest = new LoginRequestDTO("admin@test.com", "senha123");
+        MvcResult authResult = mockMvc.perform(post("/api/auth/login")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(registerRequest)))
-                .andExpect(status().isCreated())
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
                 .andReturn();
         token = objectMapper.readTree(authResult.getResponse().getContentAsString()).get("token").asText();
 

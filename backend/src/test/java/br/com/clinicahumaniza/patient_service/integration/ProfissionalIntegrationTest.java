@@ -1,9 +1,9 @@
 package br.com.clinicahumaniza.patient_service.integration;
 
 import br.com.clinicahumaniza.patient_service.dto.AtividadeRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.ProfissionalRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.ProfissionalUpdateDTO;
-import br.com.clinicahumaniza.patient_service.dto.RegisterRequestDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,12 +39,12 @@ class ProfissionalIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        RegisterRequestDTO registerRequest = new RegisterRequestDTO("Admin", "admin@email.com", "senha123");
+        LoginRequestDTO loginRequest = new LoginRequestDTO("admin@test.com", "senha123");
 
-        MvcResult result = mockMvc.perform(post("/api/auth/registrar")
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(registerRequest)))
-                .andExpect(status().isCreated())
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
                 .andReturn();
 
         adminToken = objectMapper.readTree(result.getResponse().getContentAsString()).get("token").asText();

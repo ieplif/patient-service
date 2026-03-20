@@ -37,15 +37,14 @@ class AssinaturaIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        RegisterRequestDTO registerRequest = new RegisterRequestDTO("Admin", "admin@email.com", "senha123");
-
-        String body = objectMapper.writeValueAsString(registerRequest);
-        MvcResult result = mockMvc.perform(post("/api/auth/registrar")
+        // Login com admin seedado pelo DataInitializer (application-test.properties)
+        LoginRequestDTO loginRequest = new LoginRequestDTO("admin@test.com", "senha123");
+        String body = objectMapper.writeValueAsString(loginRequest);
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .contentType("application/json")
                         .content(body))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andReturn();
-
         String responseBody = result.getResponse().getContentAsString();
         token = objectMapper.readTree(responseBody).get("token").asText();
     }

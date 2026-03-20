@@ -1,7 +1,7 @@
 package br.com.clinicahumaniza.patient_service.integration;
 
+import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.RegisterRequestDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,13 +38,13 @@ class PatientIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        RegisterRequestDTO registerRequest = new RegisterRequestDTO("Admin", "admin@email.com", "senha123");
+        LoginRequestDTO loginRequest = new LoginRequestDTO("admin@test.com", "senha123");
 
-        String body = objectMapper.writeValueAsString(registerRequest);
-        MvcResult result = mockMvc.perform(post("/api/auth/registrar")
+        String body = objectMapper.writeValueAsString(loginRequest);
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .contentType("application/json")
                         .content(body))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andReturn();
 
         String responseBody = result.getResponse().getContentAsString();
