@@ -1,11 +1,12 @@
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { Search, Users } from "lucide-react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { Search, Users, UserPlus, Pencil, UserX } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { getPatients } from "@/api/patients"
+import { getPatients, deletePatient } from "@/api/patients"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import {
@@ -17,6 +18,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Pagination } from "@/components/shared/Pagination"
+import { PatientFormSheet } from "@/components/shared/PatientFormSheet"
+import { useToast } from "@/hooks/use-toast"
+import type { Patient } from "@/types"
 
 const PAGE_SIZE = 15
 
@@ -24,6 +28,10 @@ export function PacientesPage() {
   const [page, setPage] = useState(0)
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null)
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
 
   function handleSearch(value: string) {
     setSearch(value)
@@ -33,6 +41,27 @@ export function PacientesPage() {
       setPage(0)
     }, 400)
   }
+
+  function openCreate() {
+    setEditingPatient(null)
+    setSheetOpen(true)
+  }
+
+  function openEdit(patient: Patient) {
+    setEditingPatient(patient)
+    setSheetOpen(true)
+  }
+
+  const deactivateMutation = useMutation({
+    mutationFn: (id: string) => deletePatient(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patients"] })
+      toast({ title: "Paciente desativado", description: "O paciente foi desativado com sucesso." })
+    },
+    onError: () => {
+      toast({ title: "Erro", description: "Não foi possível desativar o paciente.", variant: "destructive" })
+    },
+  })
 
   const { data, isLoading } = useQuery({
     queryKey: ["patients", page, debouncedSearch],
@@ -57,6 +86,10 @@ export function PacientesPage() {
             {data ? `${data.totalElements} pacientes cadastrados` : "Carregando..."}
           </p>
         </div>
+        <Button onClick={openCreate} className="font-primary gap-2">
+          <UserPlus className="h-4 w-4" />
+          Novo Paciente
+        </Button>
       </div>
 
       <Card className="border border-border/60 shadow-soft">
@@ -84,7 +117,7 @@ export function PacientesPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
-                    {["Nome", "E-mail", "Telefone", "Nascimento", "Status"].map((h) => (
+                    {["Nome", "E-mail", "Telefone", "Nascimento", "Status", "Ações"].map((h) => (
                       <TableHead
                         key={h}
                         className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide"
@@ -98,7 +131,7 @@ export function PacientesPage() {
                   {data?.content.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={5}
+                        colSpan={6}
                         className="text-center text-muted-foreground font-secondary py-12"
                       >
                         Nenhum paciente encontrado
@@ -113,11 +146,11 @@ export function PacientesPage() {
                         <TableCell className="text-sm font-secondary text-muted-foreground">
                           {p.email}
                         </TableCell>
-                        <TableCell className="text-sm font-secondary text-muted-foreground">
-                          {p.telefone}
+                        <TableCell className="text-sm font-secondary text-muted-foreground whitespace-nowrap">
+                          {p.telefone.replace(/\D/g, "").replace(/^(\d{2})(\d{4,5})(\d{4})$/, "($1) $2-$3")}
                         </TableCell>
                         <TableCell className="text-sm font-secondary text-muted-foreground">
-                          {format(new Date(p.dataNascimento), "dd/MM/yyyy", { locale: ptBR })}
+                          {format(new Date(`${p.dataNascimento}T00:00:00`), "dd/MM/yyyy", { locale: ptBR })}
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -130,6 +163,34 @@ export function PacientesPage() {
                           >
                             {p.statusAtivo ? "Ativo" : "Inativo"}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                              title="Editar paciente"
+                              onClick={() => openEdit(p)}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            {p.statusAtivo && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                title="Desativar paciente"
+                                onClick={() => {
+                                  if (confirm(`Desativar ${p.nomeCompleto}?`)) {
+                                    deactivateMutation.mutate(p.id)
+                                  }
+                                }}
+                              >
+                                <UserX className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -147,6 +208,12 @@ export function PacientesPage() {
           )}
         </CardContent>
       </Card>
+
+      <PatientFormSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        patient={editingPatient}
+      />
     </div>
   )
 }

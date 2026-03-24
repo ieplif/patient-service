@@ -58,6 +58,10 @@ public class PatientMapper {
         dto.setEmail(entity.getEmail());
         dto.setDataNascimento(entity.getDataNascimento());
         dto.setTelefone(entity.getTelefone());
+        dto.setEndereco(entity.getEndereco());
+        dto.setProfissao(entity.getProfissao());
+        dto.setEstadoCivil(entity.getEstadoCivil());
+        dto.setConsentimentoLgpd(entity.isConsentimentoLgpd());
         dto.setStatusAtivo(entity.isStatusAtivo());
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;

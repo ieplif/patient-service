@@ -33,6 +33,10 @@ export interface Patient {
   email: string
   dataNascimento: string
   telefone: string
+  endereco?: string
+  profissao?: string
+  estadoCivil?: string
+  consentimentoLgpd?: boolean
   statusAtivo: boolean
   createdAt: string
 }
