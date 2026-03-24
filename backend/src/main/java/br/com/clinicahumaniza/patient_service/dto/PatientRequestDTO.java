@@ -41,5 +41,8 @@ public class PatientRequestDTO {
     @Size(max = 50, message = "Estado civil deve ter no máximo 50 caracteres")
     private String estadoCivil;
 
+    @Size(max = 150, message = "Médico(a) responsável deve ter no máximo 150 caracteres")
+    private String medicoResponsavel;
+
     private Boolean consentimentoLgpd;
 }

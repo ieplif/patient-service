@@ -10,6 +10,7 @@ export interface PatientCreateData {
   endereco?: string
   profissao?: string
   estadoCivil?: string
+  medicoResponsavel?: string
   consentimentoLgpd?: boolean
 }
 
@@ -19,6 +20,7 @@ export interface PatientUpdateData {
   endereco?: string
   profissao?: string
   estadoCivil?: string
+  medicoResponsavel?: string
   statusAtivo?: boolean
   consentimentoLgpd?: boolean
 }

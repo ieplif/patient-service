@@ -1,6 +1,21 @@
 import { apiClient } from "./client"
 import type { PageResponse, Agendamento, StatusAgendamento } from "@/types"
 
+export interface AgendamentoCreateData {
+  pacienteId: string
+  profissionalId: string
+  servicoId: string
+  dataHora: string
+  duracaoMinutos?: number
+  observacoes?: string
+}
+
+export interface AgendamentoUpdateData {
+  dataHora?: string
+  duracaoMinutos?: number
+  observacoes?: string
+}
+
 export async function getAgendamentos(params?: {
   page?: number
   size?: number
@@ -20,6 +35,20 @@ export async function getAgendamentos(params?: {
 export async function getAgendamento(id: string): Promise<Agendamento> {
   const { data } = await apiClient.get<Agendamento>(`/api/v1/agendamentos/${id}`)
   return data
+}
+
+export async function createAgendamento(payload: AgendamentoCreateData): Promise<Agendamento> {
+  const { data } = await apiClient.post<Agendamento>("/api/v1/agendamentos", payload)
+  return data
+}
+
+export async function updateAgendamento(id: string, payload: AgendamentoUpdateData): Promise<Agendamento> {
+  const { data } = await apiClient.put<Agendamento>(`/api/v1/agendamentos/${id}`, payload)
+  return data
+}
+
+export async function deleteAgendamento(id: string): Promise<void> {
+  await apiClient.delete(`/api/v1/agendamentos/${id}`)
 }
 
 export async function updateAgendamentoStatus(

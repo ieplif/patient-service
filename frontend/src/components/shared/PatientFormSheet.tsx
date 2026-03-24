@@ -30,6 +30,7 @@ interface FormState {
   endereco: string
   profissao: string
   estadoCivil: string
+  medicoResponsavel: string
   consentimentoLgpd: boolean
 }
 
@@ -42,6 +43,7 @@ const emptyForm: FormState = {
   endereco: "",
   profissao: "",
   estadoCivil: "",
+  medicoResponsavel: "",
   consentimentoLgpd: false,
 }
 
@@ -80,6 +82,7 @@ export function PatientFormSheet({ open, onOpenChange, patient }: PatientFormShe
         endereco: patient.endereco ?? "",
         profissao: patient.profissao ?? "",
         estadoCivil: patient.estadoCivil ?? "",
+        medicoResponsavel: patient.medicoResponsavel ?? "",
         consentimentoLgpd: patient.consentimentoLgpd ?? false,
       })
     } else {
@@ -100,6 +103,7 @@ export function PatientFormSheet({ open, onOpenChange, patient }: PatientFormShe
           endereco: form.endereco || undefined,
           profissao: form.profissao || undefined,
           estadoCivil: form.estadoCivil || undefined,
+          medicoResponsavel: form.medicoResponsavel || undefined,
           consentimentoLgpd: form.consentimentoLgpd,
         })
       }
@@ -112,6 +116,7 @@ export function PatientFormSheet({ open, onOpenChange, patient }: PatientFormShe
         endereco: form.endereco || undefined,
         profissao: form.profissao || undefined,
         estadoCivil: form.estadoCivil || undefined,
+        medicoResponsavel: form.medicoResponsavel || undefined,
         consentimentoLgpd: form.consentimentoLgpd,
       })
     },
@@ -251,6 +256,17 @@ export function PatientFormSheet({ open, onOpenChange, patient }: PatientFormShe
                 className="font-secondary"
               />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="medicoResponsavel" className="font-primary text-sm">Médico(a) responsável</Label>
+            <Input
+              id="medicoResponsavel"
+              value={form.medicoResponsavel}
+              onChange={(e) => set("medicoResponsavel", e.target.value)}
+              placeholder="Nome do médico(a) responsável"
+              className="font-secondary"
+            />
           </div>
 
           <div className="flex items-center gap-2 pt-1">

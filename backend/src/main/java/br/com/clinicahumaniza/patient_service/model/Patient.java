@@ -45,6 +45,9 @@ public class Patient {
     @Column(length = 50)
     private String estadoCivil;
 
+    @Column(length = 150)
+    private String medicoResponsavel;
+
     private boolean statusAtivo = true; // 11. Um valor padrão pode ser definido diretamente.
 
     private boolean consentimentoLgpd = false;

@@ -36,6 +36,7 @@ export interface Patient {
   endereco?: string
   profissao?: string
   estadoCivil?: string
+  medicoResponsavel?: string
   consentimentoLgpd?: boolean
   statusAtivo: boolean
   createdAt: string
@@ -122,6 +123,15 @@ export interface Assinatura {
   observacoes?: string
   ativo: boolean
   createdAt: string
+}
+
+// ── Serviços ──────────────────────────────────────────────────────────────────
+export interface Servico {
+  id: string
+  descricao: string
+  duracaoMinutos?: number
+  valor?: number
+  ativo: boolean
 }
 
 // ── Profissionais ─────────────────────────────────────────────────────────────

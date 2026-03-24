@@ -26,6 +26,9 @@ public class PatientMapper {
         if (dto.getEstadoCivil() != null) {
             entity.setEstadoCivil(dto.getEstadoCivil());
         }
+        if (dto.getMedicoResponsavel() != null) {
+            entity.setMedicoResponsavel(dto.getMedicoResponsavel());
+        }
         if (dto.getStatusAtivo() != null) {
             entity.setStatusAtivo(dto.getStatusAtivo());
         }
@@ -45,6 +48,7 @@ public class PatientMapper {
         patient.setEndereco(dto.getEndereco());
         patient.setProfissao(dto.getProfissao());
         patient.setEstadoCivil(dto.getEstadoCivil());
+        patient.setMedicoResponsavel(dto.getMedicoResponsavel());
         if (dto.getConsentimentoLgpd() != null) {
             patient.setConsentimentoLgpd(dto.getConsentimentoLgpd());
         }
@@ -61,6 +65,7 @@ public class PatientMapper {
         dto.setEndereco(entity.getEndereco());
         dto.setProfissao(entity.getProfissao());
         dto.setEstadoCivil(entity.getEstadoCivil());
+        dto.setMedicoResponsavel(entity.getMedicoResponsavel());
         dto.setConsentimentoLgpd(entity.isConsentimentoLgpd());
         dto.setStatusAtivo(entity.isStatusAtivo());
         dto.setCreatedAt(entity.getCreatedAt());

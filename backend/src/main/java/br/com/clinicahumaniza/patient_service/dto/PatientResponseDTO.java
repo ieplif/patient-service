@@ -17,6 +17,7 @@ public class PatientResponseDTO {
     private String endereco;
     private String profissao;
     private String estadoCivil;
+    private String medicoResponsavel;
     private boolean consentimentoLgpd;
     private boolean statusAtivo;
     private LocalDateTime createdAt;
