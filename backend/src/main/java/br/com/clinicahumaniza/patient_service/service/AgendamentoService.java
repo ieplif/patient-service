@@ -372,7 +372,7 @@ public class AgendamentoService {
         }
 
         boolean transicaoValida = switch (atual) {
-            case AGENDADO -> novo == StatusAgendamento.CONFIRMADO || novo == StatusAgendamento.CANCELADO;
+            case AGENDADO -> novo == StatusAgendamento.CONFIRMADO || novo == StatusAgendamento.CANCELADO || novo == StatusAgendamento.NAO_COMPARECEU;
             case CONFIRMADO -> novo == StatusAgendamento.REALIZADO ||
                                novo == StatusAgendamento.CANCELADO ||
                                novo == StatusAgendamento.NAO_COMPARECEU;

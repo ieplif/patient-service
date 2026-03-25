@@ -117,9 +117,8 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
       onOpenChange(false)
     },
     onError: (err: unknown) => {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Verifique os dados e tente novamente."
+      const data = (err as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data
+      const msg = data?.mensagem || data?.message || "Verifique os dados e tente novamente."
       toast({ title: "Erro", description: msg, variant: "destructive" })
     },
   })

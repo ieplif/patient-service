@@ -248,3 +248,21 @@ WHERE s.atividade_id = 'a1000000-0000-0000-0000-000000000003'
   AND s.plano_id = 'b1000000-0000-0000-0000-000000000006' AND s.modalidade_local = 'Clínica'
 LIMIT 1
 ON CONFLICT (id) DO NOTHING;
+
+-- =============================================================================
+-- HORÁRIOS DISPONÍVEIS DOS PROFISSIONAIS
+-- Ana Paula: segunda a sexta 08:00-18:00
+-- Carlos Eduardo: segunda a sábado 08:00-17:00 (sábado até 13:00)
+-- =============================================================================
+INSERT INTO horarios_disponiveis (id, profissional_id, dia_semana, hora_inicio, hora_fim, ativo, created_at, updated_at) VALUES
+  (gen_random_uuid(), 'd1000000-0000-0000-0000-000000000001', 'MONDAY',    '08:00', '18:00', true, NOW(), NOW()),
+  (gen_random_uuid(), 'd1000000-0000-0000-0000-000000000001', 'TUESDAY',   '08:00', '18:00', true, NOW(), NOW()),
+  (gen_random_uuid(), 'd1000000-0000-0000-0000-000000000001', 'WEDNESDAY', '08:00', '18:00', true, NOW(), NOW()),
+  (gen_random_uuid(), 'd1000000-0000-0000-0000-000000000001', 'THURSDAY',  '08:00', '18:00', true, NOW(), NOW()),
+  (gen_random_uuid(), 'd1000000-0000-0000-0000-000000000001', 'FRIDAY',    '08:00', '18:00', true, NOW(), NOW()),
+  (gen_random_uuid(), 'd1000000-0000-0000-0000-000000000002', 'MONDAY',    '08:00', '17:00', true, NOW(), NOW()),
+  (gen_random_uuid(), 'd1000000-0000-0000-0000-000000000002', 'TUESDAY',   '08:00', '17:00', true, NOW(), NOW()),
+  (gen_random_uuid(), 'd1000000-0000-0000-0000-000000000002', 'WEDNESDAY', '08:00', '17:00', true, NOW(), NOW()),
+  (gen_random_uuid(), 'd1000000-0000-0000-0000-000000000002', 'THURSDAY',  '08:00', '17:00', true, NOW(), NOW()),
+  (gen_random_uuid(), 'd1000000-0000-0000-0000-000000000002', 'FRIDAY',    '08:00', '17:00', true, NOW(), NOW()),
+  (gen_random_uuid(), 'd1000000-0000-0000-0000-000000000002', 'SATURDAY',  '08:00', '13:00', true, NOW(), NOW());
