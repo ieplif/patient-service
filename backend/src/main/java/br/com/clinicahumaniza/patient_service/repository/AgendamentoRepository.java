@@ -2,6 +2,7 @@ package br.com.clinicahumaniza.patient_service.repository;
 
 import br.com.clinicahumaniza.patient_service.model.Agendamento;
 import br.com.clinicahumaniza.patient_service.model.StatusAgendamento;
+import br.com.clinicahumaniza.patient_service.model.TipoAgendamento;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -32,4 +33,15 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, UUID>,
 
     @Query(value = "SELECT * FROM agendamentos", nativeQuery = true)
     List<Agendamento> findAllIncludingInactive();
+
+    @Query("SELECT COUNT(a) FROM Agendamento a WHERE a.paciente.id = :pacienteId " +
+           "AND a.tipoAgendamento = 'REPOSICAO' " +
+           "AND a.createdAt >= :inicio AND a.createdAt <= :fim " +
+           "AND a.status <> 'CANCELADO'")
+    long countReposicoesNoMes(UUID pacienteId, LocalDateTime inicio, LocalDateTime fim);
+
+    boolean existsByReposicaoOrigemIdAndStatusIn(UUID origemId, List<StatusAgendamento> statuses);
+
+    List<Agendamento> findByPacienteIdAndDireitoReposicaoTrueAndDataLimiteReposicaoAfter(
+            UUID pacienteId, LocalDateTime dataAtual);
 }

@@ -209,7 +209,7 @@ public class AgendamentoRecorrenteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento", agendamentoId));
 
         if (!cancelarFuturos) {
-            agendamentoService.updateStatus(agendamentoId, new AgendamentoStatusDTO(StatusAgendamento.CANCELADO));
+            agendamentoService.updateStatus(agendamentoId, new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null));
             return List.of(agendamentoMapper.toResponseDTO(agendamento));
         }
 
@@ -228,7 +228,7 @@ public class AgendamentoRecorrenteService {
 
         List<AgendamentoResponseDTO> cancelados = new ArrayList<>();
         for (Agendamento futuro : futuros) {
-            agendamentoService.updateStatus(futuro.getId(), new AgendamentoStatusDTO(StatusAgendamento.CANCELADO));
+            agendamentoService.updateStatus(futuro.getId(), new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null));
             cancelados.add(agendamentoMapper.toResponseDTO(futuro));
         }
 

@@ -137,3 +137,21 @@ INSERT INTO servicos (id, atividade_id, plano_id, tipo_atendimento, quantidade, 
 -- =============================================================================
 INSERT INTO servicos (id, atividade_id, plano_id, tipo_atendimento, quantidade, unidade_servico, modalidade_local, valor, ativo, created_at, updated_at) VALUES
 (RANDOM_UUID(), 'a1000000-0000-0000-0000-000000000008', 'b1000000-0000-0000-0000-000000000009', 'Individual', 10, 'sessão', 'Clínica', 4000.00, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- =============================================================================
+-- FERIADOS BRASILEIROS
+-- =============================================================================
+INSERT INTO feriados (id, data, descricao, recorrente, created_at, updated_at) VALUES
+(RANDOM_UUID(), '2026-01-01', 'Confraternização Universal (Ano Novo)', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(RANDOM_UUID(), '2026-04-21', 'Tiradentes', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(RANDOM_UUID(), '2026-05-01', 'Dia do Trabalho', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(RANDOM_UUID(), '2026-09-07', 'Independência do Brasil', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(RANDOM_UUID(), '2026-10-12', 'Nossa Senhora Aparecida', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(RANDOM_UUID(), '2026-11-02', 'Finados', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(RANDOM_UUID(), '2026-11-15', 'Proclamação da República', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(RANDOM_UUID(), '2026-12-25', 'Natal', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+-- Feriados móveis de 2026 (não recorrentes)
+(RANDOM_UUID(), '2026-02-16', 'Carnaval (segunda)', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(RANDOM_UUID(), '2026-02-17', 'Carnaval (terça)', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(RANDOM_UUID(), '2026-04-03', 'Sexta-feira Santa', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(RANDOM_UUID(), '2026-06-04', 'Corpus Christi', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

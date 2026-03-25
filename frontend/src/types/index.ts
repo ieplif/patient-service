@@ -74,8 +74,19 @@ export interface Agendamento {
   duracaoMinutos?: number
   status: StatusAgendamento
   observacoes?: string
+  tipoAgendamento?: "REGULAR" | "REPOSICAO"
+  direitoReposicao?: boolean
+  reposicaoOrigemId?: string
+  dataLimiteReposicao?: string
+  motivoCancelamento?: string
   ativo: boolean
   createdAt: string
+}
+
+export interface ReposicaoInfo {
+  reposicoesUsadasNoMes: number
+  limiteReposicoesMes: number
+  agendamentosComDireitoReposicao: string[]
 }
 
 // ── Pagamentos ────────────────────────────────────────────────────────────────

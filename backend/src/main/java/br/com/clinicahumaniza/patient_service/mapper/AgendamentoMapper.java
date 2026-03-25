@@ -41,6 +41,11 @@ public class AgendamentoMapper {
         dto.setDuracaoMinutos(entity.getDuracaoMinutos());
         dto.setStatus(entity.getStatus());
         dto.setObservacoes(entity.getObservacoes());
+        dto.setTipoAgendamento(entity.getTipoAgendamento());
+        dto.setDireitoReposicao(entity.getDireitoReposicao());
+        dto.setReposicaoOrigemId(entity.getReposicaoOrigemId());
+        dto.setDataLimiteReposicao(entity.getDataLimiteReposicao());
+        dto.setMotivoCancelamento(entity.getMotivoCancelamento());
         dto.setAtivo(entity.isAtivo());
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;

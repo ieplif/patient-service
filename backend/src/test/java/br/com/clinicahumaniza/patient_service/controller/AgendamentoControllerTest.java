@@ -196,7 +196,7 @@ class AgendamentoControllerTest {
     @DisplayName("Deve alterar status com autenticação - 200")
     @WithMockUser
     void updateStatus_Authenticated_200() throws Exception {
-        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.CONFIRMADO);
+        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.CONFIRMADO, null);
 
         when(agendamentoService.updateStatus(any(UUID.class), any(AgendamentoStatusDTO.class)))
                 .thenReturn(agendamento);

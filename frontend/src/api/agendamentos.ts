@@ -1,5 +1,5 @@
 import { apiClient } from "./client"
-import type { PageResponse, Agendamento, StatusAgendamento } from "@/types"
+import type { PageResponse, Agendamento, StatusAgendamento, ReposicaoInfo } from "@/types"
 
 export interface AgendamentoCreateData {
   pacienteId: string
@@ -53,10 +53,32 @@ export async function deleteAgendamento(id: string): Promise<void> {
 
 export async function updateAgendamentoStatus(
   id: string,
-  status: StatusAgendamento
+  status: StatusAgendamento,
+  motivoCancelamento?: string
 ): Promise<Agendamento> {
   const { data } = await apiClient.patch<Agendamento>(`/api/v1/agendamentos/${id}/status`, {
     status,
+    ...(motivoCancelamento ? { motivoCancelamento } : {}),
   })
+  return data
+}
+
+export interface ReposicaoCreateData {
+  agendamentoOrigemId: string
+  profissionalId: string
+  dataHora: string
+  duracaoMinutos?: number
+  observacoes?: string
+}
+
+export async function criarReposicao(payload: ReposicaoCreateData): Promise<Agendamento> {
+  const { data } = await apiClient.post<Agendamento>("/api/v1/agendamentos/reposicao", payload)
+  return data
+}
+
+export async function getReposicoesInfo(pacienteId: string): Promise<ReposicaoInfo> {
+  const { data } = await apiClient.get<ReposicaoInfo>(
+    `/api/v1/agendamentos/paciente/${pacienteId}/reposicoes-info`
+  )
   return data
 }

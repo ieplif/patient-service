@@ -50,6 +50,22 @@ public class Agendamento {
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_agendamento", length = 20)
+    private TipoAgendamento tipoAgendamento = TipoAgendamento.REGULAR;
+
+    @Column(name = "direito_reposicao")
+    private Boolean direitoReposicao;
+
+    @Column(name = "reposicao_origem_id")
+    private UUID reposicaoOrigemId;
+
+    @Column(name = "data_limite_reposicao")
+    private LocalDateTime dataLimiteReposicao;
+
+    @Column(name = "motivo_cancelamento", columnDefinition = "TEXT")
+    private String motivoCancelamento;
+
     @ManyToOne
     @JoinColumn(name = "agendamento_recorrente_id")
     private AgendamentoRecorrente agendamentoRecorrente;

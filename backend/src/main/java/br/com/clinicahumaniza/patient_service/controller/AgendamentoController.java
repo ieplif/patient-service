@@ -192,6 +192,28 @@ public class AgendamentoController {
         return ResponseEntity.ok(slots);
     }
 
+    @PostMapping("/reposicao")
+    @Operation(summary = "Criar reposição", description = "Cria um agendamento de reposição a partir de um agendamento cancelado com direito")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Reposição criada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+            @ApiResponse(responseCode = "404", description = "Recurso não encontrado"),
+            @ApiResponse(responseCode = "422", description = "Erro de regra de negócio")
+    })
+    public ResponseEntity<AgendamentoResponseDTO> criarReposicao(
+            @Valid @RequestBody ReposicaoRequestDTO dto) {
+        Agendamento agendamento = agendamentoService.criarReposicao(dto);
+        return new ResponseEntity<>(agendamentoMapper.toResponseDTO(agendamento), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/paciente/{pacienteId}/reposicoes-info")
+    @Operation(summary = "Info de reposições do paciente", description = "Retorna informações sobre reposições usadas e disponíveis no mês")
+    @ApiResponse(responseCode = "200", description = "Informações de reposição retornadas com sucesso")
+    public ResponseEntity<ReposicaoInfoDTO> getReposicoesInfo(@PathVariable UUID pacienteId) {
+        ReposicaoInfoDTO info = agendamentoService.getReposicoesInfo(pacienteId);
+        return ResponseEntity.ok(info);
+    }
+
     @PostMapping("/recorrente")
     @Operation(summary = "Criar agendamentos recorrentes", description = "Cria uma série de agendamentos com base em um padrão de recorrência")
     @ApiResponses({

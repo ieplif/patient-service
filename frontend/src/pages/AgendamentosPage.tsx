@@ -1,13 +1,14 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Calendar, Plus, Clock, MoreHorizontal, Search } from "lucide-react"
-import { format } from "date-fns"
+import { Calendar, Plus, Clock, MoreHorizontal, Search, RefreshCw } from "lucide-react"
+import { format, differenceInHours } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { getAgendamentos, updateAgendamentoStatus, deleteAgendamento } from "@/api/agendamentos"
 import type { Agendamento, StatusAgendamento } from "@/types"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import {
   Table,
@@ -31,8 +32,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Pagination } from "@/components/shared/Pagination"
 import { AgendamentoFormSheet } from "@/components/shared/AgendamentoFormSheet"
+import { ReposicaoFormSheet } from "@/components/shared/ReposicaoFormSheet"
 import { useToast } from "@/hooks/use-toast"
 
 const PAGE_SIZE = 15
@@ -66,6 +76,11 @@ export function AgendamentosPage() {
   const [search, setSearch] = useState("")
   const [sheetOpen, setSheetOpen] = useState(false)
   const [selectedAg, setSelectedAg] = useState<Agendamento | null>(null)
+  const [reposicaoSheetOpen, setReposicaoSheetOpen] = useState(false)
+  const [reposicaoAg, setReposicaoAg] = useState<Agendamento | null>(null)
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [cancelAg, setCancelAg] = useState<Agendamento | null>(null)
+  const [motivoCancelamento, setMotivoCancelamento] = useState("")
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
@@ -81,11 +96,14 @@ export function AgendamentosPage() {
   })
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: StatusAgendamento }) =>
-      updateAgendamentoStatus(id, status),
+    mutationFn: ({ id, status, motivoCancelamento: motivo }: { id: string; status: StatusAgendamento; motivoCancelamento?: string }) =>
+      updateAgendamentoStatus(id, status, motivo),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agendamentos"] })
       toast({ title: "Status atualizado", description: "O status do agendamento foi atualizado." })
+      setCancelDialogOpen(false)
+      setCancelAg(null)
+      setMotivoCancelamento("")
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Erro ao atualizar status."
@@ -109,6 +127,53 @@ export function AgendamentosPage() {
   function handleReagendar(ag: Agendamento) {
     setSelectedAg(ag)
     setSheetOpen(true)
+  }
+
+  function handleCancelar(ag: Agendamento) {
+    const isPilates = ag.servicoDescricao.toLowerCase().includes("pilates")
+    if (isPilates) {
+      setCancelAg(ag)
+      setMotivoCancelamento("")
+      setCancelDialogOpen(true)
+    } else {
+      if (window.confirm("Deseja realmente cancelar este agendamento?")) {
+        statusMutation.mutate({ id: ag.id, status: "CANCELADO" })
+      }
+    }
+  }
+
+  function handleConfirmCancel() {
+    if (!cancelAg) return
+    statusMutation.mutate({
+      id: cancelAg.id,
+      status: "CANCELADO",
+      motivoCancelamento: motivoCancelamento || undefined,
+    })
+  }
+
+  function handleAgendarReposicao(ag: Agendamento) {
+    setReposicaoAg(ag)
+    setReposicaoSheetOpen(true)
+  }
+
+  function isPilatesAppointment(ag: Agendamento): boolean {
+    return ag.servicoDescricao.toLowerCase().includes("pilates")
+  }
+
+  function getCancelHoursMessage(ag: Agendamento): { hasRight: boolean; message: string } {
+    const now = new Date()
+    const appointmentDate = new Date(ag.dataHora)
+    const hoursUntil = differenceInHours(appointmentDate, now)
+    if (hoursUntil >= 3) {
+      return {
+        hasRight: true,
+        message: "Cancelamento com direito a reposicao (aviso com mais de 3h de antecedencia)",
+      }
+    }
+    return {
+      hasRight: false,
+      message: "Cancelamento sem direito a reposicao (menos de 3h de antecedencia)",
+    }
   }
 
   const filteredContent = search.trim()
@@ -214,9 +279,21 @@ export function AgendamentosPage() {
                             {ag.duracaoMinutos ? `${ag.duracaoMinutos} min` : "—"}
                           </TableCell>
                           <TableCell>
-                            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold font-primary ${cfg.className}`}>
-                              {cfg.label}
-                            </span>
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold font-primary ${cfg.className}`}>
+                                {cfg.label}
+                              </span>
+                              {ag.tipoAgendamento === "REPOSICAO" && (
+                                <span className="inline-flex items-center rounded-full border border-violet-300 bg-violet-100 text-violet-700 px-2 py-0.5 text-xs font-medium font-primary">
+                                  Reposicao
+                                </span>
+                              )}
+                              {ag.status === "CANCELADO" && ag.direitoReposicao === true && (
+                                <span className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 px-2 py-0.5 text-xs font-medium font-primary">
+                                  Direito a reposicao
+                                </span>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
@@ -229,11 +306,25 @@ export function AgendamentosPage() {
                                 <DropdownMenuItem onClick={() => handleReagendar(ag)} className="gap-2">
                                   <Clock className="h-4 w-4" /> Reagendar
                                 </DropdownMenuItem>
+                                {ag.status === "CANCELADO" && ag.direitoReposicao === true && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => handleAgendarReposicao(ag)} className="gap-2 text-violet-600 focus:text-violet-600">
+                                      <RefreshCw className="h-4 w-4" /> Agendar Reposicao
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
                                 {transitions.length > 0 && <DropdownMenuSeparator />}
                                 {transitions.map((t) => (
                                   <DropdownMenuItem
                                     key={t.status}
-                                    onClick={() => statusMutation.mutate({ id: ag.id, status: t.status })}
+                                    onClick={() => {
+                                      if (t.status === "CANCELADO") {
+                                        handleCancelar(ag)
+                                      } else {
+                                        statusMutation.mutate({ id: ag.id, status: t.status })
+                                      }
+                                    }}
                                     className={t.status === "CANCELADO" ? "text-destructive focus:text-destructive" : ""}
                                   >
                                     {t.label}
@@ -265,6 +356,60 @@ export function AgendamentosPage() {
         onOpenChange={setSheetOpen}
         agendamento={selectedAg}
       />
+
+      <ReposicaoFormSheet
+        open={reposicaoSheetOpen}
+        onOpenChange={setReposicaoSheetOpen}
+        agendamento={reposicaoAg}
+      />
+
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-primary">Cancelar agendamento</DialogTitle>
+            <DialogDescription className="font-secondary">
+              {cancelAg ? `Cancelar agendamento de ${cancelAg.pacienteNome}?` : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          {cancelAg && isPilatesAppointment(cancelAg) && (() => {
+            const { hasRight, message } = getCancelHoursMessage(cancelAg)
+            return (
+              <div className={`rounded-md border p-3 text-sm font-secondary ${
+                hasRight
+                  ? "bg-emerald-50 border-emerald-300 text-emerald-700"
+                  : "bg-orange-50 border-orange-300 text-orange-700"
+              }`}>
+                {message}
+              </div>
+            )
+          })()}
+
+          <div className="space-y-1.5">
+            <Label className="font-primary text-sm">Motivo do cancelamento (opcional)</Label>
+            <textarea
+              value={motivoCancelamento}
+              onChange={(e) => setMotivoCancelamento(e.target.value)}
+              placeholder="Informe o motivo do cancelamento..."
+              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-secondary ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" className="font-primary" onClick={() => setCancelDialogOpen(false)}>
+              Voltar
+            </Button>
+            <Button
+              variant="destructive"
+              className="font-primary"
+              onClick={handleConfirmCancel}
+              disabled={statusMutation.isPending}
+            >
+              {statusMutation.isPending ? "Cancelando..." : "Confirmar cancelamento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

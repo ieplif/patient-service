@@ -3,6 +3,8 @@ package br.com.clinicahumaniza.patient_service.service;
 import br.com.clinicahumaniza.patient_service.dto.AgendamentoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AgendamentoStatusDTO;
 import br.com.clinicahumaniza.patient_service.dto.AgendamentoUpdateDTO;
+import br.com.clinicahumaniza.patient_service.dto.ReposicaoInfoDTO;
+import br.com.clinicahumaniza.patient_service.dto.ReposicaoRequestDTO;
 import br.com.clinicahumaniza.patient_service.exception.BusinessException;
 import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
 import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
@@ -26,9 +28,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class AgendamentoService {
+
+    private static final int LIMITE_REPOSICOES_MES = 2;
+    private static final int DIAS_VALIDADE_REPOSICAO = 20;
+    private static final int HORAS_ANTECEDENCIA_CANCELAMENTO = 3;
 
     private final AgendamentoRepository agendamentoRepository;
     private final PatientRepository patientRepository;
@@ -36,6 +43,7 @@ public class AgendamentoService {
     private final ServicoRepository servicoRepository;
     private final AssinaturaRepository assinaturaRepository;
     private final HorarioDisponivelRepository horarioDisponivelRepository;
+    private final FeriadoRepository feriadoRepository;
     private final AgendamentoMapper agendamentoMapper;
     private final AssinaturaService assinaturaService;
     private final Optional<GoogleCalendarService> googleCalendarService;
@@ -47,6 +55,7 @@ public class AgendamentoService {
                                ServicoRepository servicoRepository,
                                AssinaturaRepository assinaturaRepository,
                                HorarioDisponivelRepository horarioDisponivelRepository,
+                               FeriadoRepository feriadoRepository,
                                AgendamentoMapper agendamentoMapper,
                                AssinaturaService assinaturaService,
                                Optional<GoogleCalendarService> googleCalendarService) {
@@ -56,6 +65,7 @@ public class AgendamentoService {
         this.servicoRepository = servicoRepository;
         this.assinaturaRepository = assinaturaRepository;
         this.horarioDisponivelRepository = horarioDisponivelRepository;
+        this.feriadoRepository = feriadoRepository;
         this.agendamentoMapper = agendamentoMapper;
         this.assinaturaService = assinaturaService;
         this.googleCalendarService = googleCalendarService;
@@ -204,9 +214,19 @@ public class AgendamentoService {
 
         agendamento.setStatus(dto.getStatus());
 
+        // Salvar motivo de cancelamento se fornecido
+        if (dto.getMotivoCancelamento() != null) {
+            agendamento.setMotivoCancelamento(dto.getMotivoCancelamento());
+        }
+
         // Se marcou como REALIZADO e tem assinatura vinculada, registrar sessão
         if (dto.getStatus() == StatusAgendamento.REALIZADO && agendamento.getAssinatura() != null) {
             assinaturaService.registrarSessao(agendamento.getAssinatura().getId());
+        }
+
+        // Avaliar direito a reposição ao cancelar
+        if (dto.getStatus() == StatusAgendamento.CANCELADO) {
+            avaliarDireitoReposicao(agendamento);
         }
 
         Agendamento saved = agendamentoRepository.save(agendamento);
@@ -271,6 +291,109 @@ public class AgendamentoService {
         }
 
         return slots;
+    }
+
+    @Transactional
+    public Agendamento criarReposicao(ReposicaoRequestDTO dto) {
+        Agendamento origem = agendamentoRepository.findById(dto.getAgendamentoOrigemId())
+                .orElseThrow(() -> new ResourceNotFoundException("Agendamento de origem", dto.getAgendamentoOrigemId()));
+
+        // Validar que o agendamento de origem está cancelado e tem direito a reposição
+        if (origem.getStatus() != StatusAgendamento.CANCELADO) {
+            throw new BusinessException("O agendamento de origem não está cancelado");
+        }
+
+        if (origem.getDireitoReposicao() == null || !origem.getDireitoReposicao()) {
+            throw new BusinessException("O agendamento de origem não possui direito a reposição");
+        }
+
+        // Validar que o agendamento de origem não é uma reposição
+        if (origem.getTipoAgendamento() == TipoAgendamento.REPOSICAO) {
+            throw new BusinessException("Não é possível criar reposição de uma reposição");
+        }
+
+        // Validar que não expirou (20 dias)
+        if (origem.getDataLimiteReposicao() != null && LocalDateTime.now().isAfter(origem.getDataLimiteReposicao())) {
+            throw new BusinessException("O prazo para reposição expirou em " + origem.getDataLimiteReposicao());
+        }
+
+        // Validar que não existe reposição já criada para esta origem
+        boolean existeReposicao = agendamentoRepository.existsByReposicaoOrigemIdAndStatusIn(
+                origem.getId(),
+                List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO, StatusAgendamento.REALIZADO)
+        );
+        if (existeReposicao) {
+            throw new BusinessException("Já existe uma reposição para este agendamento de origem");
+        }
+
+        // Validar limite de 2 reposições por mês
+        LocalDateTime inicioMes = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime fimMes = inicioMes.plusMonths(1).minusNanos(1);
+        long reposicoesNoMes = agendamentoRepository.countReposicoesNoMes(
+                origem.getPaciente().getId(), inicioMes, fimMes);
+        if (reposicoesNoMes >= LIMITE_REPOSICOES_MES) {
+            throw new BusinessException("Limite de " + LIMITE_REPOSICOES_MES + " reposições por mês atingido");
+        }
+
+        // Buscar profissional
+        Profissional profissional = profissionalRepository.findById(dto.getProfissionalId())
+                .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
+
+        // Validar que o profissional atende a atividade do serviço
+        validarProfissionalAtendeAtividade(profissional, origem.getServico());
+
+        // Default duração
+        Integer duracao = dto.getDuracaoMinutos() != null ? dto.getDuracaoMinutos() : origem.getDuracaoMinutos();
+
+        // Validar horário disponível e conflitos
+        validarDentroDoHorarioDisponivel(profissional.getId(), dto.getDataHora(), duracao);
+        int capacidade = origem.getServico().getAtividade().getCapacidadeMaxima() != null
+                ? origem.getServico().getAtividade().getCapacidadeMaxima() : 1;
+        validarConflitoHorario(profissional.getId(), dto.getDataHora(), duracao, capacidade);
+
+        // Criar o agendamento de reposição
+        Agendamento reposicao = new Agendamento();
+        reposicao.setPaciente(origem.getPaciente());
+        reposicao.setProfissional(profissional);
+        reposicao.setServico(origem.getServico());
+        reposicao.setAssinatura(origem.getAssinatura());
+        reposicao.setDataHora(dto.getDataHora());
+        reposicao.setDuracaoMinutos(duracao);
+        reposicao.setObservacoes(dto.getObservacoes());
+        reposicao.setTipoAgendamento(TipoAgendamento.REPOSICAO);
+        reposicao.setReposicaoOrigemId(origem.getId());
+        reposicao.setStatus(StatusAgendamento.AGENDADO);
+
+        Agendamento saved = agendamentoRepository.save(reposicao);
+        googleCalendarService.ifPresent(g -> g.createEvent(saved));
+        return saved;
+    }
+
+    public ReposicaoInfoDTO getReposicoesInfo(UUID pacienteId) {
+        // Verificar que o paciente existe
+        patientRepository.findById(pacienteId)
+                .orElseThrow(() -> new ResourceNotFoundException("Paciente", pacienteId));
+
+        // Contar reposições usadas no mês corrente
+        LocalDateTime inicioMes = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime fimMes = inicioMes.plusMonths(1).minusNanos(1);
+        long reposicoesUsadas = agendamentoRepository.countReposicoesNoMes(pacienteId, inicioMes, fimMes);
+
+        // Buscar agendamentos com direito a reposição ainda válidos
+        List<UUID> agendamentosComDireito = agendamentoRepository
+                .findByPacienteIdAndDireitoReposicaoTrueAndDataLimiteReposicaoAfter(pacienteId, LocalDateTime.now())
+                .stream()
+                .filter(a -> {
+                    // Filtrar os que não têm reposição já criada
+                    return !agendamentoRepository.existsByReposicaoOrigemIdAndStatusIn(
+                            a.getId(),
+                            List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO, StatusAgendamento.REALIZADO)
+                    );
+                })
+                .map(Agendamento::getId)
+                .collect(Collectors.toList());
+
+        return new ReposicaoInfoDTO(reposicoesUsadas, LIMITE_REPOSICOES_MES, agendamentosComDireito);
     }
 
     // --- Validações privadas ---
@@ -390,5 +513,42 @@ public class AgendamentoService {
         return status == StatusAgendamento.REALIZADO ||
                status == StatusAgendamento.CANCELADO ||
                status == StatusAgendamento.NAO_COMPARECEU;
+    }
+
+    private void avaliarDireitoReposicao(Agendamento agendamento) {
+        // Verificar se é Pilates (nome da atividade contém "Pilates")
+        String nomeAtividade = agendamento.getServico().getAtividade().getNome();
+        boolean isPilates = nomeAtividade != null && nomeAtividade.toLowerCase().contains("pilates");
+
+        if (!isPilates) {
+            agendamento.setDireitoReposicao(false);
+            return;
+        }
+
+        // Não gerar reposição de uma reposição
+        if (agendamento.getTipoAgendamento() == TipoAgendamento.REPOSICAO) {
+            agendamento.setDireitoReposicao(false);
+            return;
+        }
+
+        // Verificar regra de 3 horas de antecedência
+        boolean cancelouComAntecedencia = LocalDateTime.now().isBefore(
+                agendamento.getDataHora().minusHours(HORAS_ANTECEDENCIA_CANCELAMENTO));
+
+        if (!cancelouComAntecedencia) {
+            agendamento.setDireitoReposicao(false);
+            return;
+        }
+
+        // Verificar se o dia do agendamento é feriado
+        boolean isFeriado = feriadoRepository.isFeriado(agendamento.getDataHora().toLocalDate());
+        if (isFeriado) {
+            agendamento.setDireitoReposicao(false);
+            return;
+        }
+
+        // Conceder direito a reposição
+        agendamento.setDireitoReposicao(true);
+        agendamento.setDataLimiteReposicao(LocalDateTime.now().plusDays(DIAS_VALIDADE_REPOSICAO));
     }
 }
