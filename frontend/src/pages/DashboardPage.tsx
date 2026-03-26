@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { Users, Calendar, CreditCard, TrendingUp } from "lucide-react"
+import { Users, Calendar, CreditCard, TrendingUp, Star } from "lucide-react"
 import { format, startOfMonth } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { StatCard } from "@/components/shared/StatCard"
@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPatients } from "@/api/patients"
 import { getAgendamentos } from "@/api/agendamentos"
 import { getPagamentos } from "@/api/pagamentos"
+import { getAssinaturas } from "@/api/assinaturas"
 import type { StatusAgendamento } from "@/types"
 
 const today = format(new Date(), "yyyy-MM-dd")
@@ -40,7 +41,7 @@ const statusConfig: Record<StatusAgendamento, { label: string; className: string
     className: "bg-[hsl(var(--greenish-gray))/30] text-muted-foreground border-border",
   },
   NAO_COMPARECEU: {
-    label: "Não compareceu",
+    label: "Faltou",
     className: "bg-accent/15 text-accent border-accent/30",
   },
 }
@@ -89,9 +90,14 @@ export function DashboardPage() {
       getPagamentos({ status: "PAGO", inicio: monthStart, fim: today, size: 1000 }),
   })
 
+  const { data: assinaturasAtivas, isLoading: loadingAssinaturas } = useQuery({
+    queryKey: ["assinaturas-ativas-count"],
+    queryFn: () => getAssinaturas({ status: "ATIVO", size: 1 }),
+  })
+
   const { data: proximosAgendamentos, isLoading: loadingProximos } = useQuery({
     queryKey: ["proximos-agendamentos"],
-    queryFn: () => getAgendamentos({ sort: "dataHora,asc", size: 5 }),
+    queryFn: () => getAgendamentos({ dataInicio: today, sort: "dataHora,asc", size: 5 }),
   })
 
   const { data: pagamentosPendentesLista, isLoading: loadingPagLista } = useQuery({
@@ -109,13 +115,13 @@ export function DashboardPage() {
           Dashboard
         </h1>
         <p className="text-sm text-muted-foreground font-secondary mt-0.5">
-          Visão geral da Clínica Humaniza —{" "}
+          Visao geral da Clinica Humaniza —{" "}
           {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
         </p>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           title="Pacientes Ativos"
           value={patientsData?.totalElements}
@@ -131,14 +137,21 @@ export function DashboardPage() {
           accent="blue"
         />
         <StatCard
-          title="Pagamentos Pendentes"
+          title="Assinaturas Ativas"
+          value={assinaturasAtivas?.totalElements}
+          icon={Star}
+          isLoading={loadingAssinaturas}
+          accent="sage"
+        />
+        <StatCard
+          title="Pgtos Pendentes"
           value={pagamentosPendentes?.totalElements}
           icon={CreditCard}
           isLoading={loadingPagPendentes}
           accent="earth"
         />
         <StatCard
-          title="Receita do Mês"
+          title="Receita do Mes"
           value={loadingReceitaMes ? undefined : formatCurrency(receitaMes)}
           icon={TrendingUp}
           isLoading={loadingReceitaMes}
@@ -148,12 +161,12 @@ export function DashboardPage() {
 
       {/* Tables */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Próximos Agendamentos */}
+        {/* Proximos Agendamentos */}
         <Card className="border border-border/60 shadow-soft">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold font-primary text-foreground flex items-center gap-2">
               <span className="inline-block h-2 w-2 rounded-full bg-primary" />
-              Próximos Agendamentos
+              Proximos Agendamentos
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -184,7 +197,7 @@ export function DashboardPage() {
                         colSpan={4}
                         className="text-center text-muted-foreground font-secondary py-8"
                       >
-                        Nenhum agendamento encontrado
+                        Nenhum agendamento futuro
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -192,7 +205,7 @@ export function DashboardPage() {
                       const cfg = statusConfig[ag.status]
                       return (
                         <TableRow key={ag.id} className="border-border/40 hover:bg-muted/20">
-                          <TableCell className="font-semibold font-primary text-sm text-foreground max-w-[120px] truncate">
+                          <TableCell className="font-semibold font-primary text-sm text-foreground">
                             {ag.pacienteNome}
                           </TableCell>
                           <TableCell className="text-sm font-secondary text-muted-foreground">
