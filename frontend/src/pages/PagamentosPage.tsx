@@ -1,11 +1,15 @@
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { CreditCard } from "lucide-react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { CreditCard, Plus, Search, MoreHorizontal, CheckCircle, Ban, RotateCcw } from "lucide-react"
 import { format } from "date-fns"
-import { getPagamentos } from "@/api/pagamentos"
+import { getPagamentos, createPagamento, updatePagamentoStatus } from "@/api/pagamentos"
 import type { StatusPagamento, FormaPagamento } from "@/types"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/hooks/use-toast"
 import {
   Table,
   TableBody,
@@ -21,8 +25,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Pagination } from "@/components/shared/Pagination"
+import { PagamentoFormSheet } from "@/components/shared/PagamentoFormSheet"
 
 const PAGE_SIZE = 15
 
@@ -36,8 +46,8 @@ const statusConfig: Record<StatusPagamento, { label: string; className: string }
 
 const formaPagamentoLabel: Record<FormaPagamento, string> = {
   PIX: "Pix",
-  CARTAO_CREDITO: "Cartão Crédito",
-  CARTAO_DEBITO: "Cartão Débito",
+  CARTAO_CREDITO: "Cartao Credito",
+  CARTAO_DEBITO: "Cartao Debito",
   DINHEIRO: "Dinheiro",
 }
 
@@ -57,6 +67,10 @@ const statusOptions: { value: StatusPagamento | "TODOS"; label: string }[] = [
 export function PagamentosPage() {
   const [page, setPage] = useState(0)
   const [statusFilter, setStatusFilter] = useState<StatusPagamento | "TODOS">("TODOS")
+  const [search, setSearch] = useState("")
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
 
   const { data, isLoading } = useQuery({
     queryKey: ["pagamentos", page, statusFilter],
@@ -69,35 +83,85 @@ export function PagamentosPage() {
       }),
   })
 
+  const createMutation = useMutation({
+    mutationFn: createPagamento,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pagamentos"] })
+      toast({ title: "Pagamento registrado", description: "O pagamento foi cadastrado com sucesso." })
+      setSheetOpen(false)
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
+        || (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        || "Erro ao registrar pagamento."
+      toast({ title: "Erro", description: msg, variant: "destructive" })
+    },
+  })
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: StatusPagamento }) =>
+      updatePagamentoStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pagamentos"] })
+      toast({ title: "Status atualizado", description: "O status do pagamento foi alterado." })
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
+        || (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        || "Erro ao alterar status."
+      toast({ title: "Erro", description: msg, variant: "destructive" })
+    },
+  })
+
+  const filtered = data?.content.filter((pag) =>
+    !search || pag.pacienteNome.toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
     <div className="space-y-5 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold font-primary text-foreground tracking-tight flex items-center gap-2">
-          <CreditCard className="h-6 w-6 text-primary" />
-          Pagamentos
-        </h1>
-        <p className="text-sm text-muted-foreground font-secondary mt-0.5">
-          {data ? `${data.totalElements} pagamentos` : "Carregando..."}
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold font-primary text-foreground tracking-tight flex items-center gap-2">
+            <CreditCard className="h-6 w-6 text-primary" />
+            Pagamentos
+          </h1>
+          <p className="text-sm text-muted-foreground font-secondary mt-0.5">
+            {data ? `${data.totalElements} pagamentos` : "Carregando..."}
+          </p>
+        </div>
+        <Button className="bg-primary text-primary-foreground font-primary" onClick={() => setSheetOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" /> Novo Pagamento
+        </Button>
       </div>
 
       <Card className="border border-border/60 shadow-soft">
         <CardHeader className="pb-3">
-          <Select
-            value={statusFilter}
-            onValueChange={(v) => { setStatusFilter(v as StatusPagamento | "TODOS"); setPage(0) }}
-          >
-            <SelectTrigger className="w-52 bg-background border-border/70 font-secondary text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((o) => (
-                <SelectItem key={o.value} value={o.value} className="font-secondary text-sm">
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-3">
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => { setStatusFilter(v as StatusPagamento | "TODOS"); setPage(0) }}
+            >
+              <SelectTrigger className="w-52 bg-background border-border/70 font-secondary text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value} className="font-secondary text-sm">
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por paciente..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 font-secondary text-sm"
+              />
+            </div>
+          </div>
         </CardHeader>
 
         <CardContent className="p-0">
@@ -112,22 +176,22 @@ export function PagamentosPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
-                    {["Paciente", "Valor", "Forma", "Vencimento", "Parcelas", "Status"].map((h) => (
-                      <TableHead key={h} className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
+                    {["Paciente", "Valor", "Forma", "Vencimento", "Parcelas", "Status", ""].map((h) => (
+                      <TableHead key={h || "actions"} className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
                         {h}
                       </TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.content.length === 0 ? (
+                  {!filtered || filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground font-secondary py-12">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground font-secondary py-12">
                         Nenhum pagamento encontrado
                       </TableCell>
                     </TableRow>
                   ) : (
-                    data?.content.map((pag) => {
+                    filtered.map((pag) => {
                       const cfg = statusConfig[pag.status]
                       return (
                         <TableRow key={pag.id} className="border-border/40 hover:bg-muted/20">
@@ -153,6 +217,48 @@ export function PagamentosPage() {
                               {cfg.label}
                             </span>
                           </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="font-secondary">
+                                {pag.status === "PENDENTE" && (
+                                  <>
+                                    <DropdownMenuItem onClick={() => statusMutation.mutate({ id: pag.id, status: "PAGO" })}>
+                                      <CheckCircle className="h-4 w-4 mr-2" /> Marcar como Pago
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-destructive"
+                                      onClick={() => statusMutation.mutate({ id: pag.id, status: "CANCELADO" })}
+                                    >
+                                      <Ban className="h-4 w-4 mr-2" /> Cancelar
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {pag.status === "PAGO" && (
+                                  <DropdownMenuItem onClick={() => statusMutation.mutate({ id: pag.id, status: "REEMBOLSADO" })}>
+                                    <RotateCcw className="h-4 w-4 mr-2" /> Reembolsar
+                                  </DropdownMenuItem>
+                                )}
+                                {pag.status === "PARCIALMENTE_PAGO" && (
+                                  <>
+                                    <DropdownMenuItem onClick={() => statusMutation.mutate({ id: pag.id, status: "PAGO" })}>
+                                      <CheckCircle className="h-4 w-4 mr-2" /> Marcar como Pago
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-destructive"
+                                      onClick={() => statusMutation.mutate({ id: pag.id, status: "CANCELADO" })}
+                                    >
+                                      <Ban className="h-4 w-4 mr-2" /> Cancelar
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
                         </TableRow>
                       )
                     })
@@ -170,6 +276,13 @@ export function PagamentosPage() {
           )}
         </CardContent>
       </Card>
+
+      <PagamentoFormSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        onSubmit={(formData) => createMutation.mutate(formData)}
+        isPending={createMutation.isPending}
+      />
     </div>
   )
 }

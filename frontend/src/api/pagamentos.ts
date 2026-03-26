@@ -20,6 +20,20 @@ export async function getPagamento(id: string): Promise<Pagamento> {
   return data
 }
 
+export async function createPagamento(payload: {
+  pacienteId: string
+  assinaturaId?: string
+  agendamentoId?: string
+  valor: number
+  formaPagamento: FormaPagamento
+  numeroParcelas?: number
+  dataVencimento: string
+  observacoes?: string
+}): Promise<Pagamento> {
+  const { data } = await apiClient.post<Pagamento>("/api/v1/pagamentos", payload)
+  return data
+}
+
 export async function updatePagamentoStatus(
   id: string,
   status: StatusPagamento
