@@ -11,6 +11,7 @@ import java.util.UUID;
 public class PatientResponseDTO {
     private UUID id;
     private String nomeCompleto;
+    private String cpf;
     private String email;
     private LocalDate dataNascimento;
     private String telefone;

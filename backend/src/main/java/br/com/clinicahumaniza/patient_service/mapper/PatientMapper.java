@@ -59,6 +59,7 @@ public class PatientMapper {
         PatientResponseDTO dto = new PatientResponseDTO();
         dto.setId(entity.getId());
         dto.setNomeCompleto(entity.getNomeCompleto());
+        dto.setCpf(entity.getCpf());
         dto.setEmail(entity.getEmail());
         dto.setDataNascimento(entity.getDataNascimento());
         dto.setTelefone(entity.getTelefone());

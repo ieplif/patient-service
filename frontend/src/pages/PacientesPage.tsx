@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Search, Users, UserPlus, Pencil, UserX } from "lucide-react"
 import { format } from "date-fns"
@@ -141,7 +142,12 @@ export function PacientesPage() {
                     data?.content.map((p) => (
                       <TableRow key={p.id} className="border-border/40 hover:bg-muted/20">
                         <TableCell className="font-semibold font-primary text-sm text-foreground">
-                          {p.nomeCompleto}
+                          <Link
+                            to={`/pacientes/${p.id}`}
+                            className="hover:text-primary hover:underline transition-colors"
+                          >
+                            {p.nomeCompleto}
+                          </Link>
                         </TableCell>
                         <TableCell className="text-sm font-secondary text-muted-foreground">
                           {p.email}

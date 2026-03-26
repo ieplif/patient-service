@@ -8,6 +8,7 @@ import { AgendamentosPage } from "@/pages/AgendamentosPage"
 import { PagamentosPage } from "@/pages/PagamentosPage"
 import { AssinaturasPage } from "@/pages/AssinaturasPage"
 import { ProfissionaisPage } from "@/pages/ProfissionaisPage"
+import { PacienteResumoPage } from "@/pages/PacienteResumoPage"
 import { useAuthStore } from "@/store/authStore"
 
 const queryClient = new QueryClient({
@@ -40,6 +41,7 @@ export default function App() {
           >
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/pacientes" element={<PacientesPage />} />
+            <Route path="/pacientes/:id" element={<PacienteResumoPage />} />
             <Route path="/agendamentos" element={<AgendamentosPage />} />
             <Route path="/pagamentos" element={<PagamentosPage />} />
             <Route path="/assinaturas" element={<AssinaturasPage />} />

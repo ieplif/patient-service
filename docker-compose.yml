@@ -1,30 +1,7 @@
 services:
 
   # ─────────────────────────────────────────
-  # Banco de dados — PostgreSQL
-  # ─────────────────────────────────────────
-  postgres:
-    image: postgres:16-alpine
-    container_name: humaniza-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: humanizadb
-      POSTGRES_USER: ${DB_USERNAME:-humaniza}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-humaniza123}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - humaniza-net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-humaniza} -d humanizadb"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # ─────────────────────────────────────────
-  # Backend — Spring Boot
+  # Backend — Spring Boot → Supabase
   # ─────────────────────────────────────────
   backend:
     build: ./backend
@@ -34,19 +11,16 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      DATABASE_URL: jdbc:postgresql://postgres:5432/humanizadb
-      DATABASE_USERNAME: ${DB_USERNAME:-humaniza}
-      DATABASE_PASSWORD: ${DB_PASSWORD:-humaniza123}
-      JWT_SECRET: ${JWT_SECRET:-Y2xpbmljYWh1bWFuaXphcmpzZWN1cml0eWtleWJhc2U2NDIwMjU=}
-      ADMIN1_EMAIL: ${ADMIN1_EMAIL:-caissa@humaniza.com}
-      ADMIN1_NOME: ${ADMIN1_NOME:-Caissa Humaniza}
-      ADMIN1_PASSWORD: ${ADMIN1_PASSWORD:-Humaniza@2025}
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN1_EMAIL: ${ADMIN1_EMAIL}
+      ADMIN1_NOME: ${ADMIN1_NOME}
+      ADMIN1_PASSWORD: ${ADMIN1_PASSWORD}
       ADMIN2_EMAIL: ${ADMIN2_EMAIL:-}
       ADMIN2_NOME: ${ADMIN2_NOME:-}
       ADMIN2_PASSWORD: ${ADMIN2_PASSWORD:-}
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - humaniza-net
 
@@ -67,6 +41,3 @@ services:
 networks:
   humaniza-net:
     driver: bridge
-
-volumes:
-  postgres_data:

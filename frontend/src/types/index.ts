@@ -30,6 +30,7 @@ export interface PageResponse<T> {
 export interface Patient {
   id: string
   nomeCompleto: string
+  cpf?: string
   email: string
   dataNascimento: string
   telefone: string
@@ -39,6 +40,21 @@ export interface Patient {
   medicoResponsavel?: string
   consentimentoLgpd?: boolean
   statusAtivo: boolean
+  createdAt: string
+}
+
+export interface Prontuario {
+  id: string
+  pacienteId: string
+  pacienteNome: string
+  titulo: string
+  descricao?: string
+  nomeArquivo: string
+  tipoArquivo: string
+  tamanhoBytes: number
+  storagePath: string
+  storageUrl: string
+  uploadedBy: string
   createdAt: string
 }
 
