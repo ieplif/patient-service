@@ -42,6 +42,16 @@ public class DataInitializer implements CommandLineRunner {
     @Value("${app.seed.admin2.password:}")
     private String admin2Password;
 
+    // Usuário profissional — para teste de acesso restrito
+    @Value("${app.seed.profissional1.email:}")
+    private String prof1Email;
+
+    @Value("${app.seed.profissional1.nome:}")
+    private String prof1Nome;
+
+    @Value("${app.seed.profissional1.password:}")
+    private String prof1Password;
+
     @Autowired
     public DataInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -54,6 +64,10 @@ public class DataInitializer implements CommandLineRunner {
 
         if (admin2Email != null && !admin2Email.isBlank()) {
             criarUsuarioSeNaoExistir(admin2Email, admin2Nome, admin2Password, Role.ROLE_ADMIN);
+        }
+
+        if (prof1Email != null && !prof1Email.isBlank()) {
+            criarUsuarioSeNaoExistir(prof1Email, prof1Nome, prof1Password, Role.ROLE_PROFISSIONAL);
         }
     }
 

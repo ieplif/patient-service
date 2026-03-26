@@ -17,6 +17,8 @@ import { useAuthStore } from "@/store/authStore"
 import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/toaster"
 
+const FINANCIAL_ROUTES = ["/pagamentos", "/assinaturas"]
+
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/pacientes", label: "Pacientes", icon: Users },
@@ -28,9 +30,16 @@ const navItems = [
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
+  const { user } = useAuthStore()
+  const isProfissional = user?.role === "ROLE_PROFISSIONAL"
+
+  const visibleItems = isProfissional
+    ? navItems.filter((item) => !FINANCIAL_ROUTES.includes(item.to))
+    : navItems
+
   return (
     <nav className="flex flex-col gap-1">
-      {navItems.map(({ to, label, icon: Icon }) => (
+      {visibleItems.map(({ to, label, icon: Icon }) => (
         <Link
           key={to}
           to={to}

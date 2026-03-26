@@ -18,6 +18,7 @@ import { getPatients } from "@/api/patients"
 import { getAgendamentos } from "@/api/agendamentos"
 import { getPagamentos } from "@/api/pagamentos"
 import { getAssinaturas } from "@/api/assinaturas"
+import { useAuthStore } from "@/store/authStore"
 import type { StatusAgendamento } from "@/types"
 
 const today = format(new Date(), "yyyy-MM-dd")
@@ -69,6 +70,9 @@ function TableSkeleton({ cols }: { cols: number }) {
 }
 
 export function DashboardPage() {
+  const { user } = useAuthStore()
+  const isProfissional = user?.role === "ROLE_PROFISSIONAL"
+
   const { data: patientsData, isLoading: loadingPatients } = useQuery({
     queryKey: ["patients-count"],
     queryFn: () => getPatients({ size: 1 }),
@@ -82,17 +86,20 @@ export function DashboardPage() {
   const { data: pagamentosPendentes, isLoading: loadingPagPendentes } = useQuery({
     queryKey: ["pagamentos-pendentes-count"],
     queryFn: () => getPagamentos({ status: "PENDENTE", size: 1 }),
+    enabled: !isProfissional,
   })
 
   const { data: pagamentosMes, isLoading: loadingReceitaMes } = useQuery({
     queryKey: ["receita-mes"],
     queryFn: () =>
       getPagamentos({ status: "PAGO", inicio: monthStart, fim: today, size: 1000 }),
+    enabled: !isProfissional,
   })
 
   const { data: assinaturasAtivas, isLoading: loadingAssinaturas } = useQuery({
     queryKey: ["assinaturas-ativas-count"],
     queryFn: () => getAssinaturas({ status: "ATIVO", size: 1 }),
+    enabled: !isProfissional,
   })
 
   const { data: proximosAgendamentos, isLoading: loadingProximos } = useQuery({
@@ -103,6 +110,7 @@ export function DashboardPage() {
   const { data: pagamentosPendentesLista, isLoading: loadingPagLista } = useQuery({
     queryKey: ["pagamentos-pendentes-lista"],
     queryFn: () => getPagamentos({ status: "PENDENTE", size: 5 }),
+    enabled: !isProfissional,
   })
 
   const receitaMes = pagamentosMes?.content.reduce((sum, p) => sum + p.valor, 0) ?? 0
@@ -121,7 +129,7 @@ export function DashboardPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className={`grid gap-4 sm:grid-cols-2 ${isProfissional ? "lg:grid-cols-2" : "lg:grid-cols-5"}`}>
         <StatCard
           title="Pacientes Ativos"
           value={patientsData?.totalElements}
@@ -136,31 +144,37 @@ export function DashboardPage() {
           isLoading={loadingAgendamentosHoje}
           accent="blue"
         />
-        <StatCard
-          title="Assinaturas Ativas"
-          value={assinaturasAtivas?.totalElements}
-          icon={Star}
-          isLoading={loadingAssinaturas}
-          accent="sage"
-        />
-        <StatCard
-          title="Pgtos Pendentes"
-          value={pagamentosPendentes?.totalElements}
-          icon={CreditCard}
-          isLoading={loadingPagPendentes}
-          accent="earth"
-        />
-        <StatCard
-          title="Receita do Mes"
-          value={loadingReceitaMes ? undefined : formatCurrency(receitaMes)}
-          icon={TrendingUp}
-          isLoading={loadingReceitaMes}
-          accent="beige"
-        />
+        {!isProfissional && (
+          <StatCard
+            title="Assinaturas Ativas"
+            value={assinaturasAtivas?.totalElements}
+            icon={Star}
+            isLoading={loadingAssinaturas}
+            accent="sage"
+          />
+        )}
+        {!isProfissional && (
+          <StatCard
+            title="Pgtos Pendentes"
+            value={pagamentosPendentes?.totalElements}
+            icon={CreditCard}
+            isLoading={loadingPagPendentes}
+            accent="earth"
+          />
+        )}
+        {!isProfissional && (
+          <StatCard
+            title="Receita do Mes"
+            value={loadingReceitaMes ? undefined : formatCurrency(receitaMes)}
+            icon={TrendingUp}
+            isLoading={loadingReceitaMes}
+            accent="beige"
+          />
+        )}
       </div>
 
       {/* Tables */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className={`grid gap-6 ${isProfissional ? "lg:grid-cols-1" : "lg:grid-cols-2"}`}>
         {/* Proximos Agendamentos */}
         <Card className="border border-border/60 shadow-soft">
           <CardHeader className="pb-3">
@@ -231,8 +245,8 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Pagamentos Pendentes */}
-        <Card className="border border-border/60 shadow-soft">
+        {/* Pagamentos Pendentes — oculto para profissionais */}
+        {!isProfissional && <Card className="border border-border/60 shadow-soft">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold font-primary text-foreground flex items-center gap-2">
               <span className="inline-block h-2 w-2 rounded-full bg-accent" />
@@ -297,7 +311,7 @@ export function DashboardPage() {
               </Table>
             )}
           </CardContent>
-        </Card>
+        </Card>}
       </div>
     </div>
   )
