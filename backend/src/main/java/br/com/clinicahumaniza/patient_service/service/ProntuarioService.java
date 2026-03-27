@@ -9,11 +9,15 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -24,7 +28,36 @@ public class ProntuarioService {
     private final PatientRepository patientRepository;
     private final SupabaseStorageService storageService;
 
+    private static final Set<String> ALLOWED_TYPES = Set.of(
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
+    private static final long MAX_FILE_SIZE = 10_485_760L; // 10MB
+
+    private void validateFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Arquivo não pode ser vazio");
+        }
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Arquivo muito grande (máx 10MB)");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_TYPES.contains(contentType)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Tipo de arquivo não permitido. Use: PDF, JPEG, PNG, DOC ou DOCX");
+        }
+        // Sanitize filename
+        String originalName = file.getOriginalFilename();
+        if (originalName != null && (originalName.contains("..") || originalName.contains("/"))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome de arquivo inválido");
+        }
+    }
+
     public ProntuarioResponseDTO upload(UUID pacienteId, String titulo, String descricao, MultipartFile file) throws IOException {
+        validateFile(file);
         Patient paciente = patientRepository.findById(pacienteId)
                 .orElseThrow(() -> new EntityNotFoundException("Paciente não encontrado"));
 

@@ -60,7 +60,9 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        criarUsuarioSeNaoExistir(admin1Email, admin1Nome, admin1Password, Role.ROLE_ADMIN);
+        if (admin1Email != null && !admin1Email.isBlank()) {
+            criarUsuarioSeNaoExistir(admin1Email, admin1Nome, admin1Password, Role.ROLE_ADMIN);
+        }
 
         if (admin2Email != null && !admin2Email.isBlank()) {
             criarUsuarioSeNaoExistir(admin2Email, admin2Nome, admin2Password, Role.ROLE_ADMIN);
@@ -72,9 +74,17 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void criarUsuarioSeNaoExistir(String email, String nome, String password, Role role) {
+        if (email == null || email.isBlank()) return;
+        if (password == null || password.isBlank()) {
+            log.warn("Senha não configurada para {}. Usuário não será criado.", email);
+            return;
+        }
         if (userRepository.existsByEmail(email)) {
             log.info("Usuário já existe, ignorando seed: {}", email);
             return;
+        }
+        if (password.equals("Humaniza@2025") || password.equals("Prof@2025")) {
+            log.warn("⚠️  ATENÇÃO: Usuário {} criado com senha padrão. Altere imediatamente via /api/auth/alterar-senha", email);
         }
 
         User user = new User();
