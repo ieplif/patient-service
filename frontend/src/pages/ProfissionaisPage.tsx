@@ -64,7 +64,7 @@ export function ProfissionaisPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold font-primary text-foreground tracking-tight flex items-center gap-2">
             <UserCog className="h-6 w-6 text-primary" />
@@ -90,10 +90,11 @@ export function ProfissionaisPage() {
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50 hover:bg-transparent">
-                    {["Nome", "Atividades", "Status", ""].map((h, i) => (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      {["Nome", "Atividades", "Status", ""].map((h, i) => (
                       <TableHead key={i} className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
                         {h}
                       </TableHead>
@@ -167,7 +168,8 @@ export function ProfissionaisPage() {
                     ))
                   )}
                 </TableBody>
-              </Table>
+                </Table>
+              </div>
               <Pagination
                 page={page}
                 totalPages={data?.totalPages ?? 0}

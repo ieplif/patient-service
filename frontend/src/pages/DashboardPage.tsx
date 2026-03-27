@@ -129,7 +129,7 @@ export function DashboardPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className={`grid gap-4 sm:grid-cols-2 ${isProfissional ? "lg:grid-cols-2" : "lg:grid-cols-5"}`}>
+      <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${isProfissional ? "lg:grid-cols-2" : "lg:grid-cols-5"}`}>
         <StatCard
           title="Pacientes Ativos"
           value={patientsData?.totalElements}
@@ -187,60 +187,62 @@ export function DashboardPage() {
             {loadingProximos ? (
               <TableSkeleton cols={4} />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
-                      Paciente
-                    </TableHead>
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
-                      Profissional
-                    </TableHead>
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
-                      Data/Hora
-                    </TableHead>
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
-                      Status
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {proximosAgendamentos?.content.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        className="text-center text-muted-foreground font-secondary py-8"
-                      >
-                        Nenhum agendamento futuro
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
+                        Paciente
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
+                        Profissional
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
+                        Data/Hora
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
+                        Status
+                      </TableHead>
                     </TableRow>
-                  ) : (
-                    proximosAgendamentos?.content.map((ag) => {
-                      const cfg = statusConfig[ag.status]
-                      return (
-                        <TableRow key={ag.id} className="border-border/40 hover:bg-muted/20">
-                          <TableCell className="font-semibold font-primary text-sm text-foreground">
-                            {ag.pacienteNome}
-                          </TableCell>
-                          <TableCell className="text-sm font-secondary text-muted-foreground">
-                            {ag.profissionalNome}
-                          </TableCell>
-                          <TableCell className="text-sm font-secondary text-muted-foreground whitespace-nowrap">
-                            {formatDateTime(ag.dataHora)}
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold font-primary ${cfg.className}`}
-                            >
-                              {cfg.label}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {proximosAgendamentos?.content.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          className="text-center text-muted-foreground font-secondary py-8"
+                        >
+                          Nenhum agendamento futuro
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      proximosAgendamentos?.content.map((ag) => {
+                        const cfg = statusConfig[ag.status]
+                        return (
+                          <TableRow key={ag.id} className="border-border/40 hover:bg-muted/20">
+                            <TableCell className="font-semibold font-primary text-sm text-foreground">
+                              {ag.pacienteNome}
+                            </TableCell>
+                            <TableCell className="text-sm font-secondary text-muted-foreground">
+                              {ag.profissionalNome}
+                            </TableCell>
+                            <TableCell className="text-sm font-secondary text-muted-foreground whitespace-nowrap">
+                              {formatDateTime(ag.dataHora)}
+                            </TableCell>
+                            <TableCell>
+                              <span
+                                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold font-primary ${cfg.className}`}
+                              >
+                                {cfg.label}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -257,58 +259,60 @@ export function DashboardPage() {
             {loadingPagLista ? (
               <TableSkeleton cols={4} />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
-                      Paciente
-                    </TableHead>
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
-                      Valor
-                    </TableHead>
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
-                      Vencimento
-                    </TableHead>
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
-                      Forma
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pagamentosPendentesLista?.content.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        className="text-center text-muted-foreground font-secondary py-8"
-                      >
-                        Nenhum pagamento pendente
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
+                        Paciente
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
+                        Valor
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
+                        Vencimento
+                      </TableHead>
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
+                        Forma
+                      </TableHead>
                     </TableRow>
-                  ) : (
-                    pagamentosPendentesLista?.content.map((pag) => (
-                      <TableRow key={pag.id} className="border-border/40 hover:bg-muted/20">
-                        <TableCell className="font-semibold font-primary text-sm text-foreground">
-                          {pag.pacienteNome}
-                        </TableCell>
-                        <TableCell className="text-sm font-secondary font-semibold text-accent">
-                          {formatCurrency(pag.valor)}
-                        </TableCell>
-                        <TableCell className="text-sm font-secondary text-muted-foreground">
-                          {format(new Date(pag.dataVencimento), "dd/MM/yyyy")}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className="text-xs font-primary border-border/60 text-muted-foreground"
-                          >
-                            {pag.formaPagamento ?? "—"}
-                          </Badge>
+                  </TableHeader>
+                  <TableBody>
+                    {pagamentosPendentesLista?.content.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          className="text-center text-muted-foreground font-secondary py-8"
+                        >
+                          Nenhum pagamento pendente
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      pagamentosPendentesLista?.content.map((pag) => (
+                        <TableRow key={pag.id} className="border-border/40 hover:bg-muted/20">
+                          <TableCell className="font-semibold font-primary text-sm text-foreground">
+                            {pag.pacienteNome}
+                          </TableCell>
+                          <TableCell className="text-sm font-secondary font-semibold text-accent">
+                            {formatCurrency(pag.valor)}
+                          </TableCell>
+                          <TableCell className="text-sm font-secondary text-muted-foreground">
+                            {format(new Date(pag.dataVencimento), "dd/MM/yyyy")}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className="text-xs font-primary border-border/60 text-muted-foreground"
+                            >
+                              {pag.formaPagamento ?? "—"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>}

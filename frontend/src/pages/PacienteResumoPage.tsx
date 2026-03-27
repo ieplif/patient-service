@@ -144,7 +144,7 @@ export function PacienteResumoPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <Link to="/pacientes">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
@@ -234,45 +234,47 @@ export function PacienteResumoPage() {
             ) : !assinaturas?.content.length ? (
               <p className="text-sm text-muted-foreground font-secondary py-4 text-center">Nenhuma assinatura</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Servico</TableHead>
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Valor</TableHead>
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Progresso</TableHead>
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Vencimento</TableHead>
-                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {assinaturas.content.map((a) => {
-                    const cfg = statusAssConfig[a.status] || statusAssConfig.ATIVO
-                    const prog = a.sessoesContratadas > 0 ? Math.round((a.sessoesRealizadas / a.sessoesContratadas) * 100) : 0
-                    return (
-                      <TableRow key={a.id} className="border-border/40">
-                        <TableCell className="text-sm font-secondary">{a.servicoDescricao}</TableCell>
-                        <TableCell className="text-sm font-secondary font-semibold text-accent">{formatCurrency(a.valor)}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden w-16">
-                              <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(prog, 100)}%` }} />
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Servico</TableHead>
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Valor</TableHead>
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Progresso</TableHead>
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Vencimento</TableHead>
+                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {assinaturas.content.map((a) => {
+                      const cfg = statusAssConfig[a.status] || statusAssConfig.ATIVO
+                      const prog = a.sessoesContratadas > 0 ? Math.round((a.sessoesRealizadas / a.sessoesContratadas) * 100) : 0
+                      return (
+                        <TableRow key={a.id} className="border-border/40">
+                          <TableCell className="text-sm font-secondary">{a.servicoDescricao}</TableCell>
+                          <TableCell className="text-sm font-secondary font-semibold text-accent">{formatCurrency(a.valor)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden w-10 sm:w-16">
+                                <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(prog, 100)}%` }} />
+                              </div>
+                              <span className="text-xs text-muted-foreground">{a.sessoesRealizadas}/{a.sessoesContratadas}</span>
                             </div>
-                            <span className="text-xs text-muted-foreground">{a.sessoesRealizadas}/{a.sessoesContratadas}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm font-secondary text-muted-foreground">
-                          {a.dataVencimento ? format(new Date(a.dataVencimento), "dd/MM/yyyy") : "—"}
-                        </TableCell>
-                        <TableCell>
-                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold font-primary ${cfg.className}`}>
-                            {cfg.label}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
+                          </TableCell>
+                          <TableCell className="text-sm font-secondary text-muted-foreground">
+                            {a.dataVencimento ? format(new Date(a.dataVencimento), "dd/MM/yyyy") : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold font-primary ${cfg.className}`}>
+                              {cfg.label}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -291,37 +293,39 @@ export function PacienteResumoPage() {
           ) : !agendamentos?.content.length ? (
             <p className="text-sm text-muted-foreground font-secondary py-4 text-center">Nenhum agendamento</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border/50 hover:bg-transparent">
-                  <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Servico</TableHead>
-                  <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Profissional</TableHead>
-                  <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Data/Hora</TableHead>
-                  <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Duracao</TableHead>
-                  <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {agendamentos.content.map((ag) => {
-                  const cfg = statusAgConfig[ag.status] || statusAgConfig.AGENDADO
-                  return (
-                    <TableRow key={ag.id} className="border-border/40">
-                      <TableCell className="text-sm font-secondary">{ag.servicoDescricao}</TableCell>
-                      <TableCell className="text-sm font-secondary text-muted-foreground">{ag.profissionalNome}</TableCell>
-                      <TableCell className="text-sm font-secondary text-muted-foreground whitespace-nowrap">
-                        {format(new Date(ag.dataHora), "dd/MM/yyyy 'as' HH:mm")}
-                      </TableCell>
-                      <TableCell className="text-sm font-secondary text-muted-foreground">{ag.duracaoMinutos} min</TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold font-primary ${cfg.className}`}>
-                          {cfg.label}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/50 hover:bg-transparent">
+                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Servico</TableHead>
+                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Profissional</TableHead>
+                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Data/Hora</TableHead>
+                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Duracao</TableHead>
+                    <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {agendamentos.content.map((ag) => {
+                    const cfg = statusAgConfig[ag.status] || statusAgConfig.AGENDADO
+                    return (
+                      <TableRow key={ag.id} className="border-border/40">
+                        <TableCell className="text-sm font-secondary">{ag.servicoDescricao}</TableCell>
+                        <TableCell className="text-sm font-secondary text-muted-foreground">{ag.profissionalNome}</TableCell>
+                        <TableCell className="text-sm font-secondary text-muted-foreground whitespace-nowrap">
+                          {format(new Date(ag.dataHora), "dd/MM/yyyy 'as' HH:mm")}
+                        </TableCell>
+                        <TableCell className="text-sm font-secondary text-muted-foreground">{ag.duracaoMinutos} min</TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold font-primary ${cfg.className}`}>
+                            {cfg.label}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -345,7 +349,7 @@ export function PacienteResumoPage() {
             <div className="space-y-2">
               {prontuarios.content.map((p) => (
                 <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:bg-muted/20">
-                  <FileText className="h-8 w-8 text-primary/60 shrink-0" />
+                  <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary/60 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold font-primary truncate">{p.titulo}</p>
                     <p className="text-xs text-muted-foreground font-secondary">

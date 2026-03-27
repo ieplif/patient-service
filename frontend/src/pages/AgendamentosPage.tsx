@@ -184,7 +184,7 @@ export function AgendamentosPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold font-primary text-foreground tracking-tight flex items-center gap-2">
             <Calendar className="h-6 w-6 text-primary" />
@@ -202,12 +202,12 @@ export function AgendamentosPage() {
 
       <Card className="border border-border/60 shadow-soft">
         <CardHeader className="pb-3">
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Select
               value={statusFilter}
               onValueChange={(v) => { setStatusFilter(v as StatusAgendamento | "TODOS"); setPage(0) }}
             >
-              <SelectTrigger className="w-52 bg-background border-border/70 font-secondary text-sm">
+              <SelectTrigger className="w-full sm:w-52 bg-background border-border/70 font-secondary text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -240,10 +240,11 @@ export function AgendamentosPage() {
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50 hover:bg-transparent">
-                    {["Paciente", "Profissional", "Serviço", "Data/Hora", "Duração", "Status", ""].map((h, i) => (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      {["Paciente", "Profissional", "Serviço", "Data/Hora", "Duração", "Status", ""].map((h, i) => (
                       <TableHead key={i} className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
                         {h}
                       </TableHead>
@@ -338,7 +339,8 @@ export function AgendamentosPage() {
                     })
                   )}
                 </TableBody>
-              </Table>
+                </Table>
+              </div>
               <Pagination
                 page={page}
                 totalPages={data?.totalPages ?? 0}

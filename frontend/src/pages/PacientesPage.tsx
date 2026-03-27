@@ -77,7 +77,7 @@ export function PacientesPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold font-primary text-foreground tracking-tight flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
@@ -95,7 +95,7 @@ export function PacientesPage() {
 
       <Card className="border border-border/60 shadow-soft">
         <CardHeader className="pb-3">
-          <div className="relative max-w-sm">
+          <div className="relative w-full max-w-sm sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nome..."
@@ -115,10 +115,11 @@ export function PacientesPage() {
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50 hover:bg-transparent">
-                    {["Nome", "E-mail", "Telefone", "Nascimento", "Status", "Ações"].map((h) => (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      {["Nome", "E-mail", "Telefone", "Nascimento", "Status", "Ações"].map((h) => (
                       <TableHead
                         key={h}
                         className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide"
@@ -202,7 +203,8 @@ export function PacientesPage() {
                     ))
                   )}
                 </TableBody>
-              </Table>
+                </Table>
+              </div>
               <Pagination
                 page={page}
                 totalPages={data?.totalPages ?? 0}
