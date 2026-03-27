@@ -11,3 +11,7 @@ export async function loginRequest(
   })
   return data
 }
+
+export async function logoutRequest(): Promise<void> {
+  await apiClient.post("/api/auth/logout")
+}

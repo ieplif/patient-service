@@ -3,16 +3,11 @@ import { useAuthStore } from "@/store/authStore"
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "",
+  withCredentials: true, // envia httpOnly cookie automaticamente
 })
 
-apiClient.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
-
+// Não precisa mais injetar Authorization header — cookie é enviado automaticamente
+// Mantemos apenas o interceptor de resposta para logout automático em 401
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {

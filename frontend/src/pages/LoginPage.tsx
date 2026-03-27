@@ -35,7 +35,7 @@ export function LoginPage() {
     setError(null)
     try {
       const res = await loginRequest(values.email, values.senha)
-      login(res.token, { nome: res.nome, email: res.email, role: res.role })
+      login({ nome: res.nome, email: res.email, role: res.role })
       navigate("/dashboard")
     } catch {
       setError("Credenciais inválidas. Verifique seu e-mail e senha.")

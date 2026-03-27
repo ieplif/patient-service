@@ -7,7 +7,7 @@ export interface User {
 
 // Flat response from backend: { token, tipo, nome, email, role }
 export interface AuthResponse {
-  token: string
+  token?: string
   tipo: string
   nome: string
   email: string

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { useAuthStore } from "@/store/authStore"
+import { logoutRequest } from "@/api/auth"
 import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/toaster"
 
@@ -63,9 +64,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
 
-  function handleLogout() {
-    logout()
-    navigate("/login")
+  async function handleLogout() {
+    try {
+      await logoutRequest()
+    } catch {
+      // ignora erro — limpa estado de qualquer forma
+    } finally {
+      logout()
+      navigate("/login")
+    }
   }
 
   const initials = user?.nome
