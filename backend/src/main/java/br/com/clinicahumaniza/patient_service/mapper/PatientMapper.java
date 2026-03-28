@@ -68,6 +68,7 @@ public class PatientMapper {
         dto.setEstadoCivil(entity.getEstadoCivil());
         dto.setMedicoResponsavel(entity.getMedicoResponsavel());
         dto.setConsentimentoLgpd(entity.isConsentimentoLgpd());
+        dto.setDataConsentimentoLgpd(entity.getDataConsentimentoLgpd());
         dto.setStatusAtivo(entity.isStatusAtivo());
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;

@@ -20,6 +20,7 @@ public class PatientResponseDTO {
     private String estadoCivil;
     private String medicoResponsavel;
     private boolean consentimentoLgpd;
+    private LocalDateTime dataConsentimentoLgpd;
     private boolean statusAtivo;
     private LocalDateTime createdAt;
 }

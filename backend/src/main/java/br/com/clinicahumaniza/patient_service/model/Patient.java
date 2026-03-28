@@ -52,6 +52,8 @@ public class Patient {
 
     private boolean consentimentoLgpd = false;
 
+    private LocalDateTime dataConsentimentoLgpd;
+
     @Column(updatable = false) // 12. Este campo não será atualizado após a criação.
     private LocalDateTime createdAt;
 

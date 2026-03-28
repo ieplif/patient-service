@@ -1,5 +1,6 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
+import br.com.clinicahumaniza.patient_service.dto.PatientExportDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientUpdateDTO;
@@ -95,5 +96,28 @@ public class PatientController {
     public ResponseEntity<Void> deletePatient(@PathVariable UUID id) {
         patientService.deletePatient(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/permanente")
+    @Operation(summary = "Exclusão permanente do paciente (LGPD - Direito ao Esquecimento)",
+               description = "Remove permanentemente todos os dados do paciente. Apenas ADMIN.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Paciente removido permanentemente"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado"),
+            @ApiResponse(responseCode = "404", description = "Paciente não encontrado")
+    })
+    public ResponseEntity<Void> deletePatientPermanente(@PathVariable UUID id) {
+        patientService.deletePermanente(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/exportar")
+    @Operation(summary = "Exportar todos os dados do paciente (LGPD - Portabilidade)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dados exportados com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Paciente não encontrado")
+    })
+    public ResponseEntity<PatientExportDTO> exportarDados(@PathVariable UUID id) {
+        return ResponseEntity.ok(patientService.exportarDados(id));
     }
 }
