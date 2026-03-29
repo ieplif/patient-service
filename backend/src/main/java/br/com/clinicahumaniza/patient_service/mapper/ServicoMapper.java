@@ -26,6 +26,25 @@ public class ServicoMapper {
     public ServicoResponseDTO toResponseDTO(Servico entity) {
         ServicoResponseDTO dto = new ServicoResponseDTO();
         dto.setId(entity.getId());
+
+        // Monta descrição legível baseada na unidade de serviço:
+        // - Pilates (frequência/semana): "Pilates Clássico - Mensalidade 2x/semana — Coletivo, Clínica"
+        // - Pacotes de sessão: "Drenagem - Pacote 10 sessões — Individual, Clínica"
+        // - Avulsos: "Pilates Clássico - Aula Avulsa — Coletivo, Clínica"
+        String desc = entity.getAtividade().getNome() + " - " + entity.getPlano().getNome();
+        if (entity.getQuantidade() != null && entity.getQuantidade() > 1) {
+            String unidade = entity.getUnidadeServico();
+            if (unidade != null && unidade.toLowerCase().contains("frequência")) {
+                desc += " " + entity.getQuantidade() + "x/semana";
+            } else if (unidade != null && unidade.toLowerCase().contains("sessão")) {
+                desc += " " + entity.getQuantidade() + " sessões";
+            } else if (unidade != null && !unidade.isBlank()) {
+                desc += " " + entity.getQuantidade() + " " + unidade;
+            }
+        }
+        desc += " — " + entity.getTipoAtendimento() + ", " + entity.getModalidadeLocal();
+        dto.setDescricao(desc);
+
         dto.setAtividadeId(entity.getAtividade().getId());
         dto.setAtividadeNome(entity.getAtividade().getNome());
         dto.setPlanoId(entity.getPlano().getId());

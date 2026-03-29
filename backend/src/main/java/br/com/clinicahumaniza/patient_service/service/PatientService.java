@@ -78,12 +78,14 @@ public class PatientService {
             throw new IllegalArgumentException("Patient ID cannot be null");
         }
         return patientRepository.findById(id)
+                .filter(Patient::isStatusAtivo)
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
     public Page<Patient> getAllPatients(String nome, String email, String cpf, Pageable pageable) {
         Specification<Patient> spec = Specification
-                .where(PatientSpecification.hasNome(nome))
+                .where(PatientSpecification.isAtivo())
+                .and(PatientSpecification.hasNome(nome))
                 .and(PatientSpecification.hasEmail(email))
                 .and(PatientSpecification.hasCpf(cpf));
         return patientRepository.findAll(spec, pageable);

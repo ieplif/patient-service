@@ -5,6 +5,10 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class PatientSpecification {
 
+    public static Specification<Patient> isAtivo() {
+        return (root, query, cb) -> cb.isTrue(root.get("statusAtivo"));
+    }
+
     public static Specification<Patient> hasNome(String nome) {
         return (root, query, cb) -> {
             if (nome == null || nome.isBlank()) return null;

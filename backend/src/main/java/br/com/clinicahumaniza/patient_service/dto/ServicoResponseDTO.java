@@ -14,6 +14,7 @@ import java.util.UUID;
 public class ServicoResponseDTO {
 
     private UUID id;
+    private String descricao;
     private UUID atividadeId;
     private String atividadeNome;
     private UUID planoId;

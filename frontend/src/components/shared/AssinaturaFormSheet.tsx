@@ -34,13 +34,14 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
   const [valor, setValor] = useState("")
   const [observacoes, setObservacoes] = useState("")
 
-  const { data: pacientesData } = useQuery({
+  const { data: pacientesData, isLoading: loadingPacientes, isError: errorPacientes } = useQuery({
     queryKey: ["patients-all"],
     queryFn: () => getPatients({ page: 0, size: 200 }),
     enabled: open,
+    retry: 1,
   })
 
-  const { data: servicosData } = useQuery({
+  const { data: servicosData, isLoading: loadingServicos } = useQuery({
     queryKey: ["servicos-all"],
     queryFn: () => getServicos(),
     enabled: open,
@@ -103,11 +104,19 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
                 <SelectValue placeholder="Selecione o paciente" />
               </SelectTrigger>
               <SelectContent>
-                {pacientesData?.content.map((p) => (
-                  <SelectItem key={p.id} value={p.id} className="font-secondary">
-                    {p.nomeCompleto}
-                  </SelectItem>
-                ))}
+                {loadingPacientes ? (
+                  <div className="py-2 px-3 text-sm text-muted-foreground">Carregando...</div>
+                ) : errorPacientes ? (
+                  <div className="py-2 px-3 text-sm text-destructive">Erro ao carregar pacientes</div>
+                ) : !pacientesData?.content?.length ? (
+                  <div className="py-2 px-3 text-sm text-muted-foreground">Nenhum paciente cadastrado</div>
+                ) : (
+                  pacientesData.content.map((p) => (
+                    <SelectItem key={p.id} value={p.id} className="font-secondary">
+                      {p.nomeCompleto}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -119,11 +128,17 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
                 <SelectValue placeholder="Selecione o serviço" />
               </SelectTrigger>
               <SelectContent>
-                {servicosData?.map((s) => (
-                  <SelectItem key={s.id} value={s.id} className="font-secondary">
-                    {s.descricao} — {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(s.valor)}
-                  </SelectItem>
-                ))}
+                {loadingServicos ? (
+                  <div className="py-2 px-3 text-sm text-muted-foreground">Carregando...</div>
+                ) : !servicosData?.length ? (
+                  <div className="py-2 px-3 text-sm text-muted-foreground">Nenhum serviço encontrado</div>
+                ) : (
+                  servicosData.map((s) => (
+                    <SelectItem key={s.id} value={s.id} className="font-secondary">
+                      {s.descricao} — {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(s.valor)}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
