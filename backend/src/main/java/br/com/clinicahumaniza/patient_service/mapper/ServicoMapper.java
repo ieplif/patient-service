@@ -54,6 +54,8 @@ public class ServicoMapper {
         dto.setUnidadeServico(entity.getUnidadeServico());
         dto.setModalidadeLocal(entity.getModalidadeLocal());
         dto.setValor(entity.getValor());
+        dto.setValidadeDias(entity.getPlano().getValidadeDias());
+        dto.setSessoesIncluidas(entity.getPlano().getSessoesIncluidas());
         dto.setAtivo(entity.isAtivo());
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;

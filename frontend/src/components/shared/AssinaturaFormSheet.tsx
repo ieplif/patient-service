@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getPatients } from "@/api/patients"
 import { getServicos } from "@/api/servicos"
-import type { Assinatura } from "@/types"
+import type { Assinatura, Servico } from "@/types"
 
 interface AssinaturaFormSheetProps {
   open: boolean
@@ -25,6 +25,42 @@ interface AssinaturaFormSheetProps {
   isPending?: boolean
 }
 
+const DIAS_SEMANA = [
+  { value: 0, label: "Dom" },
+  { value: 1, label: "Seg" },
+  { value: 2, label: "Ter" },
+  { value: 3, label: "Qua" },
+  { value: 4, label: "Qui" },
+  { value: 5, label: "Sex" },
+  { value: 6, label: "Sáb" },
+]
+
+function isPilatesService(servico: Servico | undefined | null): boolean {
+  return !!servico?.atividadeNome?.toLowerCase().includes("pilates")
+}
+
+function isFrequenciaService(servico: Servico | undefined | null): boolean {
+  return !!servico?.unidadeServico?.toLowerCase().match(/frequ[eê]ncia/)
+}
+
+function calcularAulas(dataInicio: string, validadeDias: number, diasSemana: number[]): number {
+  if (!diasSemana.length) return 0
+  const inicio = new Date(dataInicio + "T12:00:00")
+  let count = 0
+  for (let i = 0; i < validadeDias; i++) {
+    const d = new Date(inicio)
+    d.setDate(d.getDate() + i)
+    if (diasSemana.includes(d.getDay())) count++
+  }
+  return count
+}
+
+function addDaysToDate(dateStr: string, days: number): string {
+  const d = new Date(dateStr + "T12:00:00")
+  d.setDate(d.getDate() + days - 1)
+  return d.toISOString().split("T")[0]
+}
+
 export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, isPending }: AssinaturaFormSheetProps) {
   const [pacienteId, setPacienteId] = useState("")
   const [servicoId, setServicoId] = useState("")
@@ -33,6 +69,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
   const [sessoesContratadas, setSessoesContratadas] = useState("")
   const [valor, setValor] = useState("")
   const [observacoes, setObservacoes] = useState("")
+  const [diasSemana, setDiasSemana] = useState<number[]>([])
 
   const { data: pacientesData, isLoading: loadingPacientes, isError: errorPacientes } = useQuery({
     queryKey: ["patients-all"],
@@ -56,6 +93,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       setSessoesContratadas(String(assinatura.sessoesContratadas))
       setValor(String(assinatura.valor))
       setObservacoes(assinatura.observacoes || "")
+      setDiasSemana([])
     } else if (open) {
       setPacienteId("")
       setServicoId("")
@@ -64,8 +102,64 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       setSessoesContratadas("")
       setValor("")
       setObservacoes("")
+      setDiasSemana([])
     }
   }, [open, assinatura])
+
+  const isEditing = !!assinatura
+  const selectedServico = servicosData?.find(s => s.id === servicoId) ?? null
+  const isPilates = isPilatesService(selectedServico)
+  const isFrequencia = isFrequenciaService(selectedServico)
+  const showDayPicker = isPilates && isFrequencia
+  const sessoesLabel = isPilates ? "Aulas contratadas" : "Sessões contratadas"
+
+  function handleServicoChange(id: string) {
+    setServicoId(id)
+    if (isEditing) return
+
+    const servico = servicosData?.find(s => s.id === id)
+    if (!servico) return
+
+    if (servico.valor != null) {
+      setValor(String(servico.valor))
+    }
+
+    const pilates = isPilatesService(servico)
+    const freq = isFrequenciaService(servico)
+
+    if (pilates && freq) {
+      setSessoesContratadas("")
+      setDiasSemana([])
+    } else {
+      setSessoesContratadas(String(servico.quantidade ?? 1))
+    }
+
+    if (servico.validadeDias && dataInicio) {
+      setDataVencimento(addDaysToDate(dataInicio, servico.validadeDias))
+    }
+  }
+
+  function handleDataInicioChange(data: string) {
+    setDataInicio(data)
+    if (!selectedServico?.validadeDias || !data) return
+
+    setDataVencimento(addDaysToDate(data, selectedServico.validadeDias))
+
+    if (showDayPicker && diasSemana.length > 0) {
+      setSessoesContratadas(String(calcularAulas(data, selectedServico.validadeDias, diasSemana)))
+    }
+  }
+
+  function handleToggleDia(dia: number) {
+    const novos = diasSemana.includes(dia)
+      ? diasSemana.filter(d => d !== dia)
+      : [...diasSemana, dia]
+    setDiasSemana(novos)
+
+    if (!selectedServico?.validadeDias || !dataInicio) return
+    const aulas = calcularAulas(dataInicio, selectedServico.validadeDias, novos)
+    setSessoesContratadas(novos.length > 0 ? String(aulas) : "")
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -80,7 +174,8 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
     })
   }
 
-  const isEditing = !!assinatura
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -97,6 +192,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+          {/* Paciente */}
           <div className="space-y-2">
             <Label className="font-primary">Paciente *</Label>
             <Select value={pacienteId} onValueChange={setPacienteId} disabled={isEditing}>
@@ -121,9 +217,10 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             </Select>
           </div>
 
+          {/* Serviço */}
           <div className="space-y-2">
             <Label className="font-primary">Serviço *</Label>
-            <Select value={servicoId} onValueChange={setServicoId}>
+            <Select value={servicoId} onValueChange={handleServicoChange}>
               <SelectTrigger className="font-secondary">
                 <SelectValue placeholder="Selecione o serviço" />
               </SelectTrigger>
@@ -135,7 +232,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
                 ) : (
                   servicosData.map((s) => (
                     <SelectItem key={s.id} value={s.id} className="font-secondary">
-                      {s.descricao} — {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(s.valor)}
+                      {s.descricao}{s.valor != null ? ` — ${formatCurrency(s.valor)}` : ""}
                     </SelectItem>
                   ))
                 )}
@@ -143,13 +240,14 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             </Select>
           </div>
 
+          {/* Datas */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label className="font-primary">Início *</Label>
               <Input
                 type="date"
                 value={dataInicio}
-                onChange={(e) => setDataInicio(e.target.value)}
+                onChange={(e) => handleDataInicioChange(e.target.value)}
                 required
                 className="font-secondary"
               />
@@ -165,16 +263,57 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             </div>
           </div>
 
+          {/* Seletor de dias da semana para Pilates com frequência */}
+          {showDayPicker && (
+            <div className="space-y-2">
+              <Label className="font-primary">
+                Dias da semana
+                {selectedServico?.quantidade
+                  ? ` (${selectedServico.quantidade}x/semana)`
+                  : ""}
+                {" "}*
+              </Label>
+              <div className="flex gap-1.5 flex-wrap">
+                {DIAS_SEMANA.map(({ value, label }) => {
+                  const ativo = diasSemana.includes(value)
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => handleToggleDia(value)}
+                      className={
+                        "px-3 py-1.5 rounded-md text-xs font-primary border transition-colors " +
+                        (ativo
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background text-foreground border-input hover:bg-muted")
+                      }
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+              {diasSemana.length > 0 && selectedServico?.validadeDias && dataInicio && (
+                <p className="text-xs text-muted-foreground font-secondary">
+                  {sessoesContratadas} aulas no período
+                  {selectedServico.planoNome ? ` · ${selectedServico.planoNome}` : ""}
+                  {` · ${selectedServico.validadeDias} dias`}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Sessões / Aulas e Valor */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="font-primary">Sessões contratadas *</Label>
+              <Label className="font-primary">{sessoesLabel} *</Label>
               <Input
                 type="number"
                 min="1"
                 value={sessoesContratadas}
                 onChange={(e) => setSessoesContratadas(e.target.value)}
                 required
-                placeholder="12"
+                placeholder={showDayPicker ? "Selecione os dias" : "1"}
                 className="font-secondary"
               />
             </div>
@@ -187,12 +326,13 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
                 required
-                placeholder="384,00"
+                placeholder="0,00"
                 className="font-secondary"
               />
             </div>
           </div>
 
+          {/* Observações */}
           <div className="space-y-2">
             <Label className="font-primary">Observações</Label>
             <textarea
