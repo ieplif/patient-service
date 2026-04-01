@@ -7,22 +7,71 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getPatients } from "@/api/patients"
 import { getServicos } from "@/api/servicos"
-import type { Assinatura } from "@/types"
+import { getProfissionais } from "@/api/profissionais"
+import type { Assinatura, Servico } from "@/types"
+
+export interface HorarioFixo {
+  dia: string
+  horario: string
+}
+
+export interface AssinaturaFormData {
+  pacienteId: string
+  servicoId: string
+  dataInicio: string
+  dataVencimento?: string
+  sessoesContratadas: number
+  valor: number
+  observacoes?: string
+  profissionalId?: string
+  horariosFixos?: HorarioFixo[]
+}
 
 interface AssinaturaFormSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: {
-    pacienteId: string
-    servicoId: string
-    dataInicio: string
-    dataVencimento?: string
-    sessoesContratadas: number
-    valor: number
-    observacoes?: string
-  }) => void
+  onSubmit: (data: AssinaturaFormData) => void
   assinatura?: Assinatura | null
   isPending?: boolean
+}
+
+const DIAS_SEMANA = [
+  { value: "1", label: "Segunda-feira" },
+  { value: "2", label: "Terça-feira" },
+  { value: "3", label: "Quarta-feira" },
+  { value: "4", label: "Quinta-feira" },
+  { value: "5", label: "Sexta-feira" },
+  { value: "6", label: "Sábado" },
+]
+
+const DIAS_SEMANA_CURTO: Record<string, string> = {
+  "1": "Seg", "2": "Ter", "3": "Qua", "4": "Qui", "5": "Sex", "6": "Sáb",
+}
+
+function isPilatesService(servico: Servico | null): boolean {
+  return !!servico?.atividadeNome?.toLowerCase().includes("pilates")
+}
+
+function isFrequenciaService(servico: Servico | null): boolean {
+  return !!servico?.unidadeServico?.toLowerCase().match(/frequ[eê]ncia/)
+}
+
+function calcularAulas(dataInicio: string, validadeDias: number, diasSemana: number[]): number {
+  if (!diasSemana.length || !dataInicio) return 0
+  const inicio = new Date(dataInicio + "T12:00:00")
+  let count = 0
+  for (let i = 0; i < validadeDias; i++) {
+    const d = new Date(inicio)
+    d.setDate(d.getDate() + i)
+    if (diasSemana.includes(d.getDay())) count++
+  }
+  return count
+}
+
+function addDaysToDate(dateStr: string, days: number): string {
+  const d = new Date(dateStr + "T12:00:00")
+  d.setDate(d.getDate() + days - 1)
+  return d.toISOString().split("T")[0]
 }
 
 export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, isPending }: AssinaturaFormSheetProps) {
@@ -33,6 +82,8 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
   const [sessoesContratadas, setSessoesContratadas] = useState("")
   const [valor, setValor] = useState("")
   const [observacoes, setObservacoes] = useState("")
+  const [horariosFixos, setHorariosFixos] = useState<HorarioFixo[]>([])
+  const [profissionalId, setProfissionalId] = useState("")
 
   const { data: pacientesData, isLoading: loadingPacientes, isError: errorPacientes } = useQuery({
     queryKey: ["patients-all"],
@@ -47,6 +98,12 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
     enabled: open,
   })
 
+  const { data: profissionaisData, isLoading: loadingProfissionais } = useQuery({
+    queryKey: ["profissionais-all"],
+    queryFn: () => getProfissionais({ page: 0, size: 200 }),
+    enabled: open,
+  })
+
   useEffect(() => {
     if (open && assinatura) {
       setPacienteId(assinatura.pacienteId)
@@ -56,6 +113,8 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       setSessoesContratadas(String(assinatura.sessoesContratadas))
       setValor(String(assinatura.valor))
       setObservacoes(assinatura.observacoes || "")
+      setHorariosFixos([])
+      setProfissionalId("")
     } else if (open) {
       setPacienteId("")
       setServicoId("")
@@ -64,11 +123,100 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       setSessoesContratadas("")
       setValor("")
       setObservacoes("")
+      setHorariosFixos([])
+      setProfissionalId("")
     }
   }, [open, assinatura])
 
+  const isEditing = !!assinatura
+  const selectedServico = servicosData?.find(s => s.id === servicoId) ?? null
+  const isPilates = isPilatesService(selectedServico)
+  const isFrequencia = isFrequenciaService(selectedServico)
+  const showHorarios = isPilates && isFrequencia
+  const sessoesLabel = isPilates ? "Aulas contratadas" : "Sessões contratadas"
+
+  // Filter professionals by the selected service's activity
+  const profissionaisFiltrados = selectedServico?.atividadeId
+    ? profissionaisData?.content.filter(p =>
+        p.atividades.some(a => a.id === selectedServico.atividadeId)
+      )
+    : []
+
+  function recalcularAulas(horarios: HorarioFixo[], inicio: string, servico: Servico | null) {
+    if (!servico?.validadeDias || !inicio) return
+    const diasSelecionados = horarios
+      .filter(h => h.dia !== "")
+      .map(h => Number(h.dia))
+    const aulas = calcularAulas(inicio, servico.validadeDias, diasSelecionados)
+    setSessoesContratadas(diasSelecionados.length > 0 ? String(aulas) : "")
+  }
+
+  function handleServicoChange(id: string) {
+    setServicoId(id)
+    setProfissionalId("")
+    if (isEditing) return
+
+    const servico = servicosData?.find(s => s.id === id)
+    if (!servico) return
+
+    if (servico.valor != null) {
+      setValor(String(servico.valor))
+    }
+
+    const pilates = isPilatesService(servico)
+    const freq = isFrequenciaService(servico)
+
+    if (pilates && freq) {
+      const qtd = servico.quantidade ?? 1
+      setHorariosFixos(Array.from({ length: qtd }, () => ({ dia: "", horario: "" })))
+      setSessoesContratadas("")
+    } else {
+      setSessoesContratadas(String(servico.quantidade ?? 1))
+      setHorariosFixos([])
+    }
+
+    if (servico.validadeDias && dataInicio) {
+      setDataVencimento(addDaysToDate(dataInicio, servico.validadeDias))
+    }
+  }
+
+  function handleDataInicioChange(data: string) {
+    setDataInicio(data)
+    if (!selectedServico?.validadeDias || !data) return
+
+    setDataVencimento(addDaysToDate(data, selectedServico.validadeDias))
+
+    if (showHorarios && horariosFixos.length > 0) {
+      recalcularAulas(horariosFixos, data, selectedServico)
+    }
+  }
+
+  function handleHorarioChange(index: number, field: "dia" | "horario", value: string) {
+    const novos = horariosFixos.map((h, i) =>
+      i === index ? { ...h, [field]: value } : h
+    )
+    setHorariosFixos(novos)
+
+    if (field === "dia") {
+      recalcularAulas(novos, dataInicio, selectedServico)
+    }
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    // Build horários text for observações
+    let obsFinais = observacoes
+    if (showHorarios && horariosFixos.some(h => h.dia && h.horario)) {
+      const horariosTexto = horariosFixos
+        .filter(h => h.dia && h.horario)
+        .map((h, i) => `Horário ${i + 1}: ${DIAS_SEMANA_CURTO[h.dia] ?? h.dia} às ${h.horario}`)
+        .join(" | ")
+      obsFinais = obsFinais
+        ? `${obsFinais}\n${horariosTexto}`
+        : horariosTexto
+    }
+
     onSubmit({
       pacienteId,
       servicoId,
@@ -76,11 +224,16 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       dataVencimento: dataVencimento || undefined,
       sessoesContratadas: Number(sessoesContratadas),
       valor: Number(valor),
-      observacoes: observacoes || undefined,
+      observacoes: obsFinais || undefined,
+      profissionalId: profissionalId || undefined,
+      horariosFixos: showHorarios
+        ? horariosFixos.filter(h => h.dia && h.horario)
+        : undefined,
     })
   }
 
-  const isEditing = !!assinatura
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -97,6 +250,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+          {/* Paciente */}
           <div className="space-y-2">
             <Label className="font-primary">Paciente *</Label>
             <Select value={pacienteId} onValueChange={setPacienteId} disabled={isEditing}>
@@ -121,9 +275,10 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             </Select>
           </div>
 
+          {/* Serviço */}
           <div className="space-y-2">
             <Label className="font-primary">Serviço *</Label>
-            <Select value={servicoId} onValueChange={setServicoId}>
+            <Select value={servicoId} onValueChange={handleServicoChange}>
               <SelectTrigger className="font-secondary">
                 <SelectValue placeholder="Selecione o serviço" />
               </SelectTrigger>
@@ -135,7 +290,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
                 ) : (
                   servicosData.map((s) => (
                     <SelectItem key={s.id} value={s.id} className="font-secondary">
-                      {s.descricao} — {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(s.valor)}
+                      {s.descricao}{s.valor != null ? ` — ${formatCurrency(s.valor)}` : ""}
                     </SelectItem>
                   ))
                 )}
@@ -143,13 +298,41 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             </Select>
           </div>
 
+          {/* Profissional — only shown for Pilates with frequency */}
+          {showHorarios && (
+            <div className="space-y-2">
+              <Label className="font-primary">Profissional *</Label>
+              <Select value={profissionalId} onValueChange={setProfissionalId}>
+                <SelectTrigger className="font-secondary">
+                  <SelectValue placeholder="Selecione o profissional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {loadingProfissionais ? (
+                    <div className="py-2 px-3 text-sm text-muted-foreground">Carregando...</div>
+                  ) : !profissionaisFiltrados?.length ? (
+                    <div className="py-2 px-3 text-sm text-muted-foreground">
+                      Nenhum profissional encontrado para esta atividade
+                    </div>
+                  ) : (
+                    profissionaisFiltrados.map((p) => (
+                      <SelectItem key={p.id} value={p.id} className="font-secondary">
+                        {p.nome}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Datas */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label className="font-primary">Início *</Label>
               <Input
                 type="date"
                 value={dataInicio}
-                onChange={(e) => setDataInicio(e.target.value)}
+                onChange={(e) => handleDataInicioChange(e.target.value)}
                 required
                 className="font-secondary"
               />
@@ -165,16 +348,62 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             </div>
           </div>
 
+          {/* Horários fixos for Pilates with frequency */}
+          {showHorarios && horariosFixos.length > 0 && (
+            <div className="space-y-3">
+              <Label className="font-primary">
+                Horários fixos ({selectedServico?.quantidade}x/semana) *
+              </Label>
+              {horariosFixos.map((h, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground font-secondary shrink-0 w-6">
+                    {i + 1}.
+                  </span>
+                  <Select
+                    value={h.dia}
+                    onValueChange={(v) => handleHorarioChange(i, "dia", v)}
+                  >
+                    <SelectTrigger className="font-secondary flex-1">
+                      <SelectValue placeholder="Dia" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DIAS_SEMANA.map(d => (
+                        <SelectItem key={d.value} value={d.value} className="font-secondary">
+                          {d.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-xs text-muted-foreground font-secondary">às</span>
+                  <Input
+                    type="time"
+                    value={h.horario}
+                    onChange={(e) => handleHorarioChange(i, "horario", e.target.value)}
+                    className="font-secondary w-28"
+                  />
+                </div>
+              ))}
+              {horariosFixos.some(h => h.dia) && selectedServico?.validadeDias && dataInicio && (
+                <p className="text-xs text-muted-foreground font-secondary">
+                  {sessoesContratadas} aulas no período
+                  {selectedServico.planoNome ? ` · ${selectedServico.planoNome}` : ""}
+                  {` · ${selectedServico.validadeDias} dias`}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Sessões / Aulas e Valor */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="font-primary">Sessões contratadas *</Label>
+              <Label className="font-primary">{sessoesLabel} *</Label>
               <Input
                 type="number"
                 min="1"
                 value={sessoesContratadas}
                 onChange={(e) => setSessoesContratadas(e.target.value)}
                 required
-                placeholder="12"
+                placeholder={showHorarios ? "Selecione os dias" : "1"}
                 className="font-secondary"
               />
             </div>
@@ -187,12 +416,13 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
                 required
-                placeholder="384,00"
+                placeholder="0,00"
                 className="font-secondary"
               />
             </div>
           </div>
 
+          {/* Observações */}
           <div className="space-y-2">
             <Label className="font-primary">Observações</Label>
             <textarea
@@ -215,7 +445,11 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             <Button
               type="submit"
               className="flex-1 bg-primary text-primary-foreground font-primary"
-              disabled={!pacienteId || !servicoId || !dataInicio || !sessoesContratadas || !valor || isPending}
+              disabled={
+                !pacienteId || !servicoId || !dataInicio || !sessoesContratadas || !valor
+                || (showHorarios && !profissionalId)
+                || isPending
+              }
             >
               {isPending ? "Salvando..." : isEditing ? "Salvar" : "Criar Assinatura"}
             </Button>

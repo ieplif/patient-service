@@ -24,6 +24,8 @@ public class ServicoResponseDTO {
     private String unidadeServico;
     private String modalidadeLocal;
     private BigDecimal valor;
+    private Integer validadeDias;
+    private Integer sessoesIncluidas;
     private boolean ativo;
     private LocalDateTime createdAt;
 }

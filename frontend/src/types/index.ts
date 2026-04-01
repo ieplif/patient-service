@@ -156,8 +156,18 @@ export interface Assinatura {
 export interface Servico {
   id: string
   descricao: string
+  atividadeId?: string
+  atividadeNome?: string
+  planoId?: string
+  planoNome?: string
+  tipoAtendimento?: string
+  quantidade?: number
+  unidadeServico?: string
+  modalidadeLocal?: string
   duracaoMinutos?: number
   valor?: number
+  validadeDias?: number
+  sessoesIncluidas?: number
   ativo: boolean
 }
 

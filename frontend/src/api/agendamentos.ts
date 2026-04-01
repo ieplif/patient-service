@@ -76,6 +76,35 @@ export async function criarReposicao(payload: ReposicaoCreateData): Promise<Agen
   return data
 }
 
+export interface AgendamentoRecorrenteData {
+  pacienteId: string
+  profissionalId: string
+  servicoId: string
+  assinaturaId?: string
+  frequencia: "SEMANAL" | "QUINZENAL" | "MENSAL"
+  diasSemana: string[]
+  horaInicio: string
+  duracaoMinutos?: number
+  totalSessoes?: number
+  dataFim?: string
+  observacoes?: string
+}
+
+export interface AgendamentoRecorrenteResult {
+  agendamentosCriados: Agendamento[]
+  datasIgnoradas: { data: string; motivo: string }[]
+}
+
+export async function createAgendamentoRecorrente(
+  payload: AgendamentoRecorrenteData
+): Promise<AgendamentoRecorrenteResult> {
+  const { data } = await apiClient.post<AgendamentoRecorrenteResult>(
+    "/api/v1/agendamentos/recorrente",
+    payload
+  )
+  return data
+}
+
 export async function getReposicoesInfo(pacienteId: string): Promise<ReposicaoInfo> {
   const { data } = await apiClient.get<ReposicaoInfo>(
     `/api/v1/agendamentos/paciente/${pacienteId}/reposicoes-info`
