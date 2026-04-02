@@ -5,6 +5,7 @@ export interface AgendamentoCreateData {
   pacienteId: string
   profissionalId: string
   servicoId: string
+  assinaturaId?: string
   dataHora: string
   duracaoMinutos?: number
   observacoes?: string
@@ -23,6 +24,7 @@ export async function getAgendamentos(params?: {
   status?: StatusAgendamento
   pacienteId?: string
   profissionalId?: string
+  assinaturaId?: string
   dataInicio?: string
   dataFim?: string
 }): Promise<PageResponse<Agendamento>> {

@@ -82,7 +82,7 @@ export function PacienteResumoPage() {
 
   const { data: agendamentos, isLoading: loadingAg } = useQuery({
     queryKey: ["agendamentos-paciente", id],
-    queryFn: () => getAgendamentos({ pacienteId: id, size: 10, sort: "dataHora,desc" }),
+    queryFn: () => getAgendamentos({ pacienteId: id, size: 10, sort: "dataHora,asc" }),
     enabled: !!id,
   })
 

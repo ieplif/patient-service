@@ -21,8 +21,8 @@ const queryClient = new QueryClient({
 })
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token } = useAuthStore()
-  if (!token) return <Navigate to="/login" replace />
+  const { user } = useAuthStore()
+  if (!user) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 

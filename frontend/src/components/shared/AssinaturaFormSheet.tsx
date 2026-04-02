@@ -5,13 +5,23 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 import { getPatients } from "@/api/patients"
 import { getServicos } from "@/api/servicos"
 import { getProfissionais } from "@/api/profissionais"
+import { getAgendamentos } from "@/api/agendamentos"
+import { Badge } from "@/components/ui/badge"
 import type { Assinatura, Servico } from "@/types"
 
 export interface HorarioFixo {
   dia: string
+  horario: string
+}
+
+export interface AgendamentoIndividual {
+  dataHora: string
+  data: string
   horario: string
 }
 
@@ -25,6 +35,7 @@ export interface AssinaturaFormData {
   observacoes?: string
   profissionalId?: string
   horariosFixos?: HorarioFixo[]
+  agendamentosIndividuais?: AgendamentoIndividual[]
 }
 
 interface AssinaturaFormSheetProps {
@@ -47,6 +58,12 @@ const DIAS_SEMANA = [
 const DIAS_SEMANA_CURTO: Record<string, string> = {
   "1": "Seg", "2": "Ter", "3": "Qua", "4": "Qui", "5": "Sex", "6": "Sáb",
 }
+
+const HORARIOS_DISPONIVEIS = Array.from({ length: 28 }, (_, i) => {
+  const h = Math.floor(i / 2) + 7 // 07:00 até 20:30
+  const m = i % 2 === 0 ? "00" : "30"
+  return `${String(h).padStart(2, "0")}:${m}`
+})
 
 function isPilatesService(servico: Servico | null): boolean {
   return !!servico?.atividadeNome?.toLowerCase().includes("pilates")
@@ -84,6 +101,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
   const [observacoes, setObservacoes] = useState("")
   const [horariosFixos, setHorariosFixos] = useState<HorarioFixo[]>([])
   const [profissionalId, setProfissionalId] = useState("")
+  const [agendamentos, setAgendamentos] = useState<AgendamentoIndividual[]>([])
 
   const { data: pacientesData, isLoading: loadingPacientes, isError: errorPacientes } = useQuery({
     queryKey: ["patients-all"],
@@ -104,6 +122,12 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
     enabled: open,
   })
 
+  const { data: agendamentosExistentes } = useQuery({
+    queryKey: ["agendamentos-assinatura", assinatura?.id],
+    queryFn: () => getAgendamentos({ assinaturaId: assinatura!.id, size: 200, sort: "dataHora,asc" }),
+    enabled: open && !!assinatura?.id,
+  })
+
   useEffect(() => {
     if (open && assinatura) {
       setPacienteId(assinatura.pacienteId)
@@ -115,6 +139,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       setObservacoes(assinatura.observacoes || "")
       setHorariosFixos([])
       setProfissionalId("")
+      setAgendamentos([])
     } else if (open) {
       setPacienteId("")
       setServicoId("")
@@ -125,6 +150,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       setObservacoes("")
       setHorariosFixos([])
       setProfissionalId("")
+      setAgendamentos([])
     }
   }, [open, assinatura])
 
@@ -133,6 +159,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
   const isPilates = isPilatesService(selectedServico)
   const isFrequencia = isFrequenciaService(selectedServico)
   const showHorarios = isPilates && isFrequencia
+  const showAgendamentosIndividuais = !isEditing && !showHorarios && servicoId && Number(sessoesContratadas) > 0
   const sessoesLabel = isPilates ? "Aulas contratadas" : "Sessões contratadas"
 
   // Filter professionals by the selected service's activity
@@ -154,6 +181,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
   function handleServicoChange(id: string) {
     setServicoId(id)
     setProfissionalId("")
+    setAgendamentos([])
     if (isEditing) return
 
     const servico = servicosData?.find(s => s.id === id)
@@ -170,9 +198,12 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       const qtd = servico.quantidade ?? 1
       setHorariosFixos(Array.from({ length: qtd }, () => ({ dia: "", horario: "" })))
       setSessoesContratadas("")
+      setAgendamentos([])
     } else {
-      setSessoesContratadas(String(servico.quantidade ?? 1))
+      const qtd = servico.quantidade ?? 1
+      setSessoesContratadas(String(qtd))
       setHorariosFixos([])
+      setAgendamentos(Array.from({ length: qtd }, () => ({ dataHora: "", data: "", horario: "" })))
     }
 
     if (servico.validadeDias && dataInicio) {
@@ -189,6 +220,27 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
     if (showHorarios && horariosFixos.length > 0) {
       recalcularAulas(horariosFixos, data, selectedServico)
     }
+  }
+
+  function handleSessoesChange(value: string) {
+    setSessoesContratadas(value)
+    if (!showHorarios && !isEditing) {
+      const n = Math.max(0, Math.min(Number(value) || 0, 52))
+      setAgendamentos(prev => {
+        if (n === prev.length) return prev
+        if (n > prev.length) return [...prev, ...Array.from({ length: n - prev.length }, () => ({ dataHora: "", data: "", horario: "" }))]
+        return prev.slice(0, n)
+      })
+    }
+  }
+
+  function handleAgendamentoChange(index: number, field: "data" | "horario", value: string) {
+    setAgendamentos(prev => prev.map((a, i) => {
+      if (i !== index) return a
+      const updated = { ...a, [field]: value }
+      updated.dataHora = updated.data && updated.horario ? `${updated.data}T${updated.horario}` : ""
+      return updated
+    }))
   }
 
   function handleHorarioChange(index: number, field: "dia" | "horario", value: string) {
@@ -228,6 +280,9 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       profissionalId: profissionalId || undefined,
       horariosFixos: showHorarios
         ? horariosFixos.filter(h => h.dia && h.horario)
+        : undefined,
+      agendamentosIndividuais: showAgendamentosIndividuais
+        ? agendamentos.filter(a => a.dataHora)
         : undefined,
     })
   }
@@ -298,8 +353,8 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             </Select>
           </div>
 
-          {/* Profissional — only shown for Pilates with frequency */}
-          {showHorarios && (
+          {/* Profissional — shown for Pilates with frequency or non-Pilates with sessions */}
+          {(showHorarios || showAgendamentosIndividuais) && (
             <div className="space-y-2">
               <Label className="font-primary">Profissional *</Label>
               <Select value={profissionalId} onValueChange={setProfissionalId}>
@@ -393,6 +448,43 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             </div>
           )}
 
+          {/* Agendamentos individuais for non-Pilates services */}
+          {showAgendamentosIndividuais && agendamentos.length > 0 && profissionalId && (
+            <div className="space-y-3">
+              <Label className="font-primary">
+                Agendamentos ({agendamentos.length} {agendamentos.length === 1 ? "sessão" : "sessões"})
+              </Label>
+              <div className="max-h-[240px] overflow-y-auto space-y-2 pr-1">
+                {agendamentos.map((a, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground font-secondary shrink-0 w-6">
+                      {i + 1}.
+                    </span>
+                    <Input
+                      type="date"
+                      value={a.data}
+                      onChange={(e) => handleAgendamentoChange(i, "data", e.target.value)}
+                      className="font-secondary flex-1"
+                    />
+                    <Select value={a.horario} onValueChange={(v) => handleAgendamentoChange(i, "horario", v)}>
+                      <SelectTrigger className="font-secondary w-[100px]">
+                        <SelectValue placeholder="Hora" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {HORARIOS_DISPONIVEIS.map(h => (
+                          <SelectItem key={h} value={h} className="font-secondary">{h}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground font-secondary">
+                {agendamentos.filter(a => a.dataHora).length} de {agendamentos.length} agendados
+              </p>
+            </div>
+          )}
+
           {/* Sessões / Aulas e Valor */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -401,7 +493,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
                 type="number"
                 min="1"
                 value={sessoesContratadas}
-                onChange={(e) => setSessoesContratadas(e.target.value)}
+                onChange={(e) => handleSessoesChange(e.target.value)}
                 required
                 placeholder={showHorarios ? "Selecione os dias" : "1"}
                 className="font-secondary"
@@ -421,6 +513,40 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
               />
             </div>
           </div>
+
+          {/* Agendamentos existentes (edit mode) */}
+          {isEditing && agendamentosExistentes && agendamentosExistentes.content.length > 0 && (
+            <div className="space-y-3">
+              <Label className="font-primary">
+                Agendamentos ({agendamentosExistentes.content.length})
+              </Label>
+              <div className="max-h-[200px] overflow-y-auto space-y-1.5 pr-1">
+                {agendamentosExistentes.content.map((ag, i) => (
+                  <div key={ag.id} className="flex items-center gap-2 text-sm font-secondary">
+                    <span className="text-xs text-muted-foreground shrink-0 w-6">{i + 1}.</span>
+                    <span className="flex-1">
+                      {format(new Date(ag.dataHora), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={
+                        ag.status === "REALIZADO" ? "bg-primary/15 text-primary border-primary/30 text-xs" :
+                        ag.status === "CANCELADO" ? "bg-destructive/15 text-destructive border-destructive/30 text-xs" :
+                        ag.status === "NAO_COMPARECEU" ? "bg-orange-100 text-orange-700 border-orange-300 text-xs" :
+                        "bg-muted text-muted-foreground border-border text-xs"
+                      }
+                    >
+                      {ag.status === "AGENDADO" ? "Agendado" :
+                       ag.status === "CONFIRMADO" ? "Confirmado" :
+                       ag.status === "REALIZADO" ? "Realizado" :
+                       ag.status === "CANCELADO" ? "Cancelado" :
+                       ag.status === "NAO_COMPARECEU" ? "Faltou" : ag.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Observações */}
           <div className="space-y-2">
@@ -447,7 +573,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
               className="flex-1 bg-primary text-primary-foreground font-primary"
               disabled={
                 !pacienteId || !servicoId || !dataInicio || !sessoesContratadas || !valor
-                || (showHorarios && !profissionalId)
+                || ((showHorarios || showAgendamentosIndividuais) && !profissionalId)
                 || isPending
               }
             >

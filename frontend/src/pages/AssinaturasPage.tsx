@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Star, Plus, Pencil, Ban, MoreHorizontal, Search } from "lucide-react"
 import { format } from "date-fns"
 import { getAssinaturas, createAssinatura, updateAssinatura, updateAssinaturaStatus } from "@/api/assinaturas"
-import { createAgendamentoRecorrente } from "@/api/agendamentos"
+import { createAgendamento, createAgendamentoRecorrente } from "@/api/agendamentos"
 import type { StatusAssinatura, Assinatura } from "@/types"
 import type { AssinaturaFormData } from "@/components/shared/AssinaturaFormSheet"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -88,15 +88,14 @@ export function AssinaturasPage() {
 
   const createMutation = useMutation({
     mutationFn: async (formData: AssinaturaFormData) => {
-      const { profissionalId, horariosFixos, ...assinaturaPayload } = formData
+      const { profissionalId, horariosFixos, agendamentosIndividuais, ...assinaturaPayload } = formData
       const assinatura = await createAssinatura(assinaturaPayload)
 
-      // Auto-create recurring appointments for Pilates with horários fixos
       let agendamentosCriados = 0
       const errosAgendamento: string[] = []
 
+      // Auto-create recurring appointments for Pilates with horários fixos
       if (horariosFixos?.length && profissionalId) {
-        // Calculate totalSessoes per slot as fallback
         const totalAulas = assinaturaPayload.sessoesContratadas
         const sessPorSlot = Math.ceil(totalAulas / horariosFixos.length)
 
@@ -123,6 +122,29 @@ export function AssinaturasPage() {
               const errMsg = (e as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
                 || (e as { response?: { data?: { message?: string } } })?.response?.data?.message
                 || "Erro ao criar agendamentos recorrentes"
+              errosAgendamento.push(errMsg)
+            }
+          }
+        }
+      }
+
+      // Create individual appointments for non-Pilates services
+      if (agendamentosIndividuais?.length && profissionalId) {
+        for (const ag of agendamentosIndividuais) {
+          if (ag.dataHora) {
+            try {
+              await createAgendamento({
+                pacienteId: assinaturaPayload.pacienteId,
+                profissionalId,
+                servicoId: assinaturaPayload.servicoId,
+                assinaturaId: assinatura.id,
+                dataHora: ag.dataHora + ":00",
+              })
+              agendamentosCriados++
+            } catch (e) {
+              const errMsg = (e as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
+                || (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+                || "Erro ao criar agendamento"
               errosAgendamento.push(errMsg)
             }
           }
