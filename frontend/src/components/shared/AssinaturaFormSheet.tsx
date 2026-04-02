@@ -5,9 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 import { getPatients } from "@/api/patients"
 import { getServicos } from "@/api/servicos"
 import { getProfissionais } from "@/api/profissionais"
+import { getAgendamentos } from "@/api/agendamentos"
+import { Badge } from "@/components/ui/badge"
 import type { Assinatura, Servico } from "@/types"
 
 export interface HorarioFixo {
@@ -116,6 +120,12 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
     queryKey: ["profissionais-all"],
     queryFn: () => getProfissionais({ page: 0, size: 200 }),
     enabled: open,
+  })
+
+  const { data: agendamentosExistentes } = useQuery({
+    queryKey: ["agendamentos-assinatura", assinatura?.id],
+    queryFn: () => getAgendamentos({ assinaturaId: assinatura!.id, size: 200, sort: "dataHora,asc" }),
+    enabled: open && !!assinatura?.id,
   })
 
   useEffect(() => {
@@ -503,6 +513,40 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
               />
             </div>
           </div>
+
+          {/* Agendamentos existentes (edit mode) */}
+          {isEditing && agendamentosExistentes && agendamentosExistentes.content.length > 0 && (
+            <div className="space-y-3">
+              <Label className="font-primary">
+                Agendamentos ({agendamentosExistentes.content.length})
+              </Label>
+              <div className="max-h-[200px] overflow-y-auto space-y-1.5 pr-1">
+                {agendamentosExistentes.content.map((ag, i) => (
+                  <div key={ag.id} className="flex items-center gap-2 text-sm font-secondary">
+                    <span className="text-xs text-muted-foreground shrink-0 w-6">{i + 1}.</span>
+                    <span className="flex-1">
+                      {format(new Date(ag.dataHora), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={
+                        ag.status === "REALIZADO" ? "bg-primary/15 text-primary border-primary/30 text-xs" :
+                        ag.status === "CANCELADO" ? "bg-destructive/15 text-destructive border-destructive/30 text-xs" :
+                        ag.status === "NAO_COMPARECEU" ? "bg-orange-100 text-orange-700 border-orange-300 text-xs" :
+                        "bg-muted text-muted-foreground border-border text-xs"
+                      }
+                    >
+                      {ag.status === "AGENDADO" ? "Agendado" :
+                       ag.status === "CONFIRMADO" ? "Confirmado" :
+                       ag.status === "REALIZADO" ? "Realizado" :
+                       ag.status === "CANCELADO" ? "Cancelado" :
+                       ag.status === "NAO_COMPARECEU" ? "Faltou" : ag.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Observações */}
           <div className="space-y-2">

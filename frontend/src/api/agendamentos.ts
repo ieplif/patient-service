@@ -24,6 +24,7 @@ export async function getAgendamentos(params?: {
   status?: StatusAgendamento
   pacienteId?: string
   profissionalId?: string
+  assinaturaId?: string
   dataInicio?: string
   dataFim?: string
 }): Promise<PageResponse<Agendamento>> {
