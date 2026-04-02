@@ -2,6 +2,7 @@ package br.com.clinicahumaniza.patient_service.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -89,6 +90,17 @@ public class GlobalExceptionHandler {
         body.put("mensagem", "Acesso negado");
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
+
+    @ExceptionHandler(JpaObjectRetrievalFailureException.class)
+    public ResponseEntity<Map<String, Object>> handleEntityNotFound(JpaObjectRetrievalFailureException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.NOT_FOUND.value());
+        body.put("erro", "Recurso referenciado não encontrado");
+        body.put("mensagem", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
     @ExceptionHandler(BusinessException.class)

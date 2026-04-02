@@ -28,12 +28,20 @@ public class AgendamentoMapper {
         dto.setId(entity.getId());
         dto.setPacienteId(entity.getPaciente().getId());
         dto.setPacienteNome(entity.getPaciente().getNomeCompleto());
-        dto.setProfissionalId(entity.getProfissional().getId());
-        dto.setProfissionalNome(entity.getProfissional().getNome());
-        dto.setServicoId(entity.getServico().getId());
-        dto.setServicoDescricao(
-                entity.getServico().getAtividade().getNome() + " - " + entity.getServico().getPlano().getNome()
-        );
+        if (entity.getProfissional() != null) {
+            dto.setProfissionalId(entity.getProfissional().getId());
+            dto.setProfissionalNome(entity.getProfissional().getNome());
+        } else {
+            dto.setProfissionalNome("(profissional removido)");
+        }
+        if (entity.getServico() != null) {
+            dto.setServicoId(entity.getServico().getId());
+            dto.setServicoDescricao(
+                    entity.getServico().getAtividade().getNome() + " - " + entity.getServico().getPlano().getNome()
+            );
+        } else {
+            dto.setServicoDescricao("(serviço removido)");
+        }
         if (entity.getAssinatura() != null) {
             dto.setAssinaturaId(entity.getAssinatura().getId());
         }
