@@ -17,6 +17,8 @@ export interface HorarioFixo {
 
 export interface AgendamentoIndividual {
   dataHora: string
+  data: string
+  horario: string
 }
 
 export interface AssinaturaFormData {
@@ -52,6 +54,12 @@ const DIAS_SEMANA = [
 const DIAS_SEMANA_CURTO: Record<string, string> = {
   "1": "Seg", "2": "Ter", "3": "Qua", "4": "Qui", "5": "Sex", "6": "Sáb",
 }
+
+const HORARIOS_DISPONIVEIS = Array.from({ length: 28 }, (_, i) => {
+  const h = Math.floor(i / 2) + 7 // 07:00 até 20:30
+  const m = i % 2 === 0 ? "00" : "30"
+  return `${String(h).padStart(2, "0")}:${m}`
+})
 
 function isPilatesService(servico: Servico | null): boolean {
   return !!servico?.atividadeNome?.toLowerCase().includes("pilates")
@@ -185,7 +193,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       const qtd = servico.quantidade ?? 1
       setSessoesContratadas(String(qtd))
       setHorariosFixos([])
-      setAgendamentos(Array.from({ length: qtd }, () => ({ dataHora: "" })))
+      setAgendamentos(Array.from({ length: qtd }, () => ({ dataHora: "", data: "", horario: "" })))
     }
 
     if (servico.validadeDias && dataInicio) {
@@ -210,14 +218,19 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       const n = Math.max(0, Math.min(Number(value) || 0, 52))
       setAgendamentos(prev => {
         if (n === prev.length) return prev
-        if (n > prev.length) return [...prev, ...Array.from({ length: n - prev.length }, () => ({ dataHora: "" }))]
+        if (n > prev.length) return [...prev, ...Array.from({ length: n - prev.length }, () => ({ dataHora: "", data: "", horario: "" }))]
         return prev.slice(0, n)
       })
     }
   }
 
-  function handleAgendamentoChange(index: number, value: string) {
-    setAgendamentos(prev => prev.map((a, i) => i === index ? { dataHora: value } : a))
+  function handleAgendamentoChange(index: number, field: "data" | "horario", value: string) {
+    setAgendamentos(prev => prev.map((a, i) => {
+      if (i !== index) return a
+      const updated = { ...a, [field]: value }
+      updated.dataHora = updated.data && updated.horario ? `${updated.data}T${updated.horario}` : ""
+      return updated
+    }))
   }
 
   function handleHorarioChange(index: number, field: "dia" | "horario", value: string) {
@@ -431,18 +444,28 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
               <Label className="font-primary">
                 Agendamentos ({agendamentos.length} {agendamentos.length === 1 ? "sessão" : "sessões"})
               </Label>
-              <div className="max-h-[200px] overflow-y-auto space-y-2 pr-1">
+              <div className="max-h-[240px] overflow-y-auto space-y-2 pr-1">
                 {agendamentos.map((a, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground font-secondary shrink-0 w-6">
                       {i + 1}.
                     </span>
                     <Input
-                      type="datetime-local"
-                      value={a.dataHora}
-                      onChange={(e) => handleAgendamentoChange(i, e.target.value)}
+                      type="date"
+                      value={a.data}
+                      onChange={(e) => handleAgendamentoChange(i, "data", e.target.value)}
                       className="font-secondary flex-1"
                     />
+                    <Select value={a.horario} onValueChange={(v) => handleAgendamentoChange(i, "horario", v)}>
+                      <SelectTrigger className="font-secondary w-[100px]">
+                        <SelectValue placeholder="Hora" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {HORARIOS_DISPONIVEIS.map(h => (
+                          <SelectItem key={h} value={h} className="font-secondary">{h}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 ))}
               </div>
