@@ -3,7 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Star, Plus, Pencil, Ban, MoreHorizontal, Search } from "lucide-react"
 import { format } from "date-fns"
 import { getAssinaturas, createAssinatura, updateAssinatura, updateAssinaturaStatus } from "@/api/assinaturas"
+import { createAgendamento, createAgendamentoRecorrente } from "@/api/agendamentos"
 import type { StatusAssinatura, Assinatura } from "@/types"
+import type { AssinaturaFormData } from "@/components/shared/AssinaturaFormSheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -34,6 +36,16 @@ import { Pagination } from "@/components/shared/Pagination"
 import { AssinaturaFormSheet } from "@/components/shared/AssinaturaFormSheet"
 
 const PAGE_SIZE = 15
+
+const DAY_TO_JAVA: Record<string, string> = {
+  "0": "SUNDAY",
+  "1": "MONDAY",
+  "2": "TUESDAY",
+  "3": "WEDNESDAY",
+  "4": "THURSDAY",
+  "5": "FRIDAY",
+  "6": "SATURDAY",
+}
 
 const statusConfig: Record<StatusAssinatura, { label: string; className: string }> = {
   ATIVO: { label: "Ativo", className: "bg-primary/15 text-primary border-primary/30" },
@@ -75,10 +87,90 @@ export function AssinaturasPage() {
   })
 
   const createMutation = useMutation({
-    mutationFn: createAssinatura,
-    onSuccess: () => {
+    mutationFn: async (formData: AssinaturaFormData) => {
+      const { profissionalId, horariosFixos, agendamentosIndividuais, ...assinaturaPayload } = formData
+      const assinatura = await createAssinatura(assinaturaPayload)
+
+      let agendamentosCriados = 0
+      const errosAgendamento: string[] = []
+
+      // Auto-create recurring appointments for Pilates with horários fixos
+      if (horariosFixos?.length && profissionalId) {
+        const totalAulas = assinaturaPayload.sessoesContratadas
+        const sessPorSlot = Math.ceil(totalAulas / horariosFixos.length)
+
+        for (const h of horariosFixos) {
+          if (h.dia && h.horario) {
+            try {
+              const result = await createAgendamentoRecorrente({
+                pacienteId: assinaturaPayload.pacienteId,
+                profissionalId,
+                servicoId: assinaturaPayload.servicoId,
+                assinaturaId: assinatura.id,
+                frequencia: "SEMANAL",
+                diasSemana: [DAY_TO_JAVA[h.dia]],
+                horaInicio: h.horario,
+                dataFim: assinatura.dataVencimento,
+                totalSessoes: sessPorSlot,
+              })
+              agendamentosCriados += result.agendamentosCriados?.length ?? 0
+              if (result.datasIgnoradas?.length) {
+                const motivos = [...new Set(result.datasIgnoradas.map(d => d.motivo))]
+                errosAgendamento.push(...motivos)
+              }
+            } catch (e) {
+              const errMsg = (e as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
+                || (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+                || "Erro ao criar agendamentos recorrentes"
+              errosAgendamento.push(errMsg)
+            }
+          }
+        }
+      }
+
+      // Create individual appointments for non-Pilates services
+      if (agendamentosIndividuais?.length && profissionalId) {
+        for (const ag of agendamentosIndividuais) {
+          if (ag.dataHora) {
+            try {
+              await createAgendamento({
+                pacienteId: assinaturaPayload.pacienteId,
+                profissionalId,
+                servicoId: assinaturaPayload.servicoId,
+                assinaturaId: assinatura.id,
+                dataHora: ag.dataHora + ":00",
+              })
+              agendamentosCriados++
+            } catch (e) {
+              const errMsg = (e as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
+                || (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+                || "Erro ao criar agendamento"
+              errosAgendamento.push(errMsg)
+            }
+          }
+        }
+      }
+
+      return { assinatura, agendamentosCriados, errosAgendamento }
+    },
+    onSuccess: ({ agendamentosCriados, errosAgendamento }) => {
       queryClient.invalidateQueries({ queryKey: ["assinaturas"] })
-      toast({ title: "Assinatura criada", description: "Nova assinatura cadastrada com sucesso." })
+      queryClient.invalidateQueries({ queryKey: ["agendamentos"] })
+
+      if (agendamentosCriados > 0) {
+        toast({
+          title: "Assinatura criada",
+          description: `Assinatura criada com ${agendamentosCriados} agendamentos.`,
+        })
+      } else if (errosAgendamento.length > 0) {
+        toast({
+          title: "Assinatura criada (sem agendamentos)",
+          description: `Assinatura salva, mas os agendamentos falharam: ${errosAgendamento[0]}`,
+          variant: "destructive",
+        })
+      } else {
+        toast({ title: "Assinatura criada", description: "Nova assinatura cadastrada com sucesso." })
+      }
       setSheetOpen(false)
     },
     onError: (err: unknown) => {
@@ -121,9 +213,10 @@ export function AssinaturasPage() {
     },
   })
 
-  function handleSubmit(formData: Parameters<typeof createAssinatura>[0]) {
+  function handleSubmit(formData: AssinaturaFormData) {
     if (editAssinatura) {
-      updateMutation.mutate({ id: editAssinatura.id, ...formData })
+      const { profissionalId: _p, horariosFixos: _h, ...payload } = formData
+      updateMutation.mutate({ id: editAssinatura.id, ...payload })
     } else {
       createMutation.mutate(formData)
     }
