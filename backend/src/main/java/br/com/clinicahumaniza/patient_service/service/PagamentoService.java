@@ -52,10 +52,6 @@ public class PagamentoService {
 
     @Transactional
     public Pagamento createPagamento(PagamentoRequestDTO dto) {
-        if (dto.getAssinaturaId() == null && dto.getAgendamentoId() == null) {
-            throw new BusinessException("É necessário informar ao menos uma assinatura ou um agendamento");
-        }
-
         Patient paciente = patientRepository.findById(dto.getPacienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Paciente", dto.getPacienteId()));
 

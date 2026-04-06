@@ -6,12 +6,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getPatients } from "@/api/patients"
+import { getAssinaturas } from "@/api/assinaturas"
+import { getAgendamentos } from "@/api/agendamentos"
 import type { FormaPagamento } from "@/types"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 
 const formasPagamento: { value: FormaPagamento; label: string }[] = [
   { value: "PIX", label: "Pix" },
-  { value: "CARTAO_CREDITO", label: "Cartao Credito" },
-  { value: "CARTAO_DEBITO", label: "Cartao Debito" },
+  { value: "CARTAO_CREDITO", label: "Cartão Crédito" },
+  { value: "CARTAO_DEBITO", label: "Cartão Débito" },
   { value: "DINHEIRO", label: "Dinheiro" },
 ]
 
@@ -20,6 +24,8 @@ interface PagamentoFormSheetProps {
   onOpenChange: (open: boolean) => void
   onSubmit: (data: {
     pacienteId: string
+    assinaturaId?: string
+    agendamentoId?: string
     valor: number
     formaPagamento: FormaPagamento
     numeroParcelas?: number
@@ -31,6 +37,8 @@ interface PagamentoFormSheetProps {
 
 export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: PagamentoFormSheetProps) {
   const [pacienteId, setPacienteId] = useState("")
+  const [assinaturaId, setAssinaturaId] = useState("")
+  const [agendamentoId, setAgendamentoId] = useState("")
   const [valor, setValor] = useState("")
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">("")
   const [numeroParcelas, setNumeroParcelas] = useState("1")
@@ -43,9 +51,23 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
     enabled: open,
   })
 
+  const { data: assinaturasData } = useQuery({
+    queryKey: ["assinaturas-paciente", pacienteId],
+    queryFn: () => getAssinaturas({ pacienteId, size: 100, sort: "createdAt,desc" }),
+    enabled: open && !!pacienteId,
+  })
+
+  const { data: agendamentosData } = useQuery({
+    queryKey: ["agendamentos-paciente-pagamento", pacienteId],
+    queryFn: () => getAgendamentos({ pacienteId, size: 100, sort: "dataHora,desc" }),
+    enabled: open && !!pacienteId,
+  })
+
   useEffect(() => {
     if (open) {
       setPacienteId("")
+      setAssinaturaId("")
+      setAgendamentoId("")
       setValor("")
       setFormaPagamento("")
       setNumeroParcelas("1")
@@ -54,11 +76,35 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
     }
   }, [open])
 
+  function handlePacienteChange(id: string) {
+    setPacienteId(id)
+    setAssinaturaId("")
+    setAgendamentoId("")
+  }
+
+  function handleAssinaturaChange(id: string) {
+    setAssinaturaId(id === "_none" ? "" : id)
+    if (id !== "_none") {
+      setAgendamentoId("")
+      const assinatura = assinaturasData?.content.find(a => a.id === id)
+      if (assinatura) setValor(String(assinatura.valor))
+    }
+  }
+
+  function handleAgendamentoChange(id: string) {
+    setAgendamentoId(id === "_none" ? "" : id)
+    if (id !== "_none") {
+      setAssinaturaId("")
+    }
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!formaPagamento) return
     onSubmit({
       pacienteId,
+      assinaturaId: assinaturaId || undefined,
+      agendamentoId: agendamentoId || undefined,
       valor: Number(valor),
       formaPagamento,
       numeroParcelas: Number(numeroParcelas) > 1 ? Number(numeroParcelas) : undefined,
@@ -68,6 +114,8 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
   }
 
   const showParcelas = formaPagamento === "CARTAO_CREDITO"
+  const assinaturas = assinaturasData?.content ?? []
+  const agendamentos = agendamentosData?.content ?? []
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -82,7 +130,7 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
         <form onSubmit={handleSubmit} className="space-y-4 mt-6">
           <div className="space-y-2">
             <Label className="font-primary">Paciente *</Label>
-            <Select value={pacienteId} onValueChange={setPacienteId}>
+            <Select value={pacienteId} onValueChange={handlePacienteChange}>
               <SelectTrigger className="font-secondary">
                 <SelectValue placeholder="Selecione o paciente" />
               </SelectTrigger>
@@ -95,6 +143,50 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
               </SelectContent>
             </Select>
           </div>
+
+          {/* Assinatura (opcional) */}
+          {pacienteId && (
+            <div className="space-y-2">
+              <Label className="font-primary">Assinatura</Label>
+              <Select value={assinaturaId || "_none"} onValueChange={handleAssinaturaChange}>
+                <SelectTrigger className="font-secondary">
+                  <SelectValue placeholder="Nenhuma (pagamento avulso)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none" className="font-secondary text-muted-foreground">
+                    Nenhuma (pagamento avulso)
+                  </SelectItem>
+                  {assinaturas.map((a) => (
+                    <SelectItem key={a.id} value={a.id} className="font-secondary">
+                      {a.servicoDescricao} — R$ {a.valor.toFixed(2)} ({a.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Agendamento (opcional) */}
+          {pacienteId && !assinaturaId && (
+            <div className="space-y-2">
+              <Label className="font-primary">Agendamento</Label>
+              <Select value={agendamentoId || "_none"} onValueChange={handleAgendamentoChange}>
+                <SelectTrigger className="font-secondary">
+                  <SelectValue placeholder="Nenhum (pagamento avulso)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none" className="font-secondary text-muted-foreground">
+                    Nenhum (pagamento avulso)
+                  </SelectItem>
+                  {agendamentos.map((ag) => (
+                    <SelectItem key={ag.id} value={ag.id} className="font-secondary">
+                      {ag.servicoNome} — {format(new Date(ag.dataHora), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -154,11 +246,11 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
           </div>
 
           <div className="space-y-2">
-            <Label className="font-primary">Observacoes</Label>
+            <Label className="font-primary">Observações</Label>
             <textarea
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
-              placeholder="Observacoes opcionais..."
+              placeholder="Observações opcionais..."
               className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-secondary ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>

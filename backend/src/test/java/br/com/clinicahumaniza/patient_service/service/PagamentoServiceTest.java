@@ -179,19 +179,6 @@ class PagamentoServiceTest {
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando nem assinatura nem agendamento informados")
-    void createPagamento_SemAssinaturaNemAgendamento_ThrowsException() {
-        requestDTO.setAssinaturaId(null);
-        requestDTO.setAgendamentoId(null);
-
-        assertThatThrownBy(() -> pagamentoService.createPagamento(requestDTO))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("assinatura ou um agendamento");
-
-        verify(pagamentoRepository, never()).save(any());
-    }
-
-    @Test
     @DisplayName("Deve lançar exceção quando paciente não encontrado")
     void createPagamento_PacienteNotFound() {
         when(patientRepository.findById(pacienteId)).thenReturn(Optional.empty());
