@@ -113,7 +113,7 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
     })
   }
 
-  const showParcelas = formaPagamento === "CARTAO_CREDITO"
+  const maxParcelas = formaPagamento === "CARTAO_CREDITO" ? 12 : 2
   const assinaturas = assinaturasData?.content ?? []
   const agendamentos = agendamentosData?.content ?? []
 
@@ -204,7 +204,11 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
             </div>
             <div className="space-y-2">
               <Label className="font-primary">Forma *</Label>
-              <Select value={formaPagamento} onValueChange={(v) => setFormaPagamento(v as FormaPagamento)}>
+              <Select value={formaPagamento} onValueChange={(v) => {
+                setFormaPagamento(v as FormaPagamento)
+                const max = v === "CARTAO_CREDITO" ? 12 : 2
+                if (Number(numeroParcelas) > max) setNumeroParcelas(String(max))
+              }}>
                 <SelectTrigger className="font-secondary">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
@@ -230,15 +234,18 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
                 className="font-secondary"
               />
             </div>
-            {showParcelas && (
+            {formaPagamento && (
               <div className="space-y-2">
-                <Label className="font-primary">Parcelas</Label>
+                <Label className="font-primary">Parcelas (até {maxParcelas}x)</Label>
                 <Input
                   type="number"
                   min="1"
-                  max="12"
+                  max={maxParcelas}
                   value={numeroParcelas}
-                  onChange={(e) => setNumeroParcelas(e.target.value)}
+                  onChange={(e) => {
+                    const v = Math.min(Number(e.target.value) || 1, maxParcelas)
+                    setNumeroParcelas(String(v))
+                  }}
                   className="font-secondary"
                 />
               </div>
