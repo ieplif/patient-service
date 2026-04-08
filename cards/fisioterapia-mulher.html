@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Humaniza - Sa&uacute;de da Mulher</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fff; display: flex; justify-content: center; }
+  .card {
+    width: 794px; height: 1123px; background: #faf7f4;
+    position: relative; overflow: hidden;
+    font-family: 'Lato', sans-serif;
+  }
+  .header {
+    background: linear-gradient(135deg, #8B7B6F 0%, #7B8B6F 40%, #6B7B5E 100%);
+    padding: 20px 40px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo-img { height: 44px; filter: brightness(0) invert(1); }
+  .header-right { text-align: right; }
+  .title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 700; color: #fff;
+    letter-spacing: 2px; line-height: 1.1;
+  }
+  .subtitle { font-size: 10px; color: rgba(255,255,255,0.8); letter-spacing: 2px; text-transform: uppercase; }
+  .content { padding: 10px 28px 8px; }
+  .highlight-section {
+    background: linear-gradient(135deg, #7B8B6F, #8B9B7F);
+    border-radius: 12px; padding: 10px 20px; text-align: center; margin-bottom: 10px;
+  }
+  .highlight-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 700; color: #fff; }
+  .highlight-desc { font-size: 10px; color: rgba(255,255,255,0.85); line-height: 1.4; margin-top: 2px; }
+  .activity-section { margin-bottom: 8px; }
+  .activity-title-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .activity-icon {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: linear-gradient(135deg, #7B8B6F, #8B9B7F);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px; flex-shrink: 0;
+  }
+  .activity-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; color: #4a5a3e; }
+  .activity-desc { font-size: 9px; color: #999; letter-spacing: 1px; text-transform: uppercase; }
+  .price-table { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(123,139,111,0.08); }
+  .modalidade-badge {
+    display: inline-block; padding: 2px 12px; border-radius: 50px;
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    font-weight: 700; margin: 5px 0 2px 14px;
+  }
+  .badge-clinica { background: rgba(123,139,111,0.1); color: #7B8B6F; }
+  .badge-domiciliar { background: rgba(168,136,100,0.12); color: #a88864; }
+  .price-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 14px; border-bottom: 1px solid #f0ebe5;
+  }
+  .price-row:last-child { border-bottom: none; }
+  .item-name { font-size: 12px; color: #5a5a5a; font-weight: 300; }
+  .item-name strong { font-weight: 700; color: #3d3d3d; }
+  .item-price { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; color: #7B8B6F; }
+  .item-unit { font-size: 9px; color: #aaa; }
+  .divider { height: 1px; background: linear-gradient(to right, transparent, #d8d0c8, transparent); margin: 2px 0; }
+  .savings-note { text-align: center; padding: 2px 14px 5px; font-size: 9px; color: #7B8B6F; font-style: italic; }
+  .footer-note {
+    text-align: center; padding: 8px 28px; font-size: 10px; color: #999;
+    line-height: 1.5; border-top: 1px solid #ebe6e0;
+    position: absolute; bottom: 0; left: 0; right: 0;
+  }
+  .footer-note strong { color: #7B8B6F; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <img src="data:image/png;base64,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" class="logo-img" alt="Humaniza">
+    <div class="header-right">
+      <div class="title">SA&Uacute;DE DA<br>MULHER</div>
+      <div class="subtitle">P&eacute;lvica &middot; Obstetr&iacute;cia &middot; Reab. Abdominal</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="highlight-section">
+      <div class="highlight-title">Cuidado Integral &amp; Especializado</div>
+      <div class="highlight-desc">Atendimento individualizado voltado &agrave; sa&uacute;de feminina. Avalia&ccedil;&atilde;o completa + plano de tratamento personalizado.</div>
+    </div>
+    <!-- PELVICA -->
+    <div class="activity-section">
+      <div class="activity-title-bar">
+        <div class="activity-icon">&#9792;</div>
+        <div><div class="activity-name">Fisioterapia P&eacute;lvica</div><div class="activity-desc">Assoalho P&eacute;lvico &amp; Sa&uacute;de &Iacute;ntima</div></div>
+      </div>
+      <div class="price-table">
+        <div class="modalidade-badge badge-clinica">&#9752; Cl&iacute;nica</div>
+        <div class="price-row"><div><div class="item-name"><strong>Avalia&ccedil;&atilde;o</strong></div></div><div class="item-price">R$ 330</div></div>
+        <div class="price-row"><div><div class="item-name"><strong>Sess&atilde;o</strong> avulsa</div></div><div class="item-price">R$ 264</div></div>
+        <div class="price-row"><div><div class="item-name">Pacote <strong>5</strong> sess&otilde;es</div><div class="item-unit">R$ 220/sess&atilde;o</div></div><div class="item-price">R$ 1.100</div></div>
+        <div class="price-row"><div><div class="item-name">Pacote <strong>10</strong> sess&otilde;es</div><div class="item-unit">R$ 198/sess&atilde;o</div></div><div class="item-price">R$ 1.980</div></div>
+        <div class="divider"></div>
+        <div class="modalidade-badge badge-domiciliar">&#127968; Domiciliar</div>
+        <div class="price-row"><div><div class="item-name"><strong>Sess&atilde;o</strong> avulsa</div></div><div class="item-price">R$ 550</div></div>
+        <div class="price-row"><div><div class="item-name">Pacote <strong>5</strong> sess&otilde;es</div><div class="item-unit">R$ 495/sess&atilde;o</div></div><div class="item-price">R$ 2.475</div></div>
+        <div class="price-row"><div><div class="item-name">Pacote <strong>10</strong> sess&otilde;es</div><div class="item-unit">R$ 440/sess&atilde;o</div></div><div class="item-price">R$ 4.400</div></div>
+      </div>
+    </div>
+    <!-- OBSTETRICIA -->
+    <div class="activity-section">
+      <div class="activity-title-bar">
+        <div class="activity-icon">&#10043;</div>
+        <div><div class="activity-name">Obstetr&iacute;cia</div><div class="activity-desc">Acompanhamento Gestacional</div></div>
+      </div>
+      <div class="price-table">
+        <div class="modalidade-badge badge-clinica">&#9752; Cl&iacute;nica</div>
+        <div class="price-row"><div><div class="item-name"><strong>Avalia&ccedil;&atilde;o</strong></div></div><div class="item-price">R$ 330</div></div>
+        <div class="price-row"><div><div class="item-name"><strong>Sess&atilde;o</strong> avulsa</div></div><div class="item-price">R$ 264</div></div>
+        <div class="price-row"><div><div class="item-name">Pacote <strong>5</strong> sess&otilde;es</div><div class="item-unit">R$ 220/sess&atilde;o</div></div><div class="item-price">R$ 1.100</div></div>
+        <div class="price-row"><div><div class="item-name">Pacote <strong>10</strong> sess&otilde;es</div><div class="item-unit">R$ 198/sess&atilde;o</div></div><div class="item-price">R$ 1.980</div></div>
+      </div>
+    </div>
+    <!-- REABILITACAO ABDOMINAL -->
+    <div class="activity-section">
+      <div class="activity-title-bar">
+        <div class="activity-icon">&#10022;</div>
+        <div><div class="activity-name">Reabilita&ccedil;&atilde;o Abdominal</div><div class="activity-desc">Di&aacute;stase &amp; Fortalecimento</div></div>
+      </div>
+      <div class="price-table">
+        <div class="modalidade-badge badge-clinica">&#9752; Cl&iacute;nica</div>
+        <div class="price-row"><div><div class="item-name"><strong>Avalia&ccedil;&atilde;o</strong></div></div><div class="item-price">R$ 330</div></div>
+        <div class="price-row"><div><div class="item-name"><strong>Sess&atilde;o</strong> avulsa</div></div><div class="item-price">R$ 264</div></div>
+        <div class="price-row"><div><div class="item-name">Pacote <strong>5</strong> sess&otilde;es</div><div class="item-unit">R$ 220/sess&atilde;o</div></div><div class="item-price">R$ 1.100</div></div>
+        <div class="price-row"><div><div class="item-name">Pacote <strong>10</strong> sess&otilde;es</div><div class="item-unit">R$ 198/sess&atilde;o</div></div><div class="item-price">R$ 1.980</div></div>
+        <div class="savings-note">Mesmos valores da Fisioterapia P&eacute;lvica</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-note">Pacotes podem ser parcelados em at&eacute; <strong>2x via transfer&ecirc;ncia banc&aacute;ria</strong> ou em at&eacute; <strong>10x no cart&atilde;o de cr&eacute;dito</strong> mediante juros da administradora.</div>
+</div>
+</body>
+</html>

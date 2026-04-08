@@ -220,15 +220,24 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ag-time" className="font-primary text-sm">Horário *</Label>
-              <Input
-                id="ag-time"
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                required
-                className="font-secondary"
-              />
+              <Label className="font-primary text-sm">Horário *</Label>
+              <Select value={time} onValueChange={setTime} required>
+                <SelectTrigger className="font-secondary text-sm">
+                  <SelectValue placeholder="Hora" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 30 }, (_, i) => {
+                    const h = Math.floor(i / 2) + 7
+                    const m = i % 2 === 0 ? "00" : "30"
+                    const val = `${h.toString().padStart(2, "0")}:${m}`
+                    return (
+                      <SelectItem key={val} value={val} className="font-secondary text-sm">
+                        {val}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
