@@ -97,10 +97,18 @@ export function AssinaturasPage() {
       // Auto-create recurring appointments for Pilates with horários fixos
       if (horariosFixos?.length && profissionalId) {
         const totalAulas = assinaturaPayload.sessoesContratadas
-        const sessPorSlot = Math.ceil(totalAulas / horariosFixos.length)
+        const slotsValidos = horariosFixos.filter(h => h.dia && h.horario)
+        if (slotsValidos.length > 0 && totalAulas > 0) {
+          let aulasRestantes = totalAulas
 
-        for (const h of horariosFixos) {
-          if (h.dia && h.horario) {
+          for (let idx = 0; idx < slotsValidos.length; idx++) {
+            const h = slotsValidos[idx]
+            // Distribuir aulas uniformemente entre os slots restantes
+            const slotsRestantes = slotsValidos.length - idx
+            const sessoesParaEsteSlot = Math.ceil(aulasRestantes / slotsRestantes)
+
+            if (sessoesParaEsteSlot <= 0) break
+
             try {
               const result = await createAgendamentoRecorrente({
                 pacienteId: assinaturaPayload.pacienteId,
@@ -110,10 +118,12 @@ export function AssinaturasPage() {
                 frequencia: "SEMANAL",
                 diasSemana: [DAY_TO_JAVA[h.dia]],
                 horaInicio: h.horario,
-                dataFim: assinatura.dataVencimento,
-                totalSessoes: sessPorSlot,
+                dataFim: assinatura.dataVencimento || undefined,
+                totalSessoes: sessoesParaEsteSlot,
               })
-              agendamentosCriados += result.agendamentosCriados?.length ?? 0
+              const criados = result.agendamentosCriados?.length ?? 0
+              agendamentosCriados += criados
+              aulasRestantes -= criados
               if (result.datasIgnoradas?.length) {
                 const motivos = [...new Set(result.datasIgnoradas.map(d => d.motivo))]
                 errosAgendamento.push(...motivos)
