@@ -27,6 +27,7 @@ export async function createAssinatura(payload: {
   sessoesContratadas: number
   valor: number
   observacoes?: string
+  renovacaoAutomatica?: boolean
 }): Promise<Assinatura> {
   const { data } = await apiClient.post<Assinatura>("/api/v1/assinaturas", payload)
   return data
@@ -42,6 +43,7 @@ export async function updateAssinatura(
     sessoesContratadas?: number
     valor?: number
     observacoes?: string
+    renovacaoAutomatica?: boolean
   }
 ): Promise<Assinatura> {
   const { data } = await apiClient.put<Assinatura>(`/api/v1/assinaturas/${id}`, payload)

@@ -33,6 +33,7 @@ export interface AssinaturaFormData {
   sessoesContratadas: number
   valor: number
   observacoes?: string
+  renovacaoAutomatica?: boolean
   profissionalId?: string
   horariosFixos?: HorarioFixo[]
   agendamentosIndividuais?: AgendamentoIndividual[]
@@ -102,6 +103,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
   const [horariosFixos, setHorariosFixos] = useState<HorarioFixo[]>([])
   const [profissionalId, setProfissionalId] = useState("")
   const [agendamentos, setAgendamentos] = useState<AgendamentoIndividual[]>([])
+  const [renovacaoAutomatica, setRenovacaoAutomatica] = useState(false)
 
   const { data: pacientesData, isLoading: loadingPacientes, isError: errorPacientes } = useQuery({
     queryKey: ["patients-all"],
@@ -137,6 +139,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       setSessoesContratadas(String(assinatura.sessoesContratadas))
       setValor(String(assinatura.valor))
       setObservacoes(assinatura.observacoes || "")
+      setRenovacaoAutomatica(assinatura.renovacaoAutomatica ?? false)
       setHorariosFixos([])
       setProfissionalId("")
       setAgendamentos([])
@@ -148,6 +151,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       setSessoesContratadas("")
       setValor("")
       setObservacoes("")
+      setRenovacaoAutomatica(false)
       setHorariosFixos([])
       setProfissionalId("")
       setAgendamentos([])
@@ -199,6 +203,8 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       setHorariosFixos(Array.from({ length: qtd }, () => ({ dia: "", horario: "" })))
       setSessoesContratadas("")
       setAgendamentos([])
+      const isMensal = servico.planoNome?.toLowerCase().includes("mensal")
+      setRenovacaoAutomatica(!!isMensal)
     } else {
       const qtd = servico.quantidade ?? 1
       setSessoesContratadas(String(qtd))
@@ -277,6 +283,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       sessoesContratadas: Number(sessoesContratadas),
       valor: Number(valor),
       observacoes: obsFinais || undefined,
+      renovacaoAutomatica: renovacaoAutomatica || undefined,
       profissionalId: profissionalId || undefined,
       horariosFixos: showHorarios
         ? horariosFixos.filter(h => h.dia && h.horario)
@@ -430,12 +437,19 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
                     </SelectContent>
                   </Select>
                   <span className="text-xs text-muted-foreground font-secondary">às</span>
-                  <Input
-                    type="time"
+                  <Select
                     value={h.horario}
-                    onChange={(e) => handleHorarioChange(i, "horario", e.target.value)}
-                    className="font-secondary w-28"
-                  />
+                    onValueChange={(v) => handleHorarioChange(i, "horario", v)}
+                  >
+                    <SelectTrigger className="font-secondary w-[100px]">
+                      <SelectValue placeholder="Hora" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {HORARIOS_DISPONIVEIS.map(hr => (
+                        <SelectItem key={hr} value={hr} className="font-secondary">{hr}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               ))}
               {horariosFixos.some(h => h.dia) && selectedServico?.validadeDias && dataInicio && (
@@ -544,6 +558,27 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
                     </Badge>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Renovação automática — visible for Pilates frequency services */}
+          {showHorarios && (
+            <div className="flex items-center gap-3 rounded-md border border-border/50 bg-muted/30 p-3">
+              <input
+                id="renovacao-auto"
+                type="checkbox"
+                checked={renovacaoAutomatica}
+                onChange={(e) => setRenovacaoAutomatica(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <div className="flex-1">
+                <Label htmlFor="renovacao-auto" className="font-primary text-sm cursor-pointer">
+                  Renovação automática
+                </Label>
+                <p className="text-xs text-muted-foreground font-secondary mt-0.5">
+                  Renova a assinatura e cria novos agendamentos automaticamente ao final do período
+                </p>
               </div>
             </div>
           )}

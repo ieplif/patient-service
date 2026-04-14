@@ -171,7 +171,7 @@ class AgendamentoRecorrenteServiceTest {
                 FrequenciaRecorrencia.SEMANAL,
                 List.of(DayOfWeek.MONDAY),
                 LocalTime.of(10, 0),
-                4, null);
+                4, null, null);
 
         assertThat(datas).hasSize(4);
         datas.forEach(d -> assertThat(d.getDayOfWeek()).isEqualTo(DayOfWeek.MONDAY));
@@ -185,7 +185,7 @@ class AgendamentoRecorrenteServiceTest {
                 FrequenciaRecorrencia.SEMANAL,
                 List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY),
                 LocalTime.of(10, 0),
-                4, null);
+                4, null, null);
 
         assertThat(datas).hasSize(4);
         datas.forEach(d ->
@@ -199,7 +199,7 @@ class AgendamentoRecorrenteServiceTest {
                 FrequenciaRecorrencia.QUINZENAL,
                 List.of(DayOfWeek.TUESDAY),
                 LocalTime.of(14, 0),
-                6, null);
+                6, null, null);
 
         assertThat(datas).hasSize(6);
         datas.forEach(d -> assertThat(d.getDayOfWeek()).isEqualTo(DayOfWeek.TUESDAY));
@@ -219,7 +219,7 @@ class AgendamentoRecorrenteServiceTest {
                 FrequenciaRecorrencia.MENSAL,
                 List.of(DayOfWeek.MONDAY),
                 LocalTime.of(10, 0),
-                3, null);
+                3, null, null);
 
         assertThat(datas).hasSize(3);
     }
@@ -233,7 +233,7 @@ class AgendamentoRecorrenteServiceTest {
                 FrequenciaRecorrencia.SEMANAL,
                 List.of(DayOfWeek.MONDAY),
                 LocalTime.of(10, 0),
-                null, dataFim);
+                null, dataFim, null);
 
         datas.forEach(d ->
                 assertThat(d.toLocalDate()).isBeforeOrEqualTo(dataFim));
@@ -248,7 +248,7 @@ class AgendamentoRecorrenteServiceTest {
                 FrequenciaRecorrencia.SEMANAL,
                 List.of(DayOfWeek.MONDAY),
                 LocalTime.of(10, 0),
-                3, dataFimDistante);
+                3, dataFimDistante, null);
 
         assertThat(datas).hasSize(3);
     }
@@ -262,7 +262,7 @@ class AgendamentoRecorrenteServiceTest {
                 FrequenciaRecorrencia.SEMANAL,
                 List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY),
                 LocalTime.of(10, 0),
-                null, dataFimDistante);
+                null, dataFimDistante, null);
 
         assertThat(datas).hasSizeLessThanOrEqualTo(52);
     }

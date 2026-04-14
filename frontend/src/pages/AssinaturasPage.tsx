@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Star, Plus, Pencil, Ban, MoreHorizontal, Search } from "lucide-react"
+import { Star, Plus, Pencil, Ban, MoreHorizontal, Search, RefreshCw } from "lucide-react"
 import { format } from "date-fns"
 import { getAssinaturas, createAssinatura, updateAssinatura, updateAssinaturaStatus } from "@/api/assinaturas"
 import { createAgendamento, createAgendamentoRecorrente } from "@/api/agendamentos"
@@ -96,34 +96,39 @@ export function AssinaturasPage() {
 
       // Auto-create recurring appointments for Pilates with horários fixos
       if (horariosFixos?.length && profissionalId) {
-        const totalAulas = assinaturaPayload.sessoesContratadas
-        const sessPorSlot = Math.ceil(totalAulas / horariosFixos.length)
+        const slotsValidos = horariosFixos.filter(h => h.dia && h.horario)
+        let aulasRestantes = assinaturaPayload.sessoesContratadas
 
-        for (const h of horariosFixos) {
-          if (h.dia && h.horario) {
-            try {
-              const result = await createAgendamentoRecorrente({
-                pacienteId: assinaturaPayload.pacienteId,
-                profissionalId,
-                servicoId: assinaturaPayload.servicoId,
-                assinaturaId: assinatura.id,
-                frequencia: "SEMANAL",
-                diasSemana: [DAY_TO_JAVA[h.dia]],
-                horaInicio: h.horario,
-                dataFim: assinatura.dataVencimento,
-                totalSessoes: sessPorSlot,
-              })
-              agendamentosCriados += result.agendamentosCriados?.length ?? 0
-              if (result.datasIgnoradas?.length) {
-                const motivos = [...new Set(result.datasIgnoradas.map(d => d.motivo))]
-                errosAgendamento.push(...motivos)
-              }
-            } catch (e) {
-              const errMsg = (e as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
-                || (e as { response?: { data?: { message?: string } } })?.response?.data?.message
-                || "Erro ao criar agendamentos recorrentes"
-              errosAgendamento.push(errMsg)
+        for (let idx = 0; idx < slotsValidos.length; idx++) {
+          const h = slotsValidos[idx]
+          if (aulasRestantes <= 0) break
+          const slotsRestantes = slotsValidos.length - idx
+          const sessoesParaEsteSlot = Math.ceil(aulasRestantes / slotsRestantes)
+
+          try {
+            const result = await createAgendamentoRecorrente({
+              pacienteId: assinaturaPayload.pacienteId,
+              profissionalId,
+              servicoId: assinaturaPayload.servicoId,
+              assinaturaId: assinatura.id,
+              frequencia: "SEMANAL",
+              diasSemana: [DAY_TO_JAVA[h.dia]],
+              horaInicio: h.horario,
+              dataFim: assinatura.dataVencimento,
+              totalSessoes: sessoesParaEsteSlot,
+            })
+            const criados = result.agendamentosCriados?.length ?? 0
+            agendamentosCriados += criados
+            aulasRestantes -= criados
+            if (result.datasIgnoradas?.length) {
+              const motivos = [...new Set(result.datasIgnoradas.map(d => d.motivo))]
+              errosAgendamento.push(...motivos)
             }
+          } catch (e) {
+            const errMsg = (e as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
+              || (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+              || "Erro ao criar agendamentos recorrentes"
+            errosAgendamento.push(errMsg)
           }
         }
       }
@@ -349,9 +354,16 @@ export function AssinaturasPage() {
                               : "—"}
                           </TableCell>
                           <TableCell>
-                            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold font-primary ${cfg.className}`}>
-                              {cfg.label}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold font-primary ${cfg.className}`}>
+                                {cfg.label}
+                              </span>
+                              {as.renovacaoAutomatica && (
+                                <span title="Renovação automática ativa" className="text-primary">
+                                  <RefreshCw className="h-3.5 w-3.5" />
+                                </span>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -365,6 +377,13 @@ export function AssinaturasPage() {
                                   <>
                                     <DropdownMenuItem onClick={() => handleEdit(as)}>
                                       <Pencil className="h-4 w-4 mr-2" /> Editar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => updateMutation.mutate({
+                                      id: as.id,
+                                      renovacaoAutomatica: !as.renovacaoAutomatica,
+                                    })}>
+                                      <RefreshCw className="h-4 w-4 mr-2" />
+                                      {as.renovacaoAutomatica ? "Desativar renovação auto." : "Ativar renovação auto."}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       className="text-destructive"

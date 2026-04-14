@@ -148,6 +148,7 @@ export interface Assinatura {
   status: StatusAssinatura
   valor: number
   observacoes?: string
+  renovacaoAutomatica: boolean
   ativo: boolean
   createdAt: string
 }

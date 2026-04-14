@@ -7,6 +7,7 @@ import br.com.clinicahumaniza.patient_service.dto.AssinaturaUpdateDTO;
 import br.com.clinicahumaniza.patient_service.mapper.AssinaturaMapper;
 import br.com.clinicahumaniza.patient_service.model.Assinatura;
 import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
+import br.com.clinicahumaniza.patient_service.service.AssinaturaRenovacaoService;
 import br.com.clinicahumaniza.patient_service.service.AssinaturaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,11 +34,15 @@ import java.util.stream.Collectors;
 public class AssinaturaController {
 
     private final AssinaturaService assinaturaService;
+    private final AssinaturaRenovacaoService renovacaoService;
     private final AssinaturaMapper assinaturaMapper;
 
     @Autowired
-    public AssinaturaController(AssinaturaService assinaturaService, AssinaturaMapper assinaturaMapper) {
+    public AssinaturaController(AssinaturaService assinaturaService,
+                                 AssinaturaRenovacaoService renovacaoService,
+                                 AssinaturaMapper assinaturaMapper) {
         this.assinaturaService = assinaturaService;
+        this.renovacaoService = renovacaoService;
         this.assinaturaMapper = assinaturaMapper;
     }
 
@@ -132,6 +138,14 @@ public class AssinaturaController {
     public ResponseEntity<AssinaturaResponseDTO> registrarSessao(@PathVariable UUID id) {
         Assinatura assinatura = assinaturaService.registrarSessao(id);
         return ResponseEntity.ok(assinaturaMapper.toResponseDTO(assinatura));
+    }
+
+    @PostMapping("/renovar")
+    @Operation(summary = "Renovar assinaturas", description = "Dispara manualmente a renovação automática de assinaturas próximas do vencimento")
+    @ApiResponse(responseCode = "200", description = "Renovação executada")
+    public ResponseEntity<Map<String, Object>> renovarAssinaturas() {
+        int renovadas = renovacaoService.renovarAssinaturasProximasDoVencimento();
+        return ResponseEntity.ok(Map.of("renovadas", renovadas));
     }
 
     @DeleteMapping("/{id}")

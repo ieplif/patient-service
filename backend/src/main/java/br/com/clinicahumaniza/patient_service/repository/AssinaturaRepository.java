@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,6 +21,9 @@ public interface AssinaturaRepository extends JpaRepository<Assinatura, UUID>, J
     List<Assinatura> findByStatus(StatusAssinatura status);
 
     List<Assinatura> findByPacienteIdAndStatus(UUID pacienteId, StatusAssinatura status);
+
+    List<Assinatura> findByRenovacaoAutomaticaTrueAndStatusAndDataVencimentoLessThanEqual(
+            StatusAssinatura status, LocalDate limitDate);
 
     @Query(value = "SELECT * FROM assinaturas", nativeQuery = true)
     List<Assinatura> findAllIncludingInactive();

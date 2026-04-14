@@ -23,4 +23,6 @@ public class AssinaturaUpdateDTO {
     private BigDecimal valor;
 
     private String observacoes;
+
+    private Boolean renovacaoAutomatica;
 }

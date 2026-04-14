@@ -36,4 +36,6 @@ public class AssinaturaRequestDTO {
     private BigDecimal valor;
 
     private String observacoes;
+
+    private Boolean renovacaoAutomatica;
 }

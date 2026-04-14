@@ -90,7 +90,7 @@ export function AgendamentosPage() {
       getAgendamentos({
         page,
         size: PAGE_SIZE,
-        sort: "dataHora,desc",
+        sort: "dataHora,asc",
         status: statusFilter !== "TODOS" ? statusFilter : undefined,
       }),
   })

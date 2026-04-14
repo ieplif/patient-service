@@ -52,6 +52,9 @@ public class Assinatura {
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 
+    @Column(name = "renovacao_automatica")
+    private boolean renovacaoAutomatica = false;
+
     private boolean ativo = true;
 
     @Column(updatable = false)
