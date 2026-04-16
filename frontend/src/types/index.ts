@@ -191,3 +191,14 @@ export interface Profissional {
   ativo: boolean
   createdAt: string
 }
+
+export interface HorarioDisponivel {
+  id: string
+  profissionalId: string
+  profissionalNome: string
+  diaSemana: string
+  horaInicio: string
+  horaFim: string
+  ativo: boolean
+  createdAt: string
+}

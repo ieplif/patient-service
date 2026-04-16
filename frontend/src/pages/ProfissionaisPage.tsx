@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { UserCog, Plus, Pencil, PowerOff } from "lucide-react"
+import { UserCog, Plus, Pencil, PowerOff, Clock } from "lucide-react"
 import { getProfissionais, deleteProfissional } from "@/api/profissionais"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table"
 import { Pagination } from "@/components/shared/Pagination"
 import { ProfissionalFormSheet } from "@/components/shared/ProfissionalFormSheet"
+import { HorarioSheet } from "@/components/shared/HorarioSheet"
 import { useToast } from "@/hooks/use-toast"
 import type { Profissional } from "@/types"
 
@@ -32,7 +33,9 @@ function formatTelefone(value: string) {
 export function ProfissionaisPage() {
   const [page, setPage] = useState(0)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [horarioOpen, setHorarioOpen] = useState(false)
   const [selected, setSelected] = useState<Profissional | null>(null)
+  const [horarioProf, setHorarioProf] = useState<Profissional | null>(null)
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
@@ -60,6 +63,11 @@ export function ProfissionaisPage() {
   function handleEdit(prof: Profissional) {
     setSelected(prof)
     setSheetOpen(true)
+  }
+
+  function handleHorarios(prof: Profissional) {
+    setHorarioProf(prof)
+    setHorarioOpen(true)
   }
 
   return (
@@ -144,6 +152,15 @@ export function ProfissionaisPage() {
                             <Button
                               size="icon"
                               variant="ghost"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary"
+                              onClick={() => handleHorarios(prof)}
+                              title="Horarios"
+                            >
+                              <Clock className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
                               className="h-8 w-8 text-muted-foreground hover:text-foreground"
                               onClick={() => handleEdit(prof)}
                               title="Editar"
@@ -186,6 +203,12 @@ export function ProfissionaisPage() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         profissional={selected}
+      />
+
+      <HorarioSheet
+        open={horarioOpen}
+        onOpenChange={setHorarioOpen}
+        profissional={horarioProf}
       />
     </div>
   )
