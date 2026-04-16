@@ -43,10 +43,13 @@ export interface Patient {
   createdAt: string
 }
 
+export type TipoDocumento = "PRONTUARIO" | "TERMO" | "NOTA_FISCAL"
+
 export interface Prontuario {
   id: string
   pacienteId: string
   pacienteNome: string
+  tipo: TipoDocumento
   titulo: string
   descricao?: string
   nomeArquivo: string
@@ -148,6 +151,7 @@ export interface Assinatura {
   status: StatusAssinatura
   valor: number
   observacoes?: string
+  renovacaoAutomatica: boolean
   ativo: boolean
   createdAt: string
 }

@@ -9,6 +9,7 @@ import br.com.clinicahumaniza.patient_service.model.*;
 import br.com.clinicahumaniza.patient_service.security.JwtAuthenticationFilter;
 import br.com.clinicahumaniza.patient_service.security.JwtService;
 import br.com.clinicahumaniza.patient_service.security.SecurityConfig;
+import br.com.clinicahumaniza.patient_service.service.AssinaturaRenovacaoService;
 import br.com.clinicahumaniza.patient_service.service.AssinaturaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -50,6 +51,9 @@ class AssinaturaControllerTest {
 
     @MockitoBean
     private AssinaturaService assinaturaService;
+
+    @MockitoBean
+    private AssinaturaRenovacaoService renovacaoService;
 
     @MockitoBean
     private AssinaturaMapper assinaturaMapper;

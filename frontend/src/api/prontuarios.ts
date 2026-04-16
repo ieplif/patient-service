@@ -1,7 +1,8 @@
 import { apiClient } from "./client"
-import type { PageResponse, Prontuario } from "@/types"
+import type { PageResponse, Prontuario, TipoDocumento } from "@/types"
 
 export async function getProntuarios(pacienteId: string, params?: {
+  tipo?: TipoDocumento
   page?: number
   size?: number
 }): Promise<PageResponse<Prontuario>> {
@@ -16,13 +17,14 @@ export async function uploadProntuario(
   pacienteId: string,
   titulo: string,
   file: File,
-  descricao?: string
+  opts?: { tipo?: TipoDocumento; descricao?: string }
 ): Promise<Prontuario> {
   const formData = new FormData()
   formData.append("pacienteId", pacienteId)
   formData.append("titulo", titulo)
   formData.append("file", file)
-  if (descricao) formData.append("descricao", descricao)
+  if (opts?.tipo) formData.append("tipo", opts.tipo)
+  if (opts?.descricao) formData.append("descricao", opts.descricao)
 
   const { data } = await apiClient.post<Prontuario>("/api/v1/prontuarios", formData, {
     headers: { "Content-Type": "multipart/form-data" },

@@ -99,14 +99,10 @@ public class AgendamentoRecorrenteService {
             }
         }
 
-        // Determinar data de início: usar dataInicio da assinatura, ou amanhã
+        // Determinar data de início referência (da assinatura se disponível)
         LocalDate dataInicioRef = null;
         if (assinatura != null && assinatura.getDataInicio() != null) {
             dataInicioRef = assinatura.getDataInicio();
-            // Se a data de início é no passado, usar amanhã
-            if (dataInicioRef.isBefore(LocalDate.now().plusDays(1))) {
-                dataInicioRef = LocalDate.now().plusDays(1);
-            }
         }
 
         // Gerar datas candidatas
@@ -163,7 +159,8 @@ public class AgendamentoRecorrenteService {
                                     LocalTime horaInicio, Integer totalSessoes, LocalDate dataFim,
                                     LocalDate dataInicioRef) {
         List<LocalDateTime> datas = new ArrayList<>();
-        LocalDate atual = dataInicioRef != null ? dataInicioRef : LocalDate.now().plusDays(1);
+        LocalDate amanha = LocalDate.now().plusDays(1);
+        LocalDate atual = (dataInicioRef != null && dataInicioRef.isAfter(amanha)) ? dataInicioRef : amanha;
 
         while (datas.size() < MAX_DATAS) {
             // Verifica limite por data

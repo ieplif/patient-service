@@ -20,6 +20,7 @@ public class AssinaturaMapper {
         assinatura.setSessoesContratadas(dto.getSessoesContratadas());
         assinatura.setValor(dto.getValor());
         assinatura.setObservacoes(dto.getObservacoes());
+        assinatura.setRenovacaoAutomatica(dto.getRenovacaoAutomatica() != null && dto.getRenovacaoAutomatica());
         return assinatura;
     }
 
@@ -40,7 +41,8 @@ public class AssinaturaMapper {
         dto.setStatus(entity.getStatus());
         dto.setValor(entity.getValor());
         dto.setObservacoes(entity.getObservacoes());
-        dto.setAtivo(entity.isAtivo());
+        dto.setRenovacaoAutomatica(Boolean.TRUE.equals(entity.getRenovacaoAutomatica()));
+        dto.setAtivo(Boolean.TRUE.equals(entity.getAtivo()));
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;
     }
@@ -57,6 +59,9 @@ public class AssinaturaMapper {
         }
         if (dto.getObservacoes() != null) {
             entity.setObservacoes(dto.getObservacoes());
+        }
+        if (dto.getRenovacaoAutomatica() != null) {
+            entity.setRenovacaoAutomatica(dto.getRenovacaoAutomatica());
         }
     }
 }

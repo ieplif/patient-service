@@ -28,6 +28,7 @@ public class AssinaturaResponseDTO {
     private StatusAssinatura status;
     private BigDecimal valor;
     private String observacoes;
+    private boolean renovacaoAutomatica;
     private boolean ativo;
     private LocalDateTime createdAt;
 }

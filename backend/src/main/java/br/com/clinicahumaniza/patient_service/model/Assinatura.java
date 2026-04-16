@@ -52,7 +52,11 @@ public class Assinatura {
     @Column(columnDefinition = "TEXT")
     private String observacoes;
 
-    private boolean ativo = true;
+    @Column(name = "renovacao_automatica", columnDefinition = "boolean default false")
+    private Boolean renovacaoAutomatica = false;
+
+    @Column(columnDefinition = "boolean default true")
+    private Boolean ativo = true;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;

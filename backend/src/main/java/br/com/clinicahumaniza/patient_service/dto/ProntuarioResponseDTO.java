@@ -1,5 +1,6 @@
 package br.com.clinicahumaniza.patient_service.dto;
 
+import br.com.clinicahumaniza.patient_service.model.TipoDocumento;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ public class ProntuarioResponseDTO {
     private UUID id;
     private UUID pacienteId;
     private String pacienteNome;
+    private TipoDocumento tipo;
     private String titulo;
     private String descricao;
     private String nomeArquivo;

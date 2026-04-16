@@ -19,6 +19,11 @@ public class Prontuario {
     @JoinColumn(name = "paciente_id", nullable = false)
     private Patient paciente;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo", nullable = false, length = 20)
+    @Builder.Default
+    private TipoDocumento tipo = TipoDocumento.PRONTUARIO;
+
     @Column(nullable = false)
     private String titulo;
 

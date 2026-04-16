@@ -5,12 +5,13 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import {
   User, Mail, Phone, MapPin, Briefcase, Heart, Shield, Calendar,
-  Star, FileText, Upload, Trash2, ExternalLink, ArrowLeft, Clock
+  Star, FileText, FileSignature, Receipt, Folder, Upload, Trash2, ExternalLink, ArrowLeft, Clock
 } from "lucide-react"
 import { getPatient } from "@/api/patients"
 import { getAgendamentos } from "@/api/agendamentos"
 import { getAssinaturas } from "@/api/assinaturas"
 import { getProntuarios, uploadProntuario, deleteProntuario } from "@/api/prontuarios"
+import type { Prontuario, TipoDocumento } from "@/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,6 +25,9 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table"
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select"
 
 function formatPhone(v: string) {
   const d = v.replace(/\D/g, "")
@@ -64,12 +68,22 @@ const statusAssConfig: Record<string, { label: string; className: string }> = {
   FINALIZADO: { label: "Finalizado", className: "bg-muted text-muted-foreground border-border" },
 }
 
+const tipoDocumentoConfig: Record<TipoDocumento, { label: string; singular: string; icon: typeof FileText; emptyLabel: string }> = {
+  PRONTUARIO: { label: "Prontuarios", singular: "Prontuario", icon: FileText, emptyLabel: "Nenhum prontuario anexado" },
+  TERMO: { label: "Termos", singular: "Termo", icon: FileSignature, emptyLabel: "Nenhum termo anexado" },
+  NOTA_FISCAL: { label: "Notas Fiscais", singular: "Nota Fiscal", icon: Receipt, emptyLabel: "Nenhuma nota fiscal anexada" },
+}
+
+const TIPOS_DOCUMENTO: TipoDocumento[] = ["PRONTUARIO", "TERMO", "NOTA_FISCAL"]
+
 export function PacienteResumoPage() {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [activeTipo, setActiveTipo] = useState<TipoDocumento>("PRONTUARIO")
   const [uploadOpen, setUploadOpen] = useState(false)
+  const [uploadTipo, setUploadTipo] = useState<TipoDocumento>("PRONTUARIO")
   const [uploadTitulo, setUploadTitulo] = useState("")
   const [uploadDescricao, setUploadDescricao] = useState("")
   const [uploadFile, setUploadFile] = useState<File | null>(null)
@@ -99,10 +113,15 @@ export function PacienteResumoPage() {
   })
 
   const uploadMutation = useMutation({
-    mutationFn: () => uploadProntuario(id!, uploadTitulo, uploadFile!, uploadDescricao || undefined),
+    mutationFn: () => uploadProntuario(id!, uploadTitulo, uploadFile!, {
+      tipo: uploadTipo,
+      descricao: uploadDescricao || undefined,
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["prontuarios", id] })
-      toast({ title: "Prontuario anexado", description: "O arquivo foi enviado com sucesso." })
+      const label = tipoDocumentoConfig[uploadTipo].singular
+      toast({ title: `${label} anexado`, description: "O arquivo foi enviado com sucesso." })
+      setActiveTipo(uploadTipo)
       setUploadOpen(false)
       setUploadTitulo("")
       setUploadDescricao("")
@@ -117,9 +136,20 @@ export function PacienteResumoPage() {
     mutationFn: deleteProntuario,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["prontuarios", id] })
-      toast({ title: "Prontuario removido" })
+      toast({ title: "Documento removido" })
     },
   })
+
+  const documentosPorTipo = (tipo: TipoDocumento): Prontuario[] =>
+    prontuarios?.content.filter((p) => (p.tipo ?? "PRONTUARIO") === tipo) ?? []
+
+  const openUpload = (tipo: TipoDocumento) => {
+    setUploadTipo(tipo)
+    setUploadTitulo("")
+    setUploadDescricao("")
+    setUploadFile(null)
+    setUploadOpen(true)
+  }
 
   if (loadingPaciente) {
     return (
@@ -330,50 +360,92 @@ export function PacienteResumoPage() {
         </CardContent>
       </Card>
 
-      {/* Prontuários */}
+      {/* Documentos: Prontuarios / Termos / Notas Fiscais */}
       <Card className="border border-border/60 shadow-soft">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-base font-semibold font-primary flex items-center gap-2">
-            <FileText className="h-4 w-4 text-primary" /> Prontuarios
+            <Folder className="h-4 w-4 text-primary" /> Documentos
           </CardTitle>
-          <Button size="sm" className="bg-primary text-primary-foreground font-primary" onClick={() => setUploadOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" /> Anexar Arquivo
+          <Button
+            size="sm"
+            className="bg-primary text-primary-foreground font-primary"
+            onClick={() => openUpload(activeTipo)}
+          >
+            <Upload className="h-4 w-4 mr-2" /> Anexar {tipoDocumentoConfig[activeTipo].singular}
           </Button>
         </CardHeader>
         <CardContent>
+          {/* Tabs */}
+          <div className="flex gap-1 mb-4 border-b border-border/50">
+            {TIPOS_DOCUMENTO.map((tipo) => {
+              const cfg = tipoDocumentoConfig[tipo]
+              const Icon = cfg.icon
+              const count = documentosPorTipo(tipo).length
+              const isActive = activeTipo === tipo
+              return (
+                <button
+                  key={tipo}
+                  type="button"
+                  onClick={() => setActiveTipo(tipo)}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-primary transition-colors border-b-2 -mb-px ${
+                    isActive
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {cfg.label}
+                  {count > 0 && (
+                    <span className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs rounded-full font-secondary ${
+                      isActive ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                    }`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Lista da aba ativa */}
           {loadingPront ? (
             <Skeleton className="h-20 w-full" />
-          ) : !prontuarios?.content.length ? (
-            <p className="text-sm text-muted-foreground font-secondary py-4 text-center">Nenhum prontuario anexado</p>
+          ) : documentosPorTipo(activeTipo).length === 0 ? (
+            <p className="text-sm text-muted-foreground font-secondary py-4 text-center">
+              {tipoDocumentoConfig[activeTipo].emptyLabel}
+            </p>
           ) : (
             <div className="space-y-2">
-              {prontuarios.content.map((p) => (
-                <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:bg-muted/20">
-                  <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary/60 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold font-primary truncate">{p.titulo}</p>
-                    <p className="text-xs text-muted-foreground font-secondary">
-                      {p.nomeArquivo} — {formatBytes(p.tamanhoBytes)} — {format(new Date(p.createdAt), "dd/MM/yyyy HH:mm")}
-                    </p>
-                    {p.descricao && (
-                      <p className="text-xs text-muted-foreground font-secondary mt-0.5">{p.descricao}</p>
-                    )}
-                  </div>
-                  <a href={p.storageUrl} target="_blank" rel="noopener noreferrer">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <ExternalLink className="h-4 w-4" />
+              {documentosPorTipo(activeTipo).map((p) => {
+                const Icon = tipoDocumentoConfig[p.tipo ?? "PRONTUARIO"].icon
+                return (
+                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:bg-muted/20">
+                    <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary/60 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold font-primary truncate">{p.titulo}</p>
+                      <p className="text-xs text-muted-foreground font-secondary">
+                        {p.nomeArquivo} — {formatBytes(p.tamanhoBytes)} — {format(new Date(p.createdAt), "dd/MM/yyyy HH:mm")}
+                      </p>
+                      {p.descricao && (
+                        <p className="text-xs text-muted-foreground font-secondary mt-0.5">{p.descricao}</p>
+                      )}
+                    </div>
+                    <a href={p.storageUrl} target="_blank" rel="noopener noreferrer">
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    </a>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive"
+                      onClick={() => deleteMutation.mutate(p.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                  </a>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive"
-                    onClick={() => deleteMutation.mutate(p.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+                  </div>
+                )
+              })}
             </div>
           )}
         </CardContent>
@@ -383,9 +455,26 @@ export function PacienteResumoPage() {
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-primary">Anexar Prontuario</DialogTitle>
+            <DialogTitle className="font-primary">
+              Anexar {tipoDocumentoConfig[uploadTipo].singular}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="font-primary">Tipo *</Label>
+              <Select value={uploadTipo} onValueChange={(v) => setUploadTipo(v as TipoDocumento)}>
+                <SelectTrigger className="font-secondary">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPOS_DOCUMENTO.map((t) => (
+                    <SelectItem key={t} value={t} className="font-secondary">
+                      {tipoDocumentoConfig[t].singular}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label className="font-primary">Titulo *</Label>
               <Input

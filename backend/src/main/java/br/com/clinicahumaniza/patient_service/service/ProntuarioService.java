@@ -3,6 +3,7 @@ package br.com.clinicahumaniza.patient_service.service;
 import br.com.clinicahumaniza.patient_service.dto.ProntuarioResponseDTO;
 import br.com.clinicahumaniza.patient_service.model.Patient;
 import br.com.clinicahumaniza.patient_service.model.Prontuario;
+import br.com.clinicahumaniza.patient_service.model.TipoDocumento;
 import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
 import br.com.clinicahumaniza.patient_service.repository.ProntuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -56,7 +56,7 @@ public class ProntuarioService {
         }
     }
 
-    public ProntuarioResponseDTO upload(UUID pacienteId, String titulo, String descricao, MultipartFile file) throws IOException {
+    public ProntuarioResponseDTO upload(UUID pacienteId, TipoDocumento tipo, String titulo, String descricao, MultipartFile file) throws IOException {
         validateFile(file);
         Patient paciente = patientRepository.findById(pacienteId)
                 .orElseThrow(() -> new EntityNotFoundException("Paciente não encontrado"));
@@ -68,6 +68,7 @@ public class ProntuarioService {
 
         Prontuario prontuario = Prontuario.builder()
                 .paciente(paciente)
+                .tipo(tipo != null ? tipo : TipoDocumento.PRONTUARIO)
                 .titulo(titulo)
                 .descricao(descricao)
                 .nomeArquivo(file.getOriginalFilename())
@@ -82,8 +83,11 @@ public class ProntuarioService {
         return toDTO(prontuario);
     }
 
-    public Page<ProntuarioResponseDTO> getByPaciente(UUID pacienteId, Pageable pageable) {
-        return prontuarioRepository.findByPacienteId(pacienteId, pageable).map(this::toDTO);
+    public Page<ProntuarioResponseDTO> getByPaciente(UUID pacienteId, TipoDocumento tipo, Pageable pageable) {
+        Page<Prontuario> page = (tipo != null)
+                ? prontuarioRepository.findByPacienteIdAndTipo(pacienteId, tipo, pageable)
+                : prontuarioRepository.findByPacienteId(pacienteId, pageable);
+        return page.map(this::toDTO);
     }
 
     public ProntuarioResponseDTO getById(UUID id) {
@@ -106,6 +110,7 @@ public class ProntuarioService {
         dto.setId(p.getId());
         dto.setPacienteId(p.getPaciente().getId());
         dto.setPacienteNome(p.getPaciente().getNomeCompleto());
+        dto.setTipo(p.getTipo() != null ? p.getTipo() : TipoDocumento.PRONTUARIO);
         dto.setTitulo(p.getTitulo());
         dto.setDescricao(p.getDescricao());
         dto.setNomeArquivo(p.getNomeArquivo());
