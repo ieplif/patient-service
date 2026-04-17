@@ -47,9 +47,6 @@ function diaLabel(dia: string): string {
   return DIAS_SEMANA.find((d) => d.value === dia)?.label ?? dia
 }
 
-function diaShort(dia: string): string {
-  return DIAS_SEMANA.find((d) => d.value === dia)?.short ?? dia
-}
 
 function diaOrder(dia: string): number {
   const idx = DIAS_SEMANA.findIndex((d) => d.value === dia)

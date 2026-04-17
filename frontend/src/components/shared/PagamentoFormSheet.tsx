@@ -180,7 +180,7 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
                   </SelectItem>
                   {agendamentos.map((ag) => (
                     <SelectItem key={ag.id} value={ag.id} className="font-secondary">
-                      {ag.servicoNome} — {format(new Date(ag.dataHora), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      {ag.servicoDescricao} — {format(new Date(ag.dataHora), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                     </SelectItem>
                   ))}
                 </SelectContent>

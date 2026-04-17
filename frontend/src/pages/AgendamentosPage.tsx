@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Calendar, Plus, Clock, MoreHorizontal, Search, RefreshCw } from "lucide-react"
 import { format, differenceInHours } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { getAgendamentos, updateAgendamentoStatus, deleteAgendamento } from "@/api/agendamentos"
+import { getAgendamentos, updateAgendamentoStatus } from "@/api/agendamentos"
 import type { Agendamento, StatusAgendamento } from "@/types"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
@@ -111,13 +111,6 @@ export function AgendamentosPage() {
     },
   })
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteAgendamento,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["agendamentos"] })
-      toast({ title: "Agendamento cancelado", description: "O agendamento foi removido." })
-    },
-  })
 
   function handleNew() {
     setSelectedAg(null)
