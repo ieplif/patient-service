@@ -59,6 +59,7 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/pagamentos/**").hasAnyRole("ADMIN", "USER")
                         .requestMatchers("/api/assinaturas/**").hasAnyRole("ADMIN", "USER")
                         .requestMatchers("/api/parcelas/**").hasAnyRole("ADMIN", "USER")
