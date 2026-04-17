@@ -302,7 +302,7 @@ class AssinaturaServiceTest {
 
         assinaturaService.deleteAssinatura(assinaturaId);
 
-        assertThat(assinatura.isAtivo()).isFalse();
+        assertThat(assinatura.getAtivo()).isFalse();
         verify(assinaturaRepository).save(assinatura);
     }
 }
