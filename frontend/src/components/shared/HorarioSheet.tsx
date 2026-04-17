@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { getHorariosByProfissional, createHorario, deleteHorario } from "@/api/horarios"
-import type { Profissional, HorarioDisponivel } from "@/types"
+import type { Profissional } from "@/types"
 
 interface HorarioSheetProps {
   open: boolean
