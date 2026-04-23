@@ -3,7 +3,7 @@ package br.com.clinicahumaniza.patient_service.controller;
 import br.com.clinicahumaniza.patient_service.dto.AtividadeRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AtividadeResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.AtividadeUpdateDTO;
-import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
+
 import br.com.clinicahumaniza.patient_service.mapper.AtividadeMapper;
 import br.com.clinicahumaniza.patient_service.model.Atividade;
 import br.com.clinicahumaniza.patient_service.security.JwtAuthenticationFilter;
@@ -23,7 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import org.springframework.data.domain.Page;
+
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
