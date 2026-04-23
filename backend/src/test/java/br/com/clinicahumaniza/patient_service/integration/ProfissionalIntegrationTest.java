@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,7 +48,7 @@ class ProfissionalIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        adminToken = objectMapper.readTree(result.getResponse().getContentAsString()).get("token").asText();
+        adminToken = result.getResponse().getCookie("humaniza_token").getValue();
     }
 
     @Test
@@ -178,7 +179,7 @@ class ProfissionalIntegrationTest {
                         .contentType("application/json")
                         .content(loginBody))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").exists())
+                .andExpect(cookie().exists("humaniza_token"))
                 .andExpect(jsonPath("$.role").value("ROLE_PROFISSIONAL"));
     }
 

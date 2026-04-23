@@ -5,7 +5,6 @@ import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.RegisterRequestDTO;
 import br.com.clinicahumaniza.patient_service.service.AuthService;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

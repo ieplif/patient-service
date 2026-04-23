@@ -52,7 +52,7 @@ class AgendamentoIntegrationTest {
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andReturn();
-        token = objectMapper.readTree(authResult.getResponse().getContentAsString()).get("token").asText();
+        token = authResult.getResponse().getCookie("humaniza_token").getValue();
 
         // Criar paciente
         PatientRequestDTO pacienteDTO = new PatientRequestDTO();

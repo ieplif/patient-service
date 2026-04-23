@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,7 +41,7 @@ class AuthIntegrationTest {
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andReturn();
-        adminToken = objectMapper.readTree(result.getResponse().getContentAsString()).get("token").asText();
+        adminToken = result.getResponse().getCookie("humaniza_token").getValue();
     }
 
     @Test
@@ -53,7 +54,7 @@ class AuthIntegrationTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(registerRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(cookie().exists("humaniza_token"))
                 .andExpect(jsonPath("$.nome").value("Ana Costa"))
                 .andExpect(jsonPath("$.email").value("ana@email.com"))
                 .andExpect(jsonPath("$.tipo").value("Bearer"));
@@ -63,7 +64,7 @@ class AuthIntegrationTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(cookie().exists("humaniza_token"))
                 .andExpect(jsonPath("$.nome").value("Ana Costa"));
     }
 

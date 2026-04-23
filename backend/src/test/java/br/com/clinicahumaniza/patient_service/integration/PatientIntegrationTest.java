@@ -47,8 +47,7 @@ class PatientIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        String responseBody = result.getResponse().getContentAsString();
-        token = objectMapper.readTree(responseBody).get("token").asText();
+        token = result.getResponse().getCookie("humaniza_token").getValue();
     }
 
     @Test

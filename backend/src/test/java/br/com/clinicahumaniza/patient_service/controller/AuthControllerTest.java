@@ -25,6 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -65,7 +66,7 @@ class AuthControllerTest {
                         .contentType("application/json")
                         .content(body))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.token").value("jwt-token"))
+                .andExpect(cookie().exists("humaniza_token"))
                 .andExpect(jsonPath("$.nome").value("Maria Silva"));
     }
 
@@ -82,7 +83,7 @@ class AuthControllerTest {
                         .contentType("application/json")
                         .content(body))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("jwt-token"));
+                .andExpect(cookie().exists("humaniza_token"));
     }
 
     @Test
