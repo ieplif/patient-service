@@ -330,7 +330,7 @@ class PagamentoServiceTest {
     @DisplayName("Deve listar todos os pagamentos")
     void getAllPagamentos_Success() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(pagamentoRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(pagamentoRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Pagamento>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(pagamento)));
 
         Page<Pagamento> result = pagamentoService.getAllPagamentos(null, null, null, null, null, pageable);
