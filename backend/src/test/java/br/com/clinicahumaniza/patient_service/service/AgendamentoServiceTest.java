@@ -466,7 +466,7 @@ class AgendamentoServiceTest {
     @DisplayName("Deve listar todos os agendamentos")
     void getAllAgendamentos_Success() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(agendamentoRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(agendamentoRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Agendamento>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(agendamento)));
 
         Page<Agendamento> result = agendamentoService.getAllAgendamentos(null, null, null, null, null, pageable);

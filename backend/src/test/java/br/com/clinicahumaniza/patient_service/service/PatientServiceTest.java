@@ -135,7 +135,7 @@ class PatientServiceTest {
     @DisplayName("Deve listar todos os pacientes")
     void getAllPatients_Success() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(patientRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(patientRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Patient>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(patient)));
 
         Page<Patient> result = patientService.getAllPatients(null, null, null, pageable);

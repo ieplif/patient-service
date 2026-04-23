@@ -197,7 +197,7 @@ class AssinaturaServiceTest {
     @DisplayName("Deve listar todas as assinaturas")
     void getAllAssinaturas_Success() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(assinaturaRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(assinaturaRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Assinatura>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(assinatura)));
 
         Page<Assinatura> result = assinaturaService.getAllAssinaturas(null, null, pageable);
