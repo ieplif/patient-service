@@ -68,9 +68,9 @@ public class AssinaturaService {
     }
 
     public Page<Assinatura> getAllAssinaturas(StatusAssinatura status, UUID pacienteId, Pageable pageable) {
-        Specification<Assinatura> spec = Specification
-                .where(AssinaturaSpecification.hasStatus(status))
-                .and(AssinaturaSpecification.hasPaciente(pacienteId));
+        Specification<Assinatura> spec = Specification.allOf(
+                AssinaturaSpecification.hasStatus(status),
+                AssinaturaSpecification.hasPaciente(pacienteId));
         return assinaturaRepository.findAll(spec, pageable);
     }
 

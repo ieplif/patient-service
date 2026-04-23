@@ -83,11 +83,11 @@ public class PatientService {
     }
 
     public Page<Patient> getAllPatients(String nome, String email, String cpf, Pageable pageable) {
-        Specification<Patient> spec = Specification
-                .where(PatientSpecification.isAtivo())
-                .and(PatientSpecification.hasNome(nome))
-                .and(PatientSpecification.hasEmail(email))
-                .and(PatientSpecification.hasCpf(cpf));
+        Specification<Patient> spec = Specification.allOf(
+                PatientSpecification.isAtivo(),
+                PatientSpecification.hasNome(nome),
+                PatientSpecification.hasEmail(email),
+                PatientSpecification.hasCpf(cpf));
         return patientRepository.findAll(spec, pageable);
     }
 

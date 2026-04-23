@@ -83,18 +83,18 @@ public class PagamentoService {
     public Page<Pagamento> getAllPagamentos(StatusPagamento status, FormaPagamento formaPagamento,
                                             UUID pacienteId, LocalDate inicio, LocalDate fim,
                                             Pageable pageable) {
-        Specification<Pagamento> spec = Specification
-                .where(PagamentoSpecification.hasStatus(status))
-                .and(PagamentoSpecification.hasFormaPagamento(formaPagamento))
-                .and(PagamentoSpecification.hasPaciente(pacienteId))
-                .and(PagamentoSpecification.betweenVencimento(inicio, fim));
+        Specification<Pagamento> spec = Specification.allOf(
+                PagamentoSpecification.hasStatus(status),
+                PagamentoSpecification.hasFormaPagamento(formaPagamento),
+                PagamentoSpecification.hasPaciente(pacienteId),
+                PagamentoSpecification.betweenVencimento(inicio, fim));
         return pagamentoRepository.findAll(spec, pageable);
     }
 
     public byte[] exportCsv(LocalDate inicio, LocalDate fim, StatusPagamento status) {
-        Specification<Pagamento> spec = Specification
-                .where(PagamentoSpecification.hasStatus(status))
-                .and(PagamentoSpecification.betweenVencimento(inicio, fim));
+        Specification<Pagamento> spec = Specification.allOf(
+                PagamentoSpecification.hasStatus(status),
+                PagamentoSpecification.betweenVencimento(inicio, fim));
         List<Pagamento> pagamentos = pagamentoRepository.findAll(spec);
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Paciente,Valor,FormaPagamento,Status,DataVencimento,DataPagamento\n");

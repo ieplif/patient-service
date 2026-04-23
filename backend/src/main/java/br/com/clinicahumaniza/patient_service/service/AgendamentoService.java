@@ -127,20 +127,20 @@ public class AgendamentoService {
     public Page<Agendamento> getAllAgendamentos(StatusAgendamento status, UUID pacienteId,
                                                 UUID profissionalId, LocalDateTime dataInicio,
                                                 LocalDateTime dataFim, Pageable pageable) {
-        Specification<Agendamento> spec = Specification
-                .where(AgendamentoSpecification.hasStatus(status))
-                .and(AgendamentoSpecification.hasPaciente(pacienteId))
-                .and(AgendamentoSpecification.hasProfissional(profissionalId))
-                .and(AgendamentoSpecification.betweenDatas(dataInicio, dataFim));
+        Specification<Agendamento> spec = Specification.allOf(
+                AgendamentoSpecification.hasStatus(status),
+                AgendamentoSpecification.hasPaciente(pacienteId),
+                AgendamentoSpecification.hasProfissional(profissionalId),
+                AgendamentoSpecification.betweenDatas(dataInicio, dataFim));
         return agendamentoRepository.findAll(spec, pageable);
     }
 
     public byte[] exportCsv(LocalDate inicio, LocalDate fim, StatusAgendamento status) {
         LocalDateTime dtInicio = inicio != null ? inicio.atStartOfDay() : null;
         LocalDateTime dtFim = fim != null ? fim.atTime(LocalTime.MAX) : null;
-        Specification<Agendamento> spec = Specification
-                .where(AgendamentoSpecification.hasStatus(status))
-                .and(AgendamentoSpecification.betweenDatas(dtInicio, dtFim));
+        Specification<Agendamento> spec = Specification.allOf(
+                AgendamentoSpecification.hasStatus(status),
+                AgendamentoSpecification.betweenDatas(dtInicio, dtFim));
         List<Agendamento> agendamentos = agendamentoRepository.findAll(spec);
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Paciente,Profissional,Servico,DataHora,Status,DuracaoMinutos\n");
