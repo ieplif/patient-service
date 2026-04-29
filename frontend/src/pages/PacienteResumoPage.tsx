@@ -340,7 +340,7 @@ export function PacienteResumoPage() {
                     return (
                       <TableRow key={ag.id} className="border-border/40">
                         <TableCell className="text-sm font-secondary">{ag.servicoDescricao}</TableCell>
-                        <TableCell className="text-sm font-secondary text-muted-foreground">{ag.profissionalNome}</TableCell>
+                        <TableCell className="text-sm font-secondary text-muted-foreground">{ag.profissionalNome || "Sem profissional"}</TableCell>
                         <TableCell className="text-sm font-secondary text-muted-foreground whitespace-nowrap">
                           {format(new Date(ag.dataHora), "dd/MM/yyyy 'as' HH:mm")}
                         </TableCell>

@@ -76,14 +76,17 @@ public class AgendamentoService {
         Patient paciente = patientRepository.findById(dto.getPacienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Paciente", dto.getPacienteId()));
 
-        Profissional profissional = profissionalRepository.findById(dto.getProfissionalId())
-                .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
-
+        // Carrega serviço primeiro (sempre obrigatório); profissional só se for informado
         Servico servico = servicoRepository.findById(dto.getServicoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Serviço", dto.getServicoId()));
 
-        // Validar que o profissional atende a atividade do serviço
-        validarProfissionalAtendeAtividade(profissional, servico);
+        Profissional profissional = null;
+        if (dto.getProfissionalId() != null) {
+            profissional = profissionalRepository.findById(dto.getProfissionalId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
+            // Validar que o profissional atende a atividade do serviço
+            validarProfissionalAtendeAtividade(profissional, servico);
+        }
 
         // Validar assinatura se fornecida
         Assinatura assinatura = null;
@@ -103,19 +106,21 @@ public class AgendamentoService {
             }
         }
 
-        // Validar dentro do horário disponível do profissional
-        validarDentroDoHorarioDisponivel(profissional.getId(), dto.getDataHora(), dto.getDuracaoMinutos());
-
-        // Detectar conflitos de horário (respeitando capacidade máxima da atividade)
-        int capacidade = servico.getAtividade().getCapacidadeMaxima() != null
-                ? servico.getAtividade().getCapacidadeMaxima() : 1;
-        validarConflitoHorario(profissional.getId(), dto.getDataHora(), dto.getDuracaoMinutos(), capacidade);
+        // Validações que dependem de profissional só rodam se ele foi informado
+        if (profissional != null) {
+            validarDentroDoHorarioDisponivel(profissional.getId(), dto.getDataHora(), dto.getDuracaoMinutos());
+            int capacidade = servico.getAtividade().getCapacidadeMaxima() != null
+                    ? servico.getAtividade().getCapacidadeMaxima() : 1;
+            validarConflitoHorario(profissional.getId(), dto.getDataHora(), dto.getDuracaoMinutos(), capacidade);
+        }
 
         Agendamento agendamento = agendamentoMapper.toEntity(dto, paciente, profissional, servico, assinatura);
         agendamento.setStatus(StatusAgendamento.AGENDADO);
 
         Agendamento saved = agendamentoRepository.save(agendamento);
-        googleCalendarService.ifPresent(g -> g.createEvent(saved));
+        if (saved.getProfissional() != null) {
+            googleCalendarService.ifPresent(g -> g.createEvent(saved));
+        }
         return saved;
     }
 
@@ -145,10 +150,11 @@ public class AgendamentoService {
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Paciente,Profissional,Servico,DataHora,Status,DuracaoMinutos\n");
         for (Agendamento a : agendamentos) {
+            String nomeProfissional = a.getProfissional() != null ? a.getProfissional().getNome() : "Sem profissional";
             csv.append(String.join(",",
                     a.getId().toString(),
                     escapeCsv(a.getPaciente().getNomeCompleto()),
-                    escapeCsv(a.getProfissional().getNome()),
+                    escapeCsv(nomeProfissional),
                     escapeCsv(a.getServico().getAtividade().getNome() + " - " + a.getServico().getPlano().getNome()),
                     a.getDataHora() != null ? a.getDataHora().toString() : "",
                     a.getStatus().name(),
@@ -191,7 +197,8 @@ public class AgendamentoService {
         LocalDateTime novaDataHora = dto.getDataHora() != null ? dto.getDataHora() : agendamento.getDataHora();
         Integer novaDuracao = dto.getDuracaoMinutos() != null ? dto.getDuracaoMinutos() : agendamento.getDuracaoMinutos();
 
-        if (dto.getDataHora() != null || dto.getDuracaoMinutos() != null) {
+        if ((dto.getDataHora() != null || dto.getDuracaoMinutos() != null)
+                && agendamento.getProfissional() != null) {
             validarDentroDoHorarioDisponivel(agendamento.getProfissional().getId(), novaDataHora, novaDuracao);
             int capacidade = agendamento.getServico().getAtividade().getCapacidadeMaxima() != null
                     ? agendamento.getServico().getAtividade().getCapacidadeMaxima() : 1;
@@ -201,7 +208,9 @@ public class AgendamentoService {
 
         agendamentoMapper.updateEntityFromDto(dto, agendamento);
         Agendamento saved = agendamentoRepository.save(agendamento);
-        googleCalendarService.ifPresent(g -> g.updateEvent(saved));
+        if (saved.getProfissional() != null) {
+            googleCalendarService.ifPresent(g -> g.updateEvent(saved));
+        }
         return saved;
     }
 
@@ -243,7 +252,9 @@ public class AgendamentoService {
     public void deleteAgendamento(UUID id) {
         Agendamento agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
-        googleCalendarService.ifPresent(g -> g.deleteEvent(agendamento));
+        if (agendamento.getProfissional() != null) {
+            googleCalendarService.ifPresent(g -> g.deleteEvent(agendamento));
+        }
         agendamento.setAtivo(false);
         agendamentoRepository.save(agendamento);
     }
@@ -335,21 +346,24 @@ public class AgendamentoService {
             throw new BusinessException("Limite de " + LIMITE_REPOSICOES_MES + " reposições por mês atingido");
         }
 
-        // Buscar profissional
-        Profissional profissional = profissionalRepository.findById(dto.getProfissionalId())
-                .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
-
-        // Validar que o profissional atende a atividade do serviço
-        validarProfissionalAtendeAtividade(profissional, origem.getServico());
+        // Buscar profissional (opcional — pode ficar nulo, ex.: Pilates onde varia por dia)
+        Profissional profissional = null;
+        if (dto.getProfissionalId() != null) {
+            profissional = profissionalRepository.findById(dto.getProfissionalId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
+            validarProfissionalAtendeAtividade(profissional, origem.getServico());
+        }
 
         // Default duração
         Integer duracao = dto.getDuracaoMinutos() != null ? dto.getDuracaoMinutos() : origem.getDuracaoMinutos();
 
-        // Validar horário disponível e conflitos
-        validarDentroDoHorarioDisponivel(profissional.getId(), dto.getDataHora(), duracao);
-        int capacidade = origem.getServico().getAtividade().getCapacidadeMaxima() != null
-                ? origem.getServico().getAtividade().getCapacidadeMaxima() : 1;
-        validarConflitoHorario(profissional.getId(), dto.getDataHora(), duracao, capacidade);
+        // Validar horário disponível e conflitos só se houver profissional
+        if (profissional != null) {
+            validarDentroDoHorarioDisponivel(profissional.getId(), dto.getDataHora(), duracao);
+            int capacidade = origem.getServico().getAtividade().getCapacidadeMaxima() != null
+                    ? origem.getServico().getAtividade().getCapacidadeMaxima() : 1;
+            validarConflitoHorario(profissional.getId(), dto.getDataHora(), duracao, capacidade);
+        }
 
         // Criar o agendamento de reposição
         Agendamento reposicao = new Agendamento();
@@ -365,7 +379,9 @@ public class AgendamentoService {
         reposicao.setStatus(StatusAgendamento.AGENDADO);
 
         Agendamento saved = agendamentoRepository.save(reposicao);
-        googleCalendarService.ifPresent(g -> g.createEvent(saved));
+        if (saved.getProfissional() != null) {
+            googleCalendarService.ifPresent(g -> g.createEvent(saved));
+        }
         return saved;
     }
 

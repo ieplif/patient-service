@@ -22,7 +22,7 @@ public class AgendamentoRecorrenteRequestDTO {
     @NotNull
     private UUID pacienteId;
 
-    @NotNull
+    // Opcional — pode ficar em branco (ex.: Pilates onde o profissional varia por dia)
     private UUID profissionalId;
 
     @NotNull

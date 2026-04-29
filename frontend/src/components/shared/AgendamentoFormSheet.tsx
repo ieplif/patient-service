@@ -99,7 +99,7 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
       }
       return createAgendamento({
         pacienteId,
-        profissionalId,
+        ...(profissionalId ? { profissionalId } : {}),
         servicoId,
         dataHora,
         duracaoMinutos: duracaoMinutos ? parseInt(duracaoMinutos) : undefined,
@@ -165,10 +165,10 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
               </div>
 
               <div className="space-y-1.5">
-                <Label className="font-primary text-sm">Profissional *</Label>
-                <Select value={profissionalId} onValueChange={setProfissionalId} required>
+                <Label className="font-primary text-sm">Profissional</Label>
+                <Select value={profissionalId} onValueChange={setProfissionalId}>
                   <SelectTrigger className="font-secondary text-sm">
-                    <SelectValue placeholder="Selecione o profissional" />
+                    <SelectValue placeholder="Selecione o profissional (opcional)" />
                   </SelectTrigger>
                   <SelectContent>
                     {profissionais?.content.map((p) => (
@@ -178,6 +178,9 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground font-secondary">
+                  Opcional. Se vazio, o agendamento ficará como "Sem profissional".
+                </p>
               </div>
 
               <div className="space-y-1.5">
@@ -203,7 +206,7 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
               <p className="text-xs font-primary text-muted-foreground uppercase tracking-wide">Serviço</p>
               <p className="text-sm font-secondary text-foreground">{agendamento!.servicoDescricao}</p>
               <p className="text-xs font-primary text-muted-foreground uppercase tracking-wide mt-2">Profissional</p>
-              <p className="text-sm font-secondary text-foreground">{agendamento!.profissionalNome}</p>
+              <p className="text-sm font-secondary text-foreground">{agendamento!.profissionalNome || "Sem profissional"}</p>
             </div>
           )}
 

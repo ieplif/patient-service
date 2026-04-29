@@ -65,20 +65,24 @@ public class AgendamentoRecorrenteService {
         Patient paciente = patientRepository.findById(dto.getPacienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Paciente", dto.getPacienteId()));
 
-        Profissional profissional = profissionalRepository.findById(dto.getProfissionalId())
-                .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
-
+        // Carrega serviço primeiro (sempre obrigatório); profissional só se for informado
         Servico servico = servicoRepository.findById(dto.getServicoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Serviço", dto.getServicoId()));
 
-        // Validar que o profissional atende a atividade do serviço
-        boolean atende = profissional.getAtividades().stream()
-                .anyMatch(a -> a.getId().equals(servico.getAtividade().getId()));
-        if (!atende) {
-            throw new BusinessException(
-                    "O profissional " + profissional.getNome() +
-                    " não atende a atividade " + servico.getAtividade().getNome()
-            );
+        Profissional profissional = null;
+        if (dto.getProfissionalId() != null) {
+            profissional = profissionalRepository.findById(dto.getProfissionalId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
+
+            // Validar que o profissional atende a atividade do serviço
+            boolean atende = profissional.getAtividades().stream()
+                    .anyMatch(a -> a.getId().equals(servico.getAtividade().getId()));
+            if (!atende) {
+                throw new BusinessException(
+                        "O profissional " + profissional.getNome() +
+                        " não atende a atividade " + servico.getAtividade().getNome()
+                );
+            }
         }
 
         Assinatura assinatura = null;
@@ -262,8 +266,10 @@ public class AgendamentoRecorrenteService {
         response.setId(recorrente.getId());
         response.setPacienteId(recorrente.getPaciente().getId());
         response.setPacienteNome(recorrente.getPaciente().getNomeCompleto());
-        response.setProfissionalId(recorrente.getProfissional().getId());
-        response.setProfissionalNome(recorrente.getProfissional().getNome());
+        if (recorrente.getProfissional() != null) {
+            response.setProfissionalId(recorrente.getProfissional().getId());
+            response.setProfissionalNome(recorrente.getProfissional().getNome());
+        }
         response.setServicoId(recorrente.getServico().getId());
         response.setServicoDescricao(
                 recorrente.getServico().getAtividade().getNome() + " - " +

@@ -391,6 +391,7 @@ class AgendamentoRecorrenteServiceTest {
                 List.of(DayOfWeek.MONDAY), 4, null);
 
         when(patientRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
+        when(servicoRepository.findById(servicoId)).thenReturn(Optional.of(servico));
         when(profissionalRepository.findById(profissionalId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.createRecorrente(dto))
@@ -404,7 +405,6 @@ class AgendamentoRecorrenteServiceTest {
                 List.of(DayOfWeek.MONDAY), 4, null);
 
         when(patientRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
-        when(profissionalRepository.findById(profissionalId)).thenReturn(Optional.of(profissional));
         when(servicoRepository.findById(servicoId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.createRecorrente(dto))

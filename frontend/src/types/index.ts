@@ -85,8 +85,8 @@ export interface Agendamento {
   id: string
   pacienteId: string
   pacienteNome: string
-  profissionalId: string
-  profissionalNome: string
+  profissionalId?: string
+  profissionalNome?: string
   servicoId: string
   servicoDescricao: string
   dataHora: string

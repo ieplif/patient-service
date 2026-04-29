@@ -95,7 +95,8 @@ export function AssinaturasPage() {
       const errosAgendamento: string[] = []
 
       // Auto-create recurring appointments for Pilates with horários fixos
-      if (horariosFixos?.length && profissionalId) {
+      // Profissional é opcional — quando vazio os agendamentos ficam com "Sem profissional"
+      if (horariosFixos?.length) {
         const slotsValidos = horariosFixos.filter(h => h.dia && h.horario)
         let aulasRestantes = assinaturaPayload.sessoesContratadas
 
@@ -108,7 +109,7 @@ export function AssinaturasPage() {
           try {
             const result = await createAgendamentoRecorrente({
               pacienteId: assinaturaPayload.pacienteId,
-              profissionalId,
+              ...(profissionalId ? { profissionalId } : {}),
               servicoId: assinaturaPayload.servicoId,
               assinaturaId: assinatura.id,
               frequencia: "SEMANAL",
@@ -134,13 +135,14 @@ export function AssinaturasPage() {
       }
 
       // Create individual appointments for non-Pilates services
-      if (agendamentosIndividuais?.length && profissionalId) {
+      // Profissional é opcional — quando vazio o agendamento fica com "Sem profissional"
+      if (agendamentosIndividuais?.length) {
         for (const ag of agendamentosIndividuais) {
           if (ag.dataHora) {
             try {
               await createAgendamento({
                 pacienteId: assinaturaPayload.pacienteId,
-                profissionalId,
+                ...(profissionalId ? { profissionalId } : {}),
                 servicoId: assinaturaPayload.servicoId,
                 assinaturaId: assinatura.id,
                 dataHora: ag.dataHora + ":00",

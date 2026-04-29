@@ -32,7 +32,7 @@ public class AgendamentoMapper {
             dto.setProfissionalId(entity.getProfissional().getId());
             dto.setProfissionalNome(entity.getProfissional().getNome());
         } else {
-            dto.setProfissionalNome("(profissional removido)");
+            dto.setProfissionalNome("Sem profissional");
         }
         if (entity.getServico() != null) {
             dto.setServicoId(entity.getServico().getId());

@@ -93,7 +93,9 @@ public class AssinaturaRenovacaoService {
 
             AgendamentoRecorrenteRequestDTO dto = new AgendamentoRecorrenteRequestDTO();
             dto.setPacienteId(template.getPaciente().getId());
-            dto.setProfissionalId(template.getProfissional().getId());
+            if (template.getProfissional() != null) {
+                dto.setProfissionalId(template.getProfissional().getId());
+            }
             dto.setServicoId(template.getServico().getId());
             dto.setAssinaturaId(assinatura.getId());
             dto.setFrequencia(template.getFrequencia());

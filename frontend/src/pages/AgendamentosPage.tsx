@@ -261,7 +261,7 @@ export function AgendamentosPage() {
                             {ag.pacienteNome}
                           </TableCell>
                           <TableCell className="text-sm font-secondary text-muted-foreground">
-                            {ag.profissionalNome}
+                            {ag.profissionalNome || "Sem profissional"}
                           </TableCell>
                           <TableCell className="text-sm font-secondary text-muted-foreground max-w-[140px] truncate" title={ag.servicoDescricao}>
                             {ag.servicoDescricao}

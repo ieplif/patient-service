@@ -16,7 +16,7 @@ public class AgendamentoRequestDTO {
     @NotNull(message = "ID do paciente é obrigatório")
     private UUID pacienteId;
 
-    @NotNull(message = "ID do profissional é obrigatório")
+    // Opcional — pode ficar em branco (ex.: Pilates onde o profissional varia por dia)
     private UUID profissionalId;
 
     @NotNull(message = "ID do serviço é obrigatório")

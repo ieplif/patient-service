@@ -224,7 +224,7 @@ export function DashboardPage() {
                               {ag.pacienteNome}
                             </TableCell>
                             <TableCell className="text-sm font-secondary text-muted-foreground">
-                              {ag.profissionalNome}
+                              {ag.profissionalNome || "Sem profissional"}
                             </TableCell>
                             <TableCell className="text-sm font-secondary text-muted-foreground whitespace-nowrap">
                               {formatDateTime(ag.dataHora)}

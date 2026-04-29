@@ -3,7 +3,7 @@ import type { PageResponse, Agendamento, StatusAgendamento, ReposicaoInfo } from
 
 export interface AgendamentoCreateData {
   pacienteId: string
-  profissionalId: string
+  profissionalId?: string
   servicoId: string
   assinaturaId?: string
   dataHora: string
@@ -67,7 +67,7 @@ export async function updateAgendamentoStatus(
 
 export interface ReposicaoCreateData {
   agendamentoOrigemId: string
-  profissionalId: string
+  profissionalId?: string
   dataHora: string
   duracaoMinutos?: number
   observacoes?: string
@@ -80,7 +80,7 @@ export async function criarReposicao(payload: ReposicaoCreateData): Promise<Agen
 
 export interface AgendamentoRecorrenteData {
   pacienteId: string
-  profissionalId: string
+  profissionalId?: string
   servicoId: string
   assinaturaId?: string
   frequencia: "SEMANAL" | "QUINZENAL" | "MENSAL"

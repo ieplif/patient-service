@@ -29,7 +29,7 @@ public class Agendamento {
 
     @ManyToOne
     @NotFound(action = NotFoundAction.IGNORE)
-    @JoinColumn(name = "profissional_id", nullable = false)
+    @JoinColumn(name = "profissional_id")
     private Profissional profissional;
 
     @ManyToOne

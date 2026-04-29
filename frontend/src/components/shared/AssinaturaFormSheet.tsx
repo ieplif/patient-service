@@ -360,7 +360,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             </Select>
           </div>
 
-          {/* Profissional — opcional. Sem profissional, a assinatura é criada sem agendamentos automáticos. */}
+          {/* Profissional — opcional. Se vazio, agendamentos ficam com "Sem profissional". */}
           {(showHorarios || showAgendamentosIndividuais) && (
             <div className="space-y-2">
               <Label className="font-primary">Profissional</Label>
@@ -385,8 +385,8 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground font-secondary">
-                Opcional. Sem profissional, a assinatura é criada sem agendamentos automáticos —
-                você poderá criá-los individualmente depois.
+                Opcional. Se ficar em branco, os agendamentos serão criados como
+                "Sem profissional" — você pode atribuir um responsável depois.
               </p>
             </div>
           )}
@@ -414,8 +414,8 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             </div>
           </div>
 
-          {/* Horários fixos for Pilates with frequency — só se profissional foi escolhido */}
-          {showHorarios && horariosFixos.length > 0 && profissionalId && (
+          {/* Horários fixos for Pilates with frequency */}
+          {showHorarios && horariosFixos.length > 0 && (
             <div className="space-y-3">
               <Label className="font-primary">
                 Horários fixos ({selectedServico?.quantidade}x/semana) *
@@ -467,7 +467,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
           )}
 
           {/* Agendamentos individuais for non-Pilates services */}
-          {showAgendamentosIndividuais && agendamentos.length > 0 && profissionalId && (
+          {showAgendamentosIndividuais && agendamentos.length > 0 && (
             <div className="space-y-3">
               <Label className="font-primary">
                 Agendamentos ({agendamentos.length} {agendamentos.length === 1 ? "sessão" : "sessões"})

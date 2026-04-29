@@ -63,7 +63,7 @@ export function ReposicaoFormSheet({ open, onOpenChange, agendamento }: Reposica
       const dataHora = `${date}T${time}:00`
       return criarReposicao({
         agendamentoOrigemId: agendamento.id,
-        profissionalId,
+        ...(profissionalId ? { profissionalId } : {}),
         dataHora,
         duracaoMinutos: duracaoMinutos ? parseInt(duracaoMinutos) : undefined,
         observacoes: observacoes || undefined,
@@ -123,10 +123,10 @@ export function ReposicaoFormSheet({ open, onOpenChange, agendamento }: Reposica
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="font-primary text-sm">Profissional *</Label>
-            <Select value={profissionalId} onValueChange={setProfissionalId} required>
+            <Label className="font-primary text-sm">Profissional</Label>
+            <Select value={profissionalId} onValueChange={setProfissionalId}>
               <SelectTrigger className="font-secondary text-sm">
-                <SelectValue placeholder="Selecione o profissional" />
+                <SelectValue placeholder="Selecione o profissional (opcional)" />
               </SelectTrigger>
               <SelectContent>
                 {profissionais?.content.map((p) => (
