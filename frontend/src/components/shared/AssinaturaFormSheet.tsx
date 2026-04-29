@@ -360,13 +360,13 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             </Select>
           </div>
 
-          {/* Profissional — shown for Pilates with frequency or non-Pilates with sessions */}
+          {/* Profissional — opcional. Sem profissional, a assinatura é criada sem agendamentos automáticos. */}
           {(showHorarios || showAgendamentosIndividuais) && (
             <div className="space-y-2">
-              <Label className="font-primary">Profissional *</Label>
+              <Label className="font-primary">Profissional</Label>
               <Select value={profissionalId} onValueChange={setProfissionalId}>
                 <SelectTrigger className="font-secondary">
-                  <SelectValue placeholder="Selecione o profissional" />
+                  <SelectValue placeholder="Selecione o profissional (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
                   {loadingProfissionais ? (
@@ -384,6 +384,10 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
                   )}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground font-secondary">
+                Opcional. Sem profissional, a assinatura é criada sem agendamentos automáticos —
+                você poderá criá-los individualmente depois.
+              </p>
             </div>
           )}
 
@@ -410,8 +414,8 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
             </div>
           </div>
 
-          {/* Horários fixos for Pilates with frequency */}
-          {showHorarios && horariosFixos.length > 0 && (
+          {/* Horários fixos for Pilates with frequency — só se profissional foi escolhido */}
+          {showHorarios && horariosFixos.length > 0 && profissionalId && (
             <div className="space-y-3">
               <Label className="font-primary">
                 Horários fixos ({selectedServico?.quantidade}x/semana) *
@@ -608,7 +612,6 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
               className="flex-1 bg-primary text-primary-foreground font-primary"
               disabled={
                 !pacienteId || !servicoId || !dataInicio || !sessoesContratadas || !valor
-                || ((showHorarios || showAgendamentosIndividuais) && !profissionalId)
                 || isPending
               }
             >
