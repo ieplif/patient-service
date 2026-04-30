@@ -75,9 +75,9 @@ export function PatientFormSheet({ open, onOpenChange, patient }: PatientFormShe
     if (patient) {
       setForm({
         nomeCompleto: patient.nomeCompleto,
-        email: patient.email,
-        cpf: "",
-        dataNascimento: patient.dataNascimento,
+        email: patient.email ?? "",
+        cpf: patient.cpf ? formatCpf(patient.cpf) : "",
+        dataNascimento: patient.dataNascimento ?? "",
         telefone: formatTelefone(patient.telefone),
         endereco: patient.endereco ?? "",
         profissao: patient.profissao ?? "",
@@ -96,10 +96,14 @@ export function PatientFormSheet({ open, onOpenChange, patient }: PatientFormShe
 
   const mutation = useMutation({
     mutationFn: () => {
+      const cpfDigits = form.cpf.replace(/\D/g, "")
       if (isEdit) {
         return updatePatient(patient!.id, {
           nomeCompleto: form.nomeCompleto,
           telefone: form.telefone.replace(/\D/g, ""),
+          email: form.email || undefined,
+          cpf: cpfDigits || undefined,
+          dataNascimento: form.dataNascimento || undefined,
           endereco: form.endereco || undefined,
           profissao: form.profissao || undefined,
           estadoCivil: form.estadoCivil || undefined,
@@ -109,10 +113,10 @@ export function PatientFormSheet({ open, onOpenChange, patient }: PatientFormShe
       }
       return createPatient({
         nomeCompleto: form.nomeCompleto,
-        email: form.email,
-        cpf: form.cpf.replace(/\D/g, ""),
-        dataNascimento: form.dataNascimento,
         telefone: form.telefone.replace(/\D/g, ""),
+        email: form.email || undefined,
+        cpf: cpfDigits || undefined,
+        dataNascimento: form.dataNascimento || undefined,
         endereco: form.endereco || undefined,
         profissao: form.profissao || undefined,
         estadoCivil: form.estadoCivil || undefined,
@@ -131,9 +135,8 @@ export function PatientFormSheet({ open, onOpenChange, patient }: PatientFormShe
       onOpenChange(false)
     },
     onError: (err: unknown) => {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Verifique os dados e tente novamente."
+      const data = (err as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data
+      const msg = data?.mensagem || data?.message || "Verifique os dados e tente novamente."
       toast({ title: "Erro", description: msg, variant: "destructive" })
     },
   })
@@ -152,35 +155,23 @@ export function PatientFormSheet({ open, onOpenChange, patient }: PatientFormShe
             {isEdit ? "Editar Paciente" : "Novo Paciente"}
           </SheetTitle>
           <SheetDescription className="font-secondary">
-            {isEdit ? "Atualize os dados do paciente." : "Preencha os dados para cadastrar um novo paciente."}
+            {isEdit
+              ? "Atualize os dados do paciente. Você pode preencher CPF, e-mail e nascimento depois."
+              : "Apenas nome e telefone são obrigatórios — os demais campos podem ser preenchidos depois."}
           </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="nomeCompleto" className="font-primary text-sm">Nome completo *</Label>
-            <Input
-              id="nomeCompleto"
-              value={form.nomeCompleto}
-              onChange={(e) => set("nomeCompleto", e.target.value)}
-              placeholder="Nome completo do paciente"
-              required
-              minLength={3}
-              className="font-secondary"
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="font-primary text-sm">E-mail *</Label>
+              <Label htmlFor="nomeCompleto" className="font-primary text-sm">Nome completo *</Label>
               <Input
-                id="email"
-                type="email"
-                value={form.email}
-                onChange={(e) => set("email", e.target.value)}
-                placeholder="email@exemplo.com"
-                required={!isEdit}
-                disabled={isEdit}
+                id="nomeCompleto"
+                value={form.nomeCompleto}
+                onChange={(e) => set("nomeCompleto", e.target.value)}
+                placeholder="Nome completo do paciente"
+                required
+                minLength={3}
                 className="font-secondary"
               />
             </div>
@@ -197,32 +188,45 @@ export function PatientFormSheet({ open, onOpenChange, patient }: PatientFormShe
             </div>
           </div>
 
-          {!isEdit && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="cpf" className="font-primary text-sm">CPF *</Label>
-                <Input
-                  id="cpf"
-                  value={form.cpf}
-                  onChange={(e) => set("cpf", formatCpf(e.target.value))}
-                  placeholder="000.000.000-00"
-                  required
-                  className="font-secondary"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dataNascimento" className="font-primary text-sm">Nascimento *</Label>
-                <Input
-                  id="dataNascimento"
-                  type="date"
-                  value={form.dataNascimento}
-                  onChange={(e) => set("dataNascimento", e.target.value)}
-                  required
-                  className="font-secondary"
-                />
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="font-primary text-sm">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                value={form.email}
+                onChange={(e) => set("email", e.target.value)}
+                placeholder="email@exemplo.com"
+                className="font-secondary"
+              />
+              <p className="text-xs text-muted-foreground font-secondary">Recomendado para envio de comunicados.</p>
             </div>
-          )}
+            <div className="space-y-1.5">
+              <Label htmlFor="dataNascimento" className="font-primary text-sm">Nascimento</Label>
+              <Input
+                id="dataNascimento"
+                type="date"
+                value={form.dataNascimento}
+                onChange={(e) => set("dataNascimento", e.target.value)}
+                className="font-secondary"
+              />
+              <p className="text-xs text-muted-foreground font-secondary">Recomendado para anamnese.</p>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="cpf" className="font-primary text-sm">CPF</Label>
+            <Input
+              id="cpf"
+              value={form.cpf}
+              onChange={(e) => set("cpf", formatCpf(e.target.value))}
+              placeholder="000.000.000-00"
+              className="font-secondary"
+            />
+            <p className="text-xs text-muted-foreground font-secondary">
+              Recomendado para emissão de recibo / nota fiscal. Pode ser preenchido depois.
+            </p>
+          </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="endereco" className="font-primary text-sm">Endereço</Label>

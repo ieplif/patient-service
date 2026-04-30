@@ -208,17 +208,29 @@ export function PacienteResumoPage() {
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="font-secondary">
-                {format(new Date(paciente.dataNascimento), "dd/MM/yyyy")}
-                {idade !== null && <span className="text-muted-foreground"> ({idade} anos)</span>}
+                {paciente.dataNascimento ? (
+                  <>
+                    {format(new Date(paciente.dataNascimento), "dd/MM/yyyy")}
+                    {idade !== null && <span className="text-muted-foreground"> ({idade} anos)</span>}
+                  </>
+                ) : (
+                  <span className="text-muted-foreground italic">Nascimento não informado</span>
+                )}
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="font-secondary font-mono text-xs">{formatCpf(paciente.cpf)}</span>
+              <span className="font-secondary font-mono text-xs">
+                {paciente.cpf
+                  ? formatCpf(paciente.cpf)
+                  : <span className="font-sans not-italic text-muted-foreground italic">CPF não informado</span>}
+              </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="font-secondary">{paciente.email}</span>
+              <span className="font-secondary">
+                {paciente.email || <span className="text-muted-foreground italic">E-mail não informado</span>}
+              </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Phone className="h-4 w-4 text-muted-foreground shrink-0" />

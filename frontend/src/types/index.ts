@@ -30,9 +30,10 @@ export interface PageResponse<T> {
 export interface Patient {
   id: string
   nomeCompleto: string
+  // Email, CPF e dataNascimento são opcionais — só nome e telefone são obrigatórios
   cpf?: string
-  email: string
-  dataNascimento: string
+  email?: string
+  dataNascimento?: string
   telefone: string
   endereco?: string
   profissao?: string

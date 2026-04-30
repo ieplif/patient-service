@@ -22,13 +22,14 @@ public class Patient {
     @Column(nullable = false, length = 255) // 8. Mapeia para uma coluna. `nullable = false` cria uma restrição NOT NULL.
     private String nomeCompleto;
 
-    @Column(nullable = false, unique = true, length = 255) // 9. `unique = true` garante que não haverá e-mails duplicados.
+    // Email opcional — quando informado, a unicidade ainda vale (PostgreSQL permite múltiplos NULLs em UNIQUE).
+    @Column(unique = true, length = 255)
     private String email;
 
-    @Column(nullable = false, unique = true, length = 11)
+    // CPF opcional — pode ser preenchido depois (necessário p/ emissão de recibo/NF).
+    @Column(unique = true, length = 11)
     private String cpf;
 
-    @Column(nullable = false)
     private LocalDate dataNascimento;
 
     @Column(nullable = false, length = 20)

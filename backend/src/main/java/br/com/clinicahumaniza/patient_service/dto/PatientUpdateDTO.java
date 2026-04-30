@@ -1,13 +1,27 @@
 package br.com.clinicahumaniza.patient_service.dto;
 
+import br.com.clinicahumaniza.patient_service.validation.ValidCpf;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+
+import java.time.LocalDate;
 
 @Data
 public class PatientUpdateDTO {
 
     @Size(min = 3, max = 255, message = "Nome completo deve ter entre 3 e 255 caracteres")
     private String nomeCompleto;
+
+    @Email(message = "E-mail deve ser válido")
+    private String email;
+
+    @ValidCpf
+    private String cpf;
+
+    @Past(message = "Data de nascimento deve ser uma data no passado")
+    private LocalDate dataNascimento;
 
     @Size(min = 10, max = 20, message = "Telefone deve ter entre 10 e 20 caracteres")
     private String telefone;

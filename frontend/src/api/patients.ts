@@ -3,10 +3,11 @@ import type { PageResponse, Patient } from "@/types"
 
 export interface PatientCreateData {
   nomeCompleto: string
-  email: string
-  cpf: string
-  dataNascimento: string
   telefone: string
+  // Recomendados — backend aceita null/ausente
+  email?: string
+  cpf?: string
+  dataNascimento?: string
   endereco?: string
   profissao?: string
   estadoCivil?: string
@@ -17,6 +18,9 @@ export interface PatientCreateData {
 export interface PatientUpdateData {
   nomeCompleto?: string
   telefone?: string
+  email?: string
+  cpf?: string
+  dataNascimento?: string
   endereco?: string
   profissao?: string
   estadoCivil?: string

@@ -3,7 +3,6 @@ package br.com.clinicahumaniza.patient_service.dto;
 import br.com.clinicahumaniza.patient_service.validation.ValidCpf;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -17,15 +16,15 @@ public class PatientRequestDTO {
     @Size(min = 3, max = 255, message = "Nome completo deve ter entre 3 e 255 caracteres")
     private String nomeCompleto;
 
-    @NotBlank(message = "E-mail é obrigatório")
+    // Opcional — quando informado, valida formato.
     @Email(message = "E-mail deve ser válido")
     private String email;
 
-    @NotBlank(message = "CPF é obrigatório")
+    // Opcional — pode ser preenchido depois.
     @ValidCpf
     private String cpf;
 
-    @NotNull(message = "Data de nascimento é obrigatória")
+    // Opcional — quando informado, deve ser data no passado.
     @Past(message = "Data de nascimento deve ser uma data no passado")
     private LocalDate dataNascimento;
 

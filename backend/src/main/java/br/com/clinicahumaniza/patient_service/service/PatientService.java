@@ -59,12 +59,17 @@ public class PatientService {
     public Patient createPatient(PatientRequestDTO patientDTO) {
         Patient patient = patientMapper.toEntity(patientDTO);
 
-        patientRepository.findByCpf(patient.getCpf()).ifPresent(p -> {
-            throw new DuplicateResourceException("CPF", patient.getCpf());
-        });
-        patientRepository.findByEmail(patient.getEmail()).ifPresent(p -> {
-            throw new DuplicateResourceException("E-mail", patient.getEmail());
-        });
+        // CPF e e-mail são opcionais; só validamos duplicidade quando informados.
+        if (patient.getCpf() != null) {
+            patientRepository.findByCpf(patient.getCpf()).ifPresent(p -> {
+                throw new DuplicateResourceException("CPF", patient.getCpf());
+            });
+        }
+        if (patient.getEmail() != null) {
+            patientRepository.findByEmail(patient.getEmail()).ifPresent(p -> {
+                throw new DuplicateResourceException("E-mail", patient.getEmail());
+            });
+        }
 
         if (patient.isConsentimentoLgpd()) {
             patient.setDataConsentimentoLgpd(LocalDateTime.now());
@@ -100,6 +105,22 @@ public class PatientService {
                 .orElseThrow(() -> new PatientNotFoundException(id));
 
         boolean consentimentoAnterior = existingPatient.isConsentimentoLgpd();
+
+        // Quando CPF/e-mail são alterados (ex.: paciente preenchendo depois), checa duplicidade.
+        if (patientUpdateDTO.getCpf() != null && !patientUpdateDTO.getCpf().isBlank()) {
+            patientRepository.findByCpf(patientUpdateDTO.getCpf()).ifPresent(p -> {
+                if (!p.getId().equals(id)) {
+                    throw new DuplicateResourceException("CPF", patientUpdateDTO.getCpf());
+                }
+            });
+        }
+        if (patientUpdateDTO.getEmail() != null && !patientUpdateDTO.getEmail().isBlank()) {
+            patientRepository.findByEmail(patientUpdateDTO.getEmail()).ifPresent(p -> {
+                if (!p.getId().equals(id)) {
+                    throw new DuplicateResourceException("E-mail", patientUpdateDTO.getEmail());
+                }
+            });
+        }
 
         patientMapper.updateEntityFromDto(patientUpdateDTO, existingPatient);
 

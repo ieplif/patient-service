@@ -151,13 +151,15 @@ export function PacientesPage() {
                           </Link>
                         </TableCell>
                         <TableCell className="text-sm font-secondary text-muted-foreground">
-                          {p.email}
+                          {p.email || "—"}
                         </TableCell>
                         <TableCell className="text-sm font-secondary text-muted-foreground whitespace-nowrap">
                           {p.telefone.replace(/\D/g, "").replace(/^(\d{2})(\d{4,5})(\d{4})$/, "($1) $2-$3")}
                         </TableCell>
                         <TableCell className="text-sm font-secondary text-muted-foreground">
-                          {format(new Date(`${p.dataNascimento}T00:00:00`), "dd/MM/yyyy", { locale: ptBR })}
+                          {p.dataNascimento
+                            ? format(new Date(`${p.dataNascimento}T00:00:00`), "dd/MM/yyyy", { locale: ptBR })
+                            : "—"}
                         </TableCell>
                         <TableCell>
                           <Badge

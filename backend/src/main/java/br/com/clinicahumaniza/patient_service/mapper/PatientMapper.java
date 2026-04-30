@@ -14,6 +14,15 @@ public class PatientMapper {
         if (dto.getNomeCompleto() != null) {
             entity.setNomeCompleto(dto.getNomeCompleto());
         }
+        if (dto.getEmail() != null) {
+            entity.setEmail(dto.getEmail().isBlank() ? null : dto.getEmail());
+        }
+        if (dto.getCpf() != null) {
+            entity.setCpf(dto.getCpf().isBlank() ? null : dto.getCpf());
+        }
+        if (dto.getDataNascimento() != null) {
+            entity.setDataNascimento(dto.getDataNascimento());
+        }
         if (dto.getTelefone() != null) {
             entity.setTelefone(dto.getTelefone());
         }
@@ -41,8 +50,9 @@ public class PatientMapper {
     public Patient toEntity(PatientRequestDTO dto) {
         Patient patient = new Patient();
         patient.setNomeCompleto(dto.getNomeCompleto());
-        patient.setEmail(dto.getEmail());
-        patient.setCpf(dto.getCpf());
+        // Email e CPF em branco são tratados como null para preservar a unicidade
+        patient.setEmail(dto.getEmail() == null || dto.getEmail().isBlank() ? null : dto.getEmail());
+        patient.setCpf(dto.getCpf() == null || dto.getCpf().isBlank() ? null : dto.getCpf());
         patient.setDataNascimento(dto.getDataNascimento());
         patient.setTelefone(dto.getTelefone());
         patient.setEndereco(dto.getEndereco());
