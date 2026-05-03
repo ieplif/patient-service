@@ -467,7 +467,7 @@ class AgendamentoServiceTest {
         when(agendamentoRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Agendamento>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(agendamento)));
 
-        Page<Agendamento> result = agendamentoService.getAllAgendamentos(null, null, null, null, null, pageable);
+        Page<Agendamento> result = agendamentoService.getAllAgendamentos(null, null, null, null, null, null, pageable);
 
         assertThat(result.getContent()).hasSize(1);
     }

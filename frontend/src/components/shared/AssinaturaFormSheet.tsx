@@ -140,7 +140,14 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       setValor(String(assinatura.valor))
       setObservacoes(assinatura.observacoes || "")
       setRenovacaoAutomatica(assinatura.renovacaoAutomatica ?? false)
-      setHorariosFixos([])
+      // Inicializa slots vazios — quando o usuário preencher, dispara regeneração no submit
+      const servico = servicosData?.find(s => s.id === assinatura.servicoId) ?? null
+      if (servico && isPilatesService(servico) && isFrequenciaService(servico)) {
+        const qtd = servico.quantidade ?? 1
+        setHorariosFixos(Array.from({ length: qtd }, () => ({ dia: "", horario: "" })))
+      } else {
+        setHorariosFixos([])
+      }
       setProfissionalId("")
       setAgendamentos([])
     } else if (open) {
@@ -156,7 +163,7 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
       setProfissionalId("")
       setAgendamentos([])
     }
-  }, [open, assinatura])
+  }, [open, assinatura, servicosData])
 
   const isEditing = !!assinatura
   const selectedServico = servicosData?.find(s => s.id === servicoId) ?? null
@@ -418,8 +425,14 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
           {showHorarios && horariosFixos.length > 0 && (
             <div className="space-y-3">
               <Label className="font-primary">
-                Horários fixos ({selectedServico?.quantidade}x/semana) *
+                Horários fixos ({selectedServico?.quantidade}x/semana) {!isEditing && "*"}
               </Label>
+              {isEditing && (
+                <p className="text-xs text-amber-600 font-secondary">
+                  Preencha apenas se quiser <strong>alterar</strong> os dias/horários — vai cancelar
+                  os agendamentos futuros pendentes e criar novos. Deixe em branco para manter o atual.
+                </p>
+              )}
               {horariosFixos.map((h, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground font-secondary shrink-0 w-6">

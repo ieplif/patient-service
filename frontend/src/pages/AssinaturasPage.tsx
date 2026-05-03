@@ -2,7 +2,8 @@ import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Star, Plus, Pencil, Ban, MoreHorizontal, Search, RefreshCw } from "lucide-react"
 import { format } from "date-fns"
-import { getAssinaturas, createAssinatura, updateAssinatura, updateAssinaturaStatus } from "@/api/assinaturas"
+import { getAssinaturas, createAssinatura, updateAssinatura, updateAssinaturaStatus, regenerarHorarios } from "@/api/assinaturas"
+import type { HorarioFixoSlotDTO } from "@/api/assinaturas"
 import { createAgendamento, createAgendamentoRecorrente } from "@/api/agendamentos"
 import type { StatusAssinatura, Assinatura } from "@/types"
 import type { AssinaturaFormData } from "@/components/shared/AssinaturaFormSheet"
@@ -220,9 +221,46 @@ export function AssinaturasPage() {
     },
   })
 
-  function handleSubmit(formData: AssinaturaFormData) {
+  async function handleSubmit(formData: AssinaturaFormData) {
     if (editAssinatura) {
-      const { profissionalId: _p, horariosFixos: _h, ...payload } = formData
+      const { profissionalId, horariosFixos, ...payload } = formData
+      const horariosNovos = (horariosFixos ?? []).filter(h => h.dia && h.horario)
+      const querRegenerar = horariosNovos.length > 0
+
+      if (querRegenerar) {
+        const ok = window.confirm(
+          `Você está alterando os horários fixos.\n\n` +
+          `Isso vai CANCELAR os agendamentos futuros pendentes (status Agendado/Confirmado) ` +
+          `e CRIAR novos agendamentos a partir dos novos horários.\n\n` +
+          `Os agendamentos passados (já realizados, cancelados ou faltas) não serão tocados.\n\n` +
+          `Continuar?`
+        )
+        if (!ok) return
+
+        try {
+          const slots: HorarioFixoSlotDTO[] = horariosNovos.map(h => ({
+            diaSemana: DAY_TO_JAVA[h.dia] as HorarioFixoSlotDTO["diaSemana"],
+            horaInicio: h.horario,
+          }))
+          const result = await regenerarHorarios(editAssinatura.id, {
+            horariosFixos: slots,
+            profissionalId: profissionalId || undefined,
+          })
+          toast({
+            title: "Horários regenerados",
+            description: `${result.agendamentosCancelados} cancelados, ${result.agendamentosCriados} criados.`,
+          })
+          queryClient.invalidateQueries({ queryKey: ["agendamentos"] })
+          queryClient.invalidateQueries({ queryKey: ["agendamentos-assinatura"] })
+        } catch (e) {
+          const msg = (e as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
+            || (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+            || "Erro ao regenerar horários."
+          toast({ title: "Erro ao regenerar horários", description: msg, variant: "destructive" })
+          return
+        }
+      }
+
       updateMutation.mutate({ id: editAssinatura.id, ...payload })
     } else {
       createMutation.mutate(formData)

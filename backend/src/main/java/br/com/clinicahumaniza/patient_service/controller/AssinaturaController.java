@@ -4,9 +4,12 @@ import br.com.clinicahumaniza.patient_service.dto.AssinaturaRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaStatusDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaUpdateDTO;
+import br.com.clinicahumaniza.patient_service.dto.RegenerarHorariosRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.RegenerarHorariosResponseDTO;
 import br.com.clinicahumaniza.patient_service.mapper.AssinaturaMapper;
 import br.com.clinicahumaniza.patient_service.model.Assinatura;
 import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
+import br.com.clinicahumaniza.patient_service.service.AgendamentoRecorrenteService;
 import br.com.clinicahumaniza.patient_service.service.AssinaturaRenovacaoService;
 import br.com.clinicahumaniza.patient_service.service.AssinaturaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,14 +38,17 @@ public class AssinaturaController {
 
     private final AssinaturaService assinaturaService;
     private final AssinaturaRenovacaoService renovacaoService;
+    private final AgendamentoRecorrenteService recorrenteService;
     private final AssinaturaMapper assinaturaMapper;
 
     @Autowired
     public AssinaturaController(AssinaturaService assinaturaService,
                                  AssinaturaRenovacaoService renovacaoService,
+                                 AgendamentoRecorrenteService recorrenteService,
                                  AssinaturaMapper assinaturaMapper) {
         this.assinaturaService = assinaturaService;
         this.renovacaoService = renovacaoService;
+        this.recorrenteService = recorrenteService;
         this.assinaturaMapper = assinaturaMapper;
     }
 
@@ -146,6 +152,20 @@ public class AssinaturaController {
     public ResponseEntity<Map<String, Object>> renovarAssinaturas() {
         int renovadas = renovacaoService.renovarAssinaturasProximasDoVencimento();
         return ResponseEntity.ok(Map.of("renovadas", renovadas));
+    }
+
+    @PostMapping("/{id}/regenerar-horarios")
+    @Operation(summary = "Regenerar horários fixos",
+            description = "Cancela agendamentos futuros pendentes e cria novos a partir dos slots informados")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Horários regenerados"),
+            @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
+            @ApiResponse(responseCode = "422", description = "Erro de regra de negócio (assinatura inativa, sem vencimento, etc.)")
+    })
+    public ResponseEntity<RegenerarHorariosResponseDTO> regenerarHorarios(
+            @PathVariable UUID id,
+            @Valid @RequestBody RegenerarHorariosRequestDTO dto) {
+        return ResponseEntity.ok(recorrenteService.regenerarHorarios(id, dto));
     }
 
     @DeleteMapping("/{id}")

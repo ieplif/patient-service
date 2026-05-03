@@ -30,6 +30,9 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, UUID>,
     List<Agendamento> findByAgendamentoRecorrenteIdAndDataHoraGreaterThanEqualAndStatusIn(
             UUID recorrenteId, LocalDateTime dataHora, List<StatusAgendamento> statuses);
 
+    List<Agendamento> findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
+            UUID assinaturaId, LocalDateTime dataHora, List<StatusAgendamento> statuses);
+
     @Query(value = "SELECT * FROM agendamentos", nativeQuery = true)
     List<Agendamento> findAllIncludingInactive();
 

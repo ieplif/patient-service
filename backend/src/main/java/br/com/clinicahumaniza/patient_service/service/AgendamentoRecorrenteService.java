@@ -247,6 +247,107 @@ public class AgendamentoRecorrenteService {
         return cancelados;
     }
 
+    /**
+     * Regenera os horários fixos de uma assinatura: cancela agendamentos futuros
+     * (status AGENDADO/CONFIRMADO) a partir de {@code dataInicioRegeneracao},
+     * desativa templates {@link AgendamentoRecorrente} antigos e cria novos
+     * agendamentos para os slots informados, até a {@code dataVencimento} da assinatura.
+     */
+    @Transactional
+    public RegenerarHorariosResponseDTO regenerarHorarios(UUID assinaturaId, RegenerarHorariosRequestDTO dto) {
+        Assinatura assinatura = assinaturaRepository.findById(assinaturaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Assinatura", assinaturaId));
+
+        if (assinatura.getStatus() != StatusAssinatura.ATIVO) {
+            throw new BusinessException("Só é possível regenerar horários de assinaturas ativas");
+        }
+        if (assinatura.getDataVencimento() == null) {
+            throw new BusinessException("Assinatura sem data de vencimento — não é possível regenerar");
+        }
+
+        LocalDate dataInicio = dto.getDataInicioRegeneracao() != null
+                ? dto.getDataInicioRegeneracao()
+                : LocalDate.now().plusDays(1);
+
+        // 1. Cancelar agendamentos futuros que ainda estão pendentes
+        List<StatusAgendamento> statusesPendentes = List.of(
+                StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO);
+        List<Agendamento> futurosPendentes = agendamentoRepository
+                .findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
+                        assinaturaId, dataInicio.atStartOfDay(), statusesPendentes);
+
+        int cancelados = 0;
+        for (Agendamento ag : futurosPendentes) {
+            agendamentoService.updateStatus(ag.getId(),
+                    new AgendamentoStatusDTO(StatusAgendamento.CANCELADO,
+                            "Cancelado por regeneração de horários da assinatura"));
+            cancelados++;
+        }
+
+        // 2. Desativar templates antigos
+        List<AgendamentoRecorrente> antigos = recorrenteRepository
+                .findByAssinaturaIdAndAtivoTrue(assinaturaId);
+        for (AgendamentoRecorrente template : antigos) {
+            template.setAtivo(false);
+            recorrenteRepository.save(template);
+        }
+
+        // 3. Criar novos templates + agendamentos para cada slot
+        // Distribui as aulas restantes entre os slots informados.
+        int slots = dto.getHorariosFixos().size();
+        int aulasRestantes = Math.max(
+                0, assinatura.getSessoesContratadas() - assinatura.getSessoesRealizadas() + cancelados);
+
+        List<Agendamento> novosAgendamentos = new ArrayList<>();
+        List<DataIgnoradaDTO> datasIgnoradas = new ArrayList<>();
+
+        for (int idx = 0; idx < slots; idx++) {
+            RegenerarHorariosRequestDTO.HorarioFixoDTO slot = dto.getHorariosFixos().get(idx);
+            int slotsRestantes = slots - idx;
+            int sessoesEsteSlot = aulasRestantes > 0
+                    ? (int) Math.ceil((double) aulasRestantes / slotsRestantes)
+                    : 0;
+            if (sessoesEsteSlot == 0) continue;
+
+            AgendamentoRecorrenteRequestDTO recorrenteReq = new AgendamentoRecorrenteRequestDTO();
+            recorrenteReq.setPacienteId(assinatura.getPaciente().getId());
+            recorrenteReq.setProfissionalId(dto.getProfissionalId());
+            recorrenteReq.setServicoId(assinatura.getServico().getId());
+            recorrenteReq.setAssinaturaId(assinaturaId);
+            recorrenteReq.setFrequencia(FrequenciaRecorrencia.SEMANAL);
+            recorrenteReq.setDiasSemana(List.of(slot.getDiaSemana()));
+            recorrenteReq.setHoraInicio(slot.getHoraInicio());
+            recorrenteReq.setTotalSessoes(sessoesEsteSlot);
+            recorrenteReq.setDataFim(assinatura.getDataVencimento());
+
+            try {
+                AgendamentoRecorrenteResponseDTO result = createRecorrente(recorrenteReq);
+                if (result.getAgendamentosCriados() != null) {
+                    int criados = result.getAgendamentosCriados().size();
+                    aulasRestantes = Math.max(0, aulasRestantes - criados);
+                }
+                if (result.getDatasIgnoradas() != null) {
+                    datasIgnoradas.addAll(result.getDatasIgnoradas());
+                }
+            } catch (BusinessException e) {
+                datasIgnoradas.add(new DataIgnoradaDTO(dataInicio, e.getMessage()));
+            }
+        }
+
+        // Buscar todos os novos agendamentos da assinatura criados a partir de dataInicio
+        // (mais confiável do que coletar do retorno de createRecorrente, que sai sem o ID persistido)
+        List<Agendamento> novos = agendamentoRepository
+                .findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
+                        assinaturaId, dataInicio.atStartOfDay(), List.of(StatusAgendamento.AGENDADO));
+        novosAgendamentos.addAll(novos);
+
+        return new RegenerarHorariosResponseDTO(
+                cancelados,
+                novosAgendamentos.size(),
+                novosAgendamentos.stream().map(agendamentoMapper::toResponseDTO).collect(Collectors.toList()),
+                datasIgnoradas);
+    }
+
     public AgendamentoRecorrenteResponseDTO getRecorrenciaByAgendamento(UUID agendamentoId) {
         Agendamento agendamento = agendamentoRepository.findById(agendamentoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento", agendamentoId));

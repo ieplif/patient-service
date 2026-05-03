@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface AgendamentoRecorrenteRepository extends JpaRepository<AgendamentoRecorrente, UUID> {
 
     List<AgendamentoRecorrente> findByAssinaturaId(UUID assinaturaId);
+
+    List<AgendamentoRecorrente> findByAssinaturaIdAndAtivoTrue(UUID assinaturaId);
 }

@@ -69,13 +69,14 @@ public class AgendamentoController {
             @RequestParam(required = false) StatusAgendamento status,
             @RequestParam(required = false) UUID pacienteId,
             @RequestParam(required = false) UUID profissionalId,
+            @RequestParam(required = false) UUID assinaturaId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
             @PageableDefault(size = 20, sort = "dataHora", direction = Sort.Direction.DESC) Pageable pageable) {
         LocalDateTime dtInicio = dataInicio != null ? dataInicio.atStartOfDay() : null;
         LocalDateTime dtFim = dataFim != null ? dataFim.atTime(LocalTime.MAX) : null;
         return ResponseEntity.ok(agendamentoService.getAllAgendamentos(status, pacienteId, profissionalId,
-                dtInicio, dtFim, pageable).map(agendamentoMapper::toResponseDTO));
+                assinaturaId, dtInicio, dtFim, pageable).map(agendamentoMapper::toResponseDTO));
     }
 
     @GetMapping("/export/csv")

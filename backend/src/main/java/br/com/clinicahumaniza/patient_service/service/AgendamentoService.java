@@ -130,12 +130,14 @@ public class AgendamentoService {
     }
 
     public Page<Agendamento> getAllAgendamentos(StatusAgendamento status, UUID pacienteId,
-                                                UUID profissionalId, LocalDateTime dataInicio,
-                                                LocalDateTime dataFim, Pageable pageable) {
+                                                UUID profissionalId, UUID assinaturaId,
+                                                LocalDateTime dataInicio, LocalDateTime dataFim,
+                                                Pageable pageable) {
         Specification<Agendamento> spec = Specification.allOf(
                 AgendamentoSpecification.hasStatus(status),
                 AgendamentoSpecification.hasPaciente(pacienteId),
                 AgendamentoSpecification.hasProfissional(profissionalId),
+                AgendamentoSpecification.hasAssinatura(assinaturaId),
                 AgendamentoSpecification.betweenDatas(dataInicio, dataFim));
         return agendamentoRepository.findAll(spec, pageable);
     }

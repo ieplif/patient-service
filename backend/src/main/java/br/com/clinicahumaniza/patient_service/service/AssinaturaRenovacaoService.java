@@ -65,7 +65,7 @@ public class AssinaturaRenovacaoService {
     }
 
     private void renovarAssinatura(Assinatura assinatura) {
-        List<AgendamentoRecorrente> templates = recorrenteRepository.findByAssinaturaId(assinatura.getId());
+        List<AgendamentoRecorrente> templates = recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinatura.getId());
 
         if (templates.isEmpty()) {
             log.warn("Assinatura {} nao possui agendamentos recorrentes vinculados, pulando renovacao",

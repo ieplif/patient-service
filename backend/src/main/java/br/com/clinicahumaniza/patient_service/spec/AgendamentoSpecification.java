@@ -30,6 +30,13 @@ public class AgendamentoSpecification {
         };
     }
 
+    public static Specification<Agendamento> hasAssinatura(UUID assinaturaId) {
+        return (root, query, cb) -> {
+            if (assinaturaId == null) return null;
+            return cb.equal(root.get("assinatura").get("id"), assinaturaId);
+        };
+    }
+
     public static Specification<Agendamento> betweenDatas(LocalDateTime inicio, LocalDateTime fim) {
         return (root, query, cb) -> {
             if (inicio == null && fim == null) return null;

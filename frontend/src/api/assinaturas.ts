@@ -1,5 +1,23 @@
 import { apiClient } from "./client"
-import type { PageResponse, Assinatura, StatusAssinatura } from "@/types"
+import type { PageResponse, Assinatura, StatusAssinatura, Agendamento } from "@/types"
+
+export interface HorarioFixoSlotDTO {
+  diaSemana: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY"
+  horaInicio: string // "HH:mm"
+}
+
+export interface RegenerarHorariosPayload {
+  horariosFixos: HorarioFixoSlotDTO[]
+  profissionalId?: string
+  dataInicioRegeneracao?: string // YYYY-MM-DD
+}
+
+export interface RegenerarHorariosResult {
+  agendamentosCancelados: number
+  agendamentosCriados: number
+  novosAgendamentos: Agendamento[]
+  datasIgnoradas: { data: string; motivo: string }[]
+}
 
 export async function getAssinaturas(params?: {
   page?: number
@@ -62,4 +80,15 @@ export async function updateAssinaturaStatus(
 
 export async function deleteAssinatura(id: string): Promise<void> {
   await apiClient.delete(`/api/v1/assinaturas/${id}`)
+}
+
+export async function regenerarHorarios(
+  id: string,
+  payload: RegenerarHorariosPayload
+): Promise<RegenerarHorariosResult> {
+  const { data } = await apiClient.post<RegenerarHorariosResult>(
+    `/api/v1/assinaturas/${id}/regenerar-horarios`,
+    payload
+  )
+  return data
 }
