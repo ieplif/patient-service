@@ -4,6 +4,7 @@ import { Star, Plus, Pencil, Ban, MoreHorizontal, Search, RefreshCw } from "luci
 import { format } from "date-fns"
 import { getAssinaturas, createAssinatura, updateAssinatura, updateAssinaturaStatus, regenerarHorarios } from "@/api/assinaturas"
 import type { HorarioFixoSlotDTO } from "@/api/assinaturas"
+import { shortenName } from "@/lib/names"
 import { createAgendamento, createAgendamentoRecorrente } from "@/api/agendamentos"
 import type { StatusAssinatura, Assinatura } from "@/types"
 import type { AssinaturaFormData } from "@/components/shared/AssinaturaFormSheet"
@@ -363,8 +364,8 @@ export function AssinaturasPage() {
                         : 0
                       return (
                         <TableRow key={as.id} className="border-border/40 hover:bg-muted/20">
-                          <TableCell className="font-semibold font-primary text-sm text-foreground">
-                            {as.pacienteNome}
+                          <TableCell className="font-semibold font-primary text-sm text-foreground" title={as.pacienteNome}>
+                            {shortenName(as.pacienteNome)}
                           </TableCell>
                           <TableCell className="text-sm font-secondary text-muted-foreground max-w-[160px] truncate" title={as.servicoDescricao}>
                             {as.servicoDescricao}

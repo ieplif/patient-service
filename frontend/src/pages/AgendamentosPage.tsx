@@ -44,6 +44,7 @@ import { Pagination } from "@/components/shared/Pagination"
 import { AgendamentoFormSheet } from "@/components/shared/AgendamentoFormSheet"
 import { ReposicaoFormSheet } from "@/components/shared/ReposicaoFormSheet"
 import { useToast } from "@/hooks/use-toast"
+import { shortenName } from "@/lib/names"
 
 const PAGE_SIZE = 15
 
@@ -257,8 +258,8 @@ export function AgendamentosPage() {
                       const transitions = nextStatuses[ag.status] ?? []
                       return (
                         <TableRow key={ag.id} className="border-border/40 hover:bg-muted/20">
-                          <TableCell className="font-semibold font-primary text-sm text-foreground">
-                            {ag.pacienteNome}
+                          <TableCell className="font-semibold font-primary text-sm text-foreground" title={ag.pacienteNome}>
+                            {shortenName(ag.pacienteNome)}
                           </TableCell>
                           <TableCell className="text-sm font-secondary text-muted-foreground">
                             {ag.profissionalNome || "Sem profissional"}

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPatients } from "@/api/patients"
+import { shortenName } from "@/lib/names"
 import { getAgendamentos } from "@/api/agendamentos"
 import { getPagamentos } from "@/api/pagamentos"
 import { getAssinaturas } from "@/api/assinaturas"
@@ -220,8 +221,8 @@ export function DashboardPage() {
                         const cfg = statusConfig[ag.status]
                         return (
                           <TableRow key={ag.id} className="border-border/40 hover:bg-muted/20">
-                            <TableCell className="font-semibold font-primary text-sm text-foreground">
-                              {ag.pacienteNome}
+                            <TableCell className="font-semibold font-primary text-sm text-foreground" title={ag.pacienteNome}>
+                              {shortenName(ag.pacienteNome)}
                             </TableCell>
                             <TableCell className="text-sm font-secondary text-muted-foreground">
                               {ag.profissionalNome || "Sem profissional"}
@@ -290,8 +291,8 @@ export function DashboardPage() {
                     ) : (
                       pagamentosPendentesLista?.content.map((pag) => (
                         <TableRow key={pag.id} className="border-border/40 hover:bg-muted/20">
-                          <TableCell className="font-semibold font-primary text-sm text-foreground">
-                            {pag.pacienteNome}
+                          <TableCell className="font-semibold font-primary text-sm text-foreground" title={pag.pacienteNome}>
+                            {shortenName(pag.pacienteNome)}
                           </TableCell>
                           <TableCell className="text-sm font-secondary font-semibold text-accent">
                             {formatCurrency(pag.valor)}

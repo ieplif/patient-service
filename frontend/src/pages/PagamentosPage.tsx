@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { CreditCard, Plus, Search, MoreHorizontal, CheckCircle, Ban, RotateCcw } from "lucide-react"
 import { format } from "date-fns"
 import { getPagamentos, createPagamento, updatePagamentoStatus } from "@/api/pagamentos"
+import { shortenName } from "@/lib/names"
 import type { StatusPagamento, FormaPagamento } from "@/types"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -196,8 +197,8 @@ export function PagamentosPage() {
                       const cfg = statusConfig[pag.status]
                       return (
                         <TableRow key={pag.id} className="border-border/40 hover:bg-muted/20">
-                          <TableCell className="font-semibold font-primary text-sm text-foreground">
-                            {pag.pacienteNome}
+                          <TableCell className="font-semibold font-primary text-sm text-foreground" title={pag.pacienteNome}>
+                            {shortenName(pag.pacienteNome)}
                           </TableCell>
                           <TableCell className="text-sm font-secondary font-semibold text-accent">
                             {formatCurrency(pag.valor)}
