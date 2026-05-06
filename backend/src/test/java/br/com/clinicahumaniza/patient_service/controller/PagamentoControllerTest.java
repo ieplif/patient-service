@@ -245,7 +245,7 @@ class PagamentoControllerTest {
     @DisplayName("Deve alterar status do pagamento - 200")
     @WithMockUser
     void updateStatus_Authenticated_200() throws Exception {
-        PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.PAGO);
+        PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.PAGO, null);
 
         when(pagamentoService.updateStatus(any(UUID.class), any(PagamentoStatusDTO.class))).thenReturn(pagamento);
         when(pagamentoMapper.toResponseDTO(pagamento)).thenReturn(responseDTO);

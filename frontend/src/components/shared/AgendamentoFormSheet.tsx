@@ -123,8 +123,22 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
     },
   })
 
+  // Se o agendamento for muito retroativo (>30 dias), pede confirmação extra
+  const dataInformada = date && time ? new Date(`${date}T${time}:00`) : null
+  const diasRetroativo = dataInformada
+    ? Math.floor((Date.now() - dataInformada.getTime()) / (1000 * 60 * 60 * 24))
+    : 0
+  const ehRetroativo = diasRetroativo > 0
+  const ehMuitoRetroativo = diasRetroativo > 30
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (ehMuitoRetroativo) {
+      const ok = window.confirm(
+        `Está registrando um agendamento de ${date} (${diasRetroativo} dias atrás). Confirmar?`
+      )
+      if (!ok) return
+    }
     mutation.mutate()
   }
 
@@ -212,7 +226,14 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="ag-date" className="font-primary text-sm">Data *</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="ag-date" className="font-primary text-sm">Data *</Label>
+                {ehRetroativo && (
+                  <span className="rounded-full bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 text-[10px] font-primary font-semibold uppercase tracking-wide">
+                    Retroativo
+                  </span>
+                )}
+              </div>
               <Input
                 id="ag-date"
                 type="date"

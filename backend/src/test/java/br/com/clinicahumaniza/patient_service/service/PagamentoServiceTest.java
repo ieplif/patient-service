@@ -405,7 +405,7 @@ class PagamentoServiceTest {
     @Test
     @DisplayName("Deve alterar status de PENDENTE para PAGO")
     void updateStatus_PendenteParaPago_Success() {
-        PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.PAGO);
+        PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.PAGO, null);
 
         when(pagamentoRepository.findById(pagamentoId)).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(pagamento)).thenReturn(pagamento);
@@ -419,7 +419,7 @@ class PagamentoServiceTest {
     @Test
     @DisplayName("Deve alterar status de PENDENTE para CANCELADO")
     void updateStatus_PendenteParaCancelado_Success() {
-        PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.CANCELADO);
+        PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.CANCELADO, null);
 
         when(pagamentoRepository.findById(pagamentoId)).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(pagamento)).thenReturn(pagamento);
@@ -433,7 +433,7 @@ class PagamentoServiceTest {
     @DisplayName("Deve alterar status de PAGO para REEMBOLSADO")
     void updateStatus_PagoParaReembolsado_Success() {
         pagamento.setStatus(StatusPagamento.PAGO);
-        PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.REEMBOLSADO);
+        PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.REEMBOLSADO, null);
 
         when(pagamentoRepository.findById(pagamentoId)).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(pagamento)).thenReturn(pagamento);
@@ -447,7 +447,7 @@ class PagamentoServiceTest {
     @DisplayName("Deve lançar exceção para transição de status inválida CANCELADO -> PAGO")
     void updateStatus_TransicaoInvalida_CanceladoParaPago() {
         pagamento.setStatus(StatusPagamento.CANCELADO);
-        PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.PAGO);
+        PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.PAGO, null);
 
         when(pagamentoRepository.findById(pagamentoId)).thenReturn(Optional.of(pagamento));
 
@@ -462,7 +462,7 @@ class PagamentoServiceTest {
     @DisplayName("Deve lançar exceção para transição de status inválida REEMBOLSADO -> PAGO")
     void updateStatus_TransicaoInvalida_ReembolsadoParaPago() {
         pagamento.setStatus(StatusPagamento.REEMBOLSADO);
-        PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.PAGO);
+        PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.PAGO, null);
 
         when(pagamentoRepository.findById(pagamentoId)).thenReturn(Optional.of(pagamento));
 

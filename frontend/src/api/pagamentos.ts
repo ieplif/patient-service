@@ -36,10 +36,12 @@ export async function createPagamento(payload: {
 
 export async function updatePagamentoStatus(
   id: string,
-  status: StatusPagamento
+  status: StatusPagamento,
+  dataPagamento?: string
 ): Promise<Pagamento> {
   const { data } = await apiClient.patch<Pagamento>(`/api/v1/pagamentos/${id}/status`, {
     status,
+    ...(dataPagamento ? { dataPagamento } : {}),
   })
   return data
 }

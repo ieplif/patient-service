@@ -163,8 +163,9 @@ public class AgendamentoRecorrenteService {
                                     LocalTime horaInicio, Integer totalSessoes, LocalDate dataFim,
                                     LocalDate dataInicioRef) {
         List<LocalDateTime> datas = new ArrayList<>();
-        LocalDate amanha = LocalDate.now().plusDays(1);
-        LocalDate atual = (dataInicioRef != null && dataInicioRef.isAfter(amanha)) ? dataInicioRef : amanha;
+        // Default: amanhã. Se o caller informa uma data (mesmo retroativa), respeita —
+        // útil para registrar histórico ao popular o sistema com casos do dia a dia.
+        LocalDate atual = dataInicioRef != null ? dataInicioRef : LocalDate.now().plusDays(1);
 
         while (datas.size() < MAX_DATAS) {
             // Verifica limite por data
@@ -221,7 +222,7 @@ public class AgendamentoRecorrenteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento", agendamentoId));
 
         if (!cancelarFuturos) {
-            agendamentoService.updateStatus(agendamentoId, new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null));
+            agendamentoService.updateStatus(agendamentoId, new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null, null));
             return List.of(agendamentoMapper.toResponseDTO(agendamento));
         }
 
@@ -240,7 +241,7 @@ public class AgendamentoRecorrenteService {
 
         List<AgendamentoResponseDTO> cancelados = new ArrayList<>();
         for (Agendamento futuro : futuros) {
-            agendamentoService.updateStatus(futuro.getId(), new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null));
+            agendamentoService.updateStatus(futuro.getId(), new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null, null));
             cancelados.add(agendamentoMapper.toResponseDTO(futuro));
         }
 
@@ -280,7 +281,7 @@ public class AgendamentoRecorrenteService {
         for (Agendamento ag : futurosPendentes) {
             agendamentoService.updateStatus(ag.getId(),
                     new AgendamentoStatusDTO(StatusAgendamento.CANCELADO,
-                            "Cancelado por regeneração de horários da assinatura"));
+                            "Cancelado por regeneração de horários da assinatura", null));
             cancelados++;
         }
 

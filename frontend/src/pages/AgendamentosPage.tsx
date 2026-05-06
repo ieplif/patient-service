@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Calendar, Plus, Clock, MoreHorizontal, Search, RefreshCw } from "lucide-react"
-import { format, differenceInHours } from "date-fns"
+import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { getAgendamentos, updateAgendamentoStatus } from "@/api/agendamentos"
 import type { Agendamento, StatusAgendamento } from "@/types"
@@ -67,8 +67,17 @@ const statusOptions: { value: StatusAgendamento | "TODOS"; label: string }[] = [
 
 // Transições permitidas por status
 const nextStatuses: Partial<Record<StatusAgendamento, { status: StatusAgendamento; label: string }[]>> = {
-  AGENDADO:   [{ status: "CONFIRMADO", label: "Confirmar" }, { status: "CANCELADO", label: "Cancelar" }, { status: "NAO_COMPARECEU", label: "Não compareceu" }],
-  CONFIRMADO: [{ status: "REALIZADO",  label: "Marcar como realizado" }, { status: "CANCELADO", label: "Cancelar" }, { status: "NAO_COMPARECEU", label: "Não compareceu" }],
+  AGENDADO:   [
+    { status: "CONFIRMADO", label: "Confirmar" },
+    { status: "REALIZADO",  label: "Marcar como realizado" },
+    { status: "CANCELADO",  label: "Cancelar" },
+    { status: "NAO_COMPARECEU", label: "Não compareceu" },
+  ],
+  CONFIRMADO: [
+    { status: "REALIZADO", label: "Marcar como realizado" },
+    { status: "CANCELADO", label: "Cancelar" },
+    { status: "NAO_COMPARECEU", label: "Não compareceu" },
+  ],
 }
 
 export function AgendamentosPage() {
@@ -82,6 +91,7 @@ export function AgendamentosPage() {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [cancelAg, setCancelAg] = useState<Agendamento | null>(null)
   const [motivoCancelamento, setMotivoCancelamento] = useState("")
+  const [gerarReposicao, setGerarReposicao] = useState(true)
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
@@ -97,14 +107,16 @@ export function AgendamentosPage() {
   })
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status, motivoCancelamento: motivo }: { id: string; status: StatusAgendamento; motivoCancelamento?: string }) =>
-      updateAgendamentoStatus(id, status, motivo),
+    mutationFn: ({ id, status, motivoCancelamento: motivo, gerarReposicao: rep }:
+      { id: string; status: StatusAgendamento; motivoCancelamento?: string; gerarReposicao?: boolean }) =>
+      updateAgendamentoStatus(id, status, motivo, rep),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agendamentos"] })
       toast({ title: "Status atualizado", description: "O status do agendamento foi atualizado." })
       setCancelDialogOpen(false)
       setCancelAg(null)
       setMotivoCancelamento("")
+      setGerarReposicao(true)
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Erro ao atualizar status."
@@ -125,23 +137,21 @@ export function AgendamentosPage() {
 
   function handleCancelar(ag: Agendamento) {
     const isPilates = ag.servicoDescricao.toLowerCase().includes("pilates")
-    if (isPilates) {
-      setCancelAg(ag)
-      setMotivoCancelamento("")
-      setCancelDialogOpen(true)
-    } else {
-      if (window.confirm("Deseja realmente cancelar este agendamento?")) {
-        statusMutation.mutate({ id: ag.id, status: "CANCELADO" })
-      }
-    }
+    setCancelAg(ag)
+    setMotivoCancelamento("")
+    setGerarReposicao(isPilates)  // default checked só pra Pilates
+    setCancelDialogOpen(true)
   }
 
   function handleConfirmCancel() {
     if (!cancelAg) return
+    const isPilates = isPilatesAppointment(cancelAg)
     statusMutation.mutate({
       id: cancelAg.id,
       status: "CANCELADO",
       motivoCancelamento: motivoCancelamento || undefined,
+      // Só envia override pra Pilates — pra outros serviços a regra padrão (sem reposição) já basta
+      gerarReposicao: isPilates ? gerarReposicao : undefined,
     })
   }
 
@@ -152,22 +162,6 @@ export function AgendamentosPage() {
 
   function isPilatesAppointment(ag: Agendamento): boolean {
     return ag.servicoDescricao.toLowerCase().includes("pilates")
-  }
-
-  function getCancelHoursMessage(ag: Agendamento): { hasRight: boolean; message: string } {
-    const now = new Date()
-    const appointmentDate = new Date(ag.dataHora)
-    const hoursUntil = differenceInHours(appointmentDate, now)
-    if (hoursUntil >= 3) {
-      return {
-        hasRight: true,
-        message: "Cancelamento com direito a reposicao (aviso com mais de 3h de antecedencia)",
-      }
-    }
-    return {
-      hasRight: false,
-      message: "Cancelamento sem direito a reposicao (menos de 3h de antecedencia)",
-    }
   }
 
   const filteredContent = search.trim()
@@ -365,18 +359,25 @@ export function AgendamentosPage() {
             </DialogDescription>
           </DialogHeader>
 
-          {cancelAg && isPilatesAppointment(cancelAg) && (() => {
-            const { hasRight, message } = getCancelHoursMessage(cancelAg)
-            return (
-              <div className={`rounded-md border p-3 text-sm font-secondary ${
-                hasRight
-                  ? "bg-emerald-50 border-emerald-300 text-emerald-700"
-                  : "bg-orange-50 border-orange-300 text-orange-700"
-              }`}>
-                {message}
+          {cancelAg && isPilatesAppointment(cancelAg) && (
+            <div className="flex items-start gap-2 rounded-md border border-border/50 bg-muted/30 p-3">
+              <input
+                id="gerar-reposicao"
+                type="checkbox"
+                checked={gerarReposicao}
+                onChange={(e) => setGerarReposicao(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <div className="flex-1">
+                <Label htmlFor="gerar-reposicao" className="font-primary text-sm cursor-pointer">
+                  Gerar direito a reposição
+                </Label>
+                <p className="text-xs text-muted-foreground font-secondary mt-0.5">
+                  Quando marcado, a paciente ganha 20 dias para agendar uma reposição (limite de 2/mês).
+                </p>
               </div>
-            )
-          })()}
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label className="font-primary text-sm">Motivo do cancelamento (opcional)</Label>

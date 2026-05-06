@@ -126,8 +126,13 @@ class AgendamentoServiceTest {
         assinatura.setSessoesContratadas(4);
         assinatura.setSessoesRealizadas(0);
 
-        // Monday 10:00
-        LocalDateTime dataHora = LocalDateTime.of(2025, 6, 2, 10, 0);
+        // Monday 10:00 — sempre no futuro (próxima segunda-feira a partir de 30 dias),
+        // para evitar quebrar testes conforme o tempo passa (validação retroativa pula HorarioDisponivel)
+        java.time.LocalDate proximaSegunda = java.time.LocalDate.now().plusDays(30);
+        while (proximaSegunda.getDayOfWeek() != DayOfWeek.MONDAY) {
+            proximaSegunda = proximaSegunda.plusDays(1);
+        }
+        LocalDateTime dataHora = proximaSegunda.atTime(10, 0);
 
         horarioDisponivel = new HorarioDisponivel();
         horarioDisponivel.setId(UUID.randomUUID());
@@ -529,7 +534,7 @@ class AgendamentoServiceTest {
     @Test
     @DisplayName("Deve transicionar AGENDADO → CONFIRMADO")
     void updateStatus_AgendadoParaConfirmado() {
-        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.CONFIRMADO, null);
+        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.CONFIRMADO, null, null);
 
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
@@ -542,7 +547,7 @@ class AgendamentoServiceTest {
     @Test
     @DisplayName("Deve transicionar AGENDADO → CANCELADO")
     void updateStatus_AgendadoParaCancelado() {
-        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null);
+        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null, null);
 
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
@@ -556,7 +561,7 @@ class AgendamentoServiceTest {
     @DisplayName("Deve transicionar CONFIRMADO → REALIZADO")
     void updateStatus_ConfirmadoParaRealizado() {
         agendamento.setStatus(StatusAgendamento.CONFIRMADO);
-        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.REALIZADO, null);
+        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.REALIZADO, null, null);
 
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
@@ -570,7 +575,7 @@ class AgendamentoServiceTest {
     @DisplayName("Deve transicionar CONFIRMADO → NAO_COMPARECEU")
     void updateStatus_ConfirmadoParaNaoCompareceu() {
         agendamento.setStatus(StatusAgendamento.CONFIRMADO);
-        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.NAO_COMPARECEU, null);
+        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.NAO_COMPARECEU, null, null);
 
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
@@ -585,7 +590,7 @@ class AgendamentoServiceTest {
     void updateStatus_RealizadoComAssinatura() {
         agendamento.setStatus(StatusAgendamento.CONFIRMADO);
         agendamento.setAssinatura(assinatura);
-        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.REALIZADO, null);
+        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.REALIZADO, null, null);
 
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
@@ -601,7 +606,7 @@ class AgendamentoServiceTest {
     void updateStatus_RealizadoSemAssinatura() {
         agendamento.setStatus(StatusAgendamento.CONFIRMADO);
         agendamento.setAssinatura(null);
-        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.REALIZADO, null);
+        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.REALIZADO, null, null);
 
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
@@ -612,22 +617,23 @@ class AgendamentoServiceTest {
     }
 
     @Test
-    @DisplayName("Deve lançar exceção para transição inválida AGENDADO → REALIZADO")
-    void updateStatus_TransicaoInvalida_AgendadoParaRealizado() {
-        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.REALIZADO, null);
+    @DisplayName("Deve permitir AGENDADO → REALIZADO direto (atalho para retroativos)")
+    void updateStatus_AgendadoParaRealizado_Direto() {
+        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.REALIZADO, null, null);
 
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
 
-        assertThatThrownBy(() -> agendamentoService.updateStatus(agendamentoId, statusDTO))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Transição de status inválida");
+        Agendamento result = agendamentoService.updateStatus(agendamentoId, statusDTO);
+
+        assertThat(result.getStatus()).isEqualTo(StatusAgendamento.REALIZADO);
     }
 
     @Test
     @DisplayName("Deve lançar exceção ao alterar status final CANCELADO")
     void updateStatus_StatusFinalCancelado() {
         agendamento.setStatus(StatusAgendamento.CANCELADO);
-        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.AGENDADO, null);
+        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.AGENDADO, null, null);
 
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
 
@@ -640,7 +646,7 @@ class AgendamentoServiceTest {
     @DisplayName("Deve lançar exceção ao alterar status final REALIZADO")
     void updateStatus_StatusFinalRealizado() {
         agendamento.setStatus(StatusAgendamento.REALIZADO);
-        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.AGENDADO, null);
+        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.AGENDADO, null, null);
 
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
 

@@ -100,8 +100,9 @@ export function PagamentosPage() {
   })
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: StatusPagamento }) =>
-      updatePagamentoStatus(id, status),
+    mutationFn: ({ id, status, dataPagamento }:
+      { id: string; status: StatusPagamento; dataPagamento?: string }) =>
+      updatePagamentoStatus(id, status, dataPagamento),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pagamentos"] })
       toast({ title: "Status atualizado", description: "O status do pagamento foi alterado." })
@@ -113,6 +114,21 @@ export function PagamentosPage() {
       toast({ title: "Erro", description: msg, variant: "destructive" })
     },
   })
+
+  // Pergunta a data do pagamento ao marcar como PAGO (permite registrar pagamento retroativo)
+  function marcarComoPago(id: string) {
+    const hoje = new Date().toISOString().split("T")[0]
+    const dataPagamento = window.prompt(
+      "Data do pagamento (YYYY-MM-DD). Deixe em branco para usar hoje:",
+      hoje
+    )
+    if (dataPagamento === null) return  // cancelado
+    statusMutation.mutate({
+      id,
+      status: "PAGO",
+      dataPagamento: dataPagamento.trim() || undefined,
+    })
+  }
 
   const filtered = data?.content.filter((pag) =>
     !search || pag.pacienteNome.toLowerCase().includes(search.toLowerCase())
@@ -229,7 +245,7 @@ export function PagamentosPage() {
                               <DropdownMenuContent align="end" className="font-secondary">
                                 {pag.status === "PENDENTE" && (
                                   <>
-                                    <DropdownMenuItem onClick={() => statusMutation.mutate({ id: pag.id, status: "PAGO" })}>
+                                    <DropdownMenuItem onClick={() => marcarComoPago(pag.id)}>
                                       <CheckCircle className="h-4 w-4 mr-2" /> Marcar como Pago
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
@@ -247,7 +263,7 @@ export function PagamentosPage() {
                                 )}
                                 {pag.status === "PARCIALMENTE_PAGO" && (
                                   <>
-                                    <DropdownMenuItem onClick={() => statusMutation.mutate({ id: pag.id, status: "PAGO" })}>
+                                    <DropdownMenuItem onClick={() => marcarComoPago(pag.id)}>
                                       <CheckCircle className="h-4 w-4 mr-2" /> Marcar como Pago
                                     </DropdownMenuItem>
                                     <DropdownMenuItem

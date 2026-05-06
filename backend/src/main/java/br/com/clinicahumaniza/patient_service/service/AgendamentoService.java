@@ -35,7 +35,6 @@ public class AgendamentoService {
 
     private static final int LIMITE_REPOSICOES_MES = 2;
     private static final int DIAS_VALIDADE_REPOSICAO = 20;
-    private static final int HORAS_ANTECEDENCIA_CANCELAMENTO = 3;
 
     private final AgendamentoRepository agendamentoRepository;
     private final PatientRepository patientRepository;
@@ -108,7 +107,13 @@ public class AgendamentoService {
 
         // Validações que dependem de profissional só rodam se ele foi informado
         if (profissional != null) {
-            validarDentroDoHorarioDisponivel(profissional.getId(), dto.getDataHora(), dto.getDuracaoMinutos());
+            // Para registros retroativos (dataHora no passado), pula a validação de
+            // HorarioDisponivel — o profissional pode ter mudado de turnos desde então.
+            // A validação de capacidade da turma continua valendo para integridade do histórico.
+            boolean ehRetroativo = dto.getDataHora() != null && dto.getDataHora().isBefore(LocalDateTime.now());
+            if (!ehRetroativo) {
+                validarDentroDoHorarioDisponivel(profissional.getId(), dto.getDataHora(), dto.getDuracaoMinutos());
+            }
             int capacidade = servico.getAtividade().getCapacidadeMaxima() != null
                     ? servico.getAtividade().getCapacidadeMaxima() : 1;
             validarConflitoHorario(profissional.getId(), dto.getDataHora(), dto.getDuracaoMinutos(), capacidade);
@@ -237,7 +242,7 @@ public class AgendamentoService {
 
         // Avaliar direito a reposição ao cancelar
         if (dto.getStatus() == StatusAgendamento.CANCELADO) {
-            avaliarDireitoReposicao(agendamento);
+            avaliarDireitoReposicao(agendamento, dto.getGerarReposicao());
         }
 
         Agendamento saved = agendamentoRepository.save(agendamento);
@@ -513,7 +518,12 @@ public class AgendamentoService {
         }
 
         boolean transicaoValida = switch (atual) {
-            case AGENDADO -> novo == StatusAgendamento.CONFIRMADO || novo == StatusAgendamento.CANCELADO || novo == StatusAgendamento.NAO_COMPARECEU;
+            // AGENDADO → REALIZADO direto: atalho útil para registros retroativos e
+            // para casos em que a recepção esquece de confirmar antes da aula
+            case AGENDADO -> novo == StatusAgendamento.CONFIRMADO ||
+                             novo == StatusAgendamento.REALIZADO ||
+                             novo == StatusAgendamento.CANCELADO ||
+                             novo == StatusAgendamento.NAO_COMPARECEU;
             case CONFIRMADO -> novo == StatusAgendamento.REALIZADO ||
                                novo == StatusAgendamento.CANCELADO ||
                                novo == StatusAgendamento.NAO_COMPARECEU;
@@ -533,8 +543,29 @@ public class AgendamentoService {
                status == StatusAgendamento.NAO_COMPARECEU;
     }
 
-    private void avaliarDireitoReposicao(Agendamento agendamento) {
-        // Verificar se é Pilates (nome da atividade contém "Pilates")
+    /**
+     * Decide se o cancelamento gera direito a reposição.
+     *
+     * Quando {@code overrideManual} é informado (não-nulo), respeita a escolha
+     * da recepção (caso a caso). Quando é {@code null}, aplica a regra padrão:
+     * Pilates + não-reposição + não-feriado.
+     *
+     * Nota: a antiga regra de "3h de antecedência" foi removida — a clínica
+     * decide caso a caso pela UI.
+     */
+    private void avaliarDireitoReposicao(Agendamento agendamento, Boolean overrideManual) {
+        // Override manual da recepção tem prioridade (qualquer caso)
+        if (overrideManual != null) {
+            if (overrideManual) {
+                agendamento.setDireitoReposicao(true);
+                agendamento.setDataLimiteReposicao(LocalDateTime.now().plusDays(DIAS_VALIDADE_REPOSICAO));
+            } else {
+                agendamento.setDireitoReposicao(false);
+            }
+            return;
+        }
+
+        // Cálculo automático
         String nomeAtividade = agendamento.getServico().getAtividade().getNome();
         boolean isPilates = nomeAtividade != null && nomeAtividade.toLowerCase().contains("pilates");
 
@@ -545,15 +576,6 @@ public class AgendamentoService {
 
         // Não gerar reposição de uma reposição
         if (agendamento.getTipoAgendamento() == TipoAgendamento.REPOSICAO) {
-            agendamento.setDireitoReposicao(false);
-            return;
-        }
-
-        // Verificar regra de 3 horas de antecedência
-        boolean cancelouComAntecedencia = LocalDateTime.now().isBefore(
-                agendamento.getDataHora().minusHours(HORAS_ANTECEDENCIA_CANCELAMENTO));
-
-        if (!cancelouComAntecedencia) {
             agendamento.setDireitoReposicao(false);
             return;
         }

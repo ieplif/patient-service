@@ -101,6 +101,17 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!formaPagamento) return
+    // Confirmação extra para vencimentos muito retroativos
+    if (dataVencimento) {
+      const venc = new Date(dataVencimento + "T00:00:00")
+      const dias = Math.floor((Date.now() - venc.getTime()) / (1000 * 60 * 60 * 24))
+      if (dias > 30) {
+        const ok = window.confirm(
+          `Está lançando um pagamento com vencimento de ${dataVencimento} (${dias} dias atrás). Confirmar?`
+        )
+        if (!ok) return
+      }
+    }
     onSubmit({
       pacienteId,
       assinaturaId: assinaturaId || undefined,
@@ -225,7 +236,14 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="font-primary">Vencimento *</Label>
+              <div className="flex items-center justify-between">
+                <Label className="font-primary">Vencimento *</Label>
+                {dataVencimento && new Date(dataVencimento + "T00:00:00") < new Date(new Date().toDateString()) && (
+                  <span className="rounded-full bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 text-[10px] font-primary font-semibold uppercase tracking-wide">
+                    Retroativo
+                  </span>
+                )}
+              </div>
               <Input
                 type="date"
                 value={dataVencimento}

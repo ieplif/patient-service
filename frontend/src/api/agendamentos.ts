@@ -56,11 +56,13 @@ export async function deleteAgendamento(id: string): Promise<void> {
 export async function updateAgendamentoStatus(
   id: string,
   status: StatusAgendamento,
-  motivoCancelamento?: string
+  motivoCancelamento?: string,
+  gerarReposicao?: boolean
 ): Promise<Agendamento> {
   const { data } = await apiClient.patch<Agendamento>(`/api/v1/agendamentos/${id}/status`, {
     status,
     ...(motivoCancelamento ? { motivoCancelamento } : {}),
+    ...(gerarReposicao !== undefined ? { gerarReposicao } : {}),
   })
   return data
 }

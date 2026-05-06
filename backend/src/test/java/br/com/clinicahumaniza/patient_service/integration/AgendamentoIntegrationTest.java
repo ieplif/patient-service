@@ -269,12 +269,16 @@ class AgendamentoIntegrationTest {
     @Test
     @DisplayName("Deve rejeitar agendamento fora da disponibilidade")
     void createAgendamento_OutsideAvailability() throws Exception {
-        // Tentar agendar às 20:00 (fora do horário 08:00-18:00)
+        // Próxima segunda-feira (futuro) às 20:00 (fora do horário 08:00-18:00)
+        // Validação só roda para agendamentos futuros — retroativos pulam essa checagem
+        LocalDate proximaSegunda = LocalDate.now().plusDays(1);
+        while (proximaSegunda.getDayOfWeek() != DayOfWeek.MONDAY) proximaSegunda = proximaSegunda.plusDays(1);
+
         AgendamentoRequestDTO agendamentoDTO = new AgendamentoRequestDTO();
         agendamentoDTO.setPacienteId(UUID.fromString(pacienteId));
         agendamentoDTO.setProfissionalId(UUID.fromString(profissionalId));
         agendamentoDTO.setServicoId(UUID.fromString(servicoId));
-        agendamentoDTO.setDataHora(LocalDateTime.of(2025, 6, 2, 20, 0));
+        agendamentoDTO.setDataHora(proximaSegunda.atTime(20, 0));
 
         mockMvc.perform(post("/api/v1/agendamentos")
                         .header("Authorization", "Bearer " + token)
@@ -313,13 +317,17 @@ class AgendamentoIntegrationTest {
     }
 
     @Test
-    @DisplayName("Deve rejeitar transição inválida AGENDADO → REALIZADO")
+    @DisplayName("Deve rejeitar alteração de agendamento com status final (CANCELADO)")
     void updateStatus_InvalidTransition() throws Exception {
+        // Cria agendamento para próxima segunda
+        LocalDate proximaSegunda = LocalDate.now().plusDays(1);
+        while (proximaSegunda.getDayOfWeek() != DayOfWeek.MONDAY) proximaSegunda = proximaSegunda.plusDays(1);
+
         AgendamentoRequestDTO agendamentoDTO = new AgendamentoRequestDTO();
         agendamentoDTO.setPacienteId(UUID.fromString(pacienteId));
         agendamentoDTO.setProfissionalId(UUID.fromString(profissionalId));
         agendamentoDTO.setServicoId(UUID.fromString(servicoId));
-        agendamentoDTO.setDataHora(LocalDateTime.of(2025, 6, 2, 10, 0));
+        agendamentoDTO.setDataHora(proximaSegunda.atTime(10, 0));
 
         MvcResult result = mockMvc.perform(post("/api/v1/agendamentos")
                         .header("Authorization", "Bearer " + token)
@@ -329,9 +337,18 @@ class AgendamentoIntegrationTest {
                 .andReturn();
         String agendamentoId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
 
-        // Tentar AGENDADO → REALIZADO (inválida, deve passar por CONFIRMADO)
+        // Cancela primeiro
+        AgendamentoStatusDTO cancelar = new AgendamentoStatusDTO();
+        cancelar.setStatus(br.com.clinicahumaniza.patient_service.model.StatusAgendamento.CANCELADO);
+        mockMvc.perform(patch("/api/v1/agendamentos/{id}/status", agendamentoId)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(cancelar)))
+                .andExpect(status().isOk());
+
+        // Tenta alterar status do CANCELADO → CONFIRMADO (status final, inválido)
         AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO();
-        statusDTO.setStatus(br.com.clinicahumaniza.patient_service.model.StatusAgendamento.REALIZADO);
+        statusDTO.setStatus(br.com.clinicahumaniza.patient_service.model.StatusAgendamento.CONFIRMADO);
 
         mockMvc.perform(patch("/api/v1/agendamentos/{id}/status", agendamentoId)
                         .header("Authorization", "Bearer " + token)

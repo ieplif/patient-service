@@ -155,7 +155,11 @@ public class PagamentoService {
         pagamento.setStatus(dto.getStatus());
 
         if (dto.getStatus() == StatusPagamento.PAGO) {
-            pagamento.setDataPagamento(LocalDateTime.now());
+            // Permite registrar pagamentos retroativos com a data correta do recibo
+            pagamento.setDataPagamento(
+                    dto.getDataPagamento() != null
+                            ? dto.getDataPagamento().atStartOfDay()
+                            : LocalDateTime.now());
         }
 
         return pagamentoRepository.save(pagamento);
