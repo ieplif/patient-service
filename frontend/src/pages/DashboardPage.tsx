@@ -196,9 +196,6 @@ export function DashboardPage() {
                         Paciente
                       </TableHead>
                       <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
-                        Profissional
-                      </TableHead>
-                      <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
                         Data/Hora
                       </TableHead>
                       <TableHead className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
@@ -210,7 +207,7 @@ export function DashboardPage() {
                     {proximosAgendamentos?.content.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={4}
+                          colSpan={3}
                           className="text-center text-muted-foreground font-secondary py-8"
                         >
                           Nenhum agendamento futuro
@@ -223,9 +220,6 @@ export function DashboardPage() {
                           <TableRow key={ag.id} className="border-border/40 hover:bg-muted/20">
                             <TableCell className="font-semibold font-primary text-sm text-foreground" title={ag.pacienteNome}>
                               {shortenName(ag.pacienteNome)}
-                            </TableCell>
-                            <TableCell className="text-sm font-secondary text-muted-foreground">
-                              {ag.profissionalNome || "Sem profissional"}
                             </TableCell>
                             <TableCell className="text-sm font-secondary text-muted-foreground whitespace-nowrap">
                               {formatDateTime(ag.dataHora)}
