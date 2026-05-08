@@ -8,6 +8,8 @@ import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
 import br.com.clinicahumaniza.patient_service.repository.ProntuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -23,6 +25,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ProntuarioService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProntuarioService.class);
 
     private final ProntuarioRepository prontuarioRepository;
     private final PatientRepository patientRepository;
@@ -61,6 +65,7 @@ public class ProntuarioService {
         Patient paciente = patientRepository.findById(pacienteId)
                 .orElseThrow(() -> new EntityNotFoundException("Paciente não encontrado"));
 
+        // Sobe primeiro no Storage (chamada externa, fora da transação JPA)
         String storagePath = storageService.upload(pacienteId, file);
         String storageUrl = storageService.getSignedUrl(storagePath);
 
@@ -79,7 +84,20 @@ public class ProntuarioService {
                 .uploadedBy(uploadedBy)
                 .build();
 
-        prontuario = prontuarioRepository.save(prontuario);
+        // Rollback manual: se o save no banco falhar, remove o arquivo do Storage
+        // pra evitar arquivos órfãos consumindo espaço e expondo dados de pacientes.
+        try {
+            prontuario = prontuarioRepository.save(prontuario);
+        } catch (RuntimeException e) {
+            log.error("Falha ao salvar Prontuario no banco. Removendo arquivo orfao do Storage: {}", storagePath, e);
+            try {
+                storageService.delete(storagePath);
+            } catch (Exception cleanupEx) {
+                log.error("Cleanup do arquivo orfao falhou (path={}): {}", storagePath, cleanupEx.getMessage());
+            }
+            throw e;
+        }
+
         return toDTO(prontuario);
     }
 
