@@ -30,7 +30,8 @@ public class Prontuario {
     @Column(columnDefinition = "TEXT")
     private String descricao;
 
-    @Column(name = "nome_arquivo")
+    // Nome de arquivo pode ter caracteres acentuados/longos — TEXT evita "value too long"
+    @Column(name = "nome_arquivo", columnDefinition = "TEXT")
     private String nomeArquivo;
 
     @Column(name = "tipo_arquivo")
@@ -39,10 +40,12 @@ public class Prontuario {
     @Column(name = "tamanho_bytes")
     private Long tamanhoBytes;
 
-    @Column(name = "storage_path", nullable = false)
+    // Path interno (UUID/UUID_arquivo) — TEXT por segurança
+    @Column(name = "storage_path", nullable = false, columnDefinition = "TEXT")
     private String storagePath;
 
-    @Column(name = "storage_url")
+    // URL assinada do Supabase contém JWT no querystring — passa facilmente de 1000 chars
+    @Column(name = "storage_url", columnDefinition = "TEXT")
     private String storageUrl;
 
     @Column(name = "uploaded_by")
