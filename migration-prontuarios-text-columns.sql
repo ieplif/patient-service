@@ -21,9 +21,17 @@ ALTER TABLE prontuarios
 ALTER TABLE prontuarios
     ALTER COLUMN nome_arquivo TYPE TEXT;
 
+-- Garantir DEFAULT true em "ativo" — sem isso o INSERT do Hibernate falha
+-- quando a entidade Java nao envia o campo
+ALTER TABLE prontuarios
+    ALTER COLUMN ativo SET DEFAULT true;
+
+-- Atualiza linhas que possam ter ficado com NULL (improvavel mas seguro)
+UPDATE prontuarios SET ativo = true WHERE ativo IS NULL;
+
 -- Verificacao
-SELECT column_name, data_type, character_maximum_length
+SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
 FROM information_schema.columns
 WHERE table_name = 'prontuarios'
-  AND column_name IN ('storage_url', 'storage_path', 'nome_arquivo')
+  AND column_name IN ('storage_url', 'storage_path', 'nome_arquivo', 'ativo')
 ORDER BY column_name;

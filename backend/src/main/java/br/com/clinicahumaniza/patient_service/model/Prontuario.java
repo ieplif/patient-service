@@ -51,6 +51,11 @@ public class Prontuario {
     @Column(name = "uploaded_by")
     private String uploadedBy;
 
+    // Soft delete — consistente com Patient, Agendamento, Assinatura, etc.
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean ativo = true;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
