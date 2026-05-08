@@ -164,6 +164,10 @@ export function AgendamentosPage() {
     return ag.servicoDescricao.toLowerCase().includes("pilates")
   }
 
+  function isFisioterapia(ag: Agendamento): boolean {
+    return ag.servicoDescricao.toLowerCase().includes("fisio")
+  }
+
   const filteredContent = search.trim()
     ? data?.content.filter((ag) =>
         ag.pacienteNome.toLowerCase().includes(search.toLowerCase())
@@ -250,8 +254,16 @@ export function AgendamentosPage() {
                     filteredContent.map((ag) => {
                       const cfg = statusConfig[ag.status]
                       const transitions = nextStatuses[ag.status] ?? []
+                      const fisio = isFisioterapia(ag)
                       return (
-                        <TableRow key={ag.id} className="border-border/40 hover:bg-muted/20">
+                        <TableRow
+                          key={ag.id}
+                          className={
+                            fisio
+                              ? "border-border/40 bg-sky-50/60 border-l-4 border-l-sky-400 hover:bg-sky-100/60"
+                              : "border-border/40 hover:bg-muted/20"
+                          }
+                        >
                           <TableCell className="font-semibold font-primary text-sm text-foreground" title={ag.pacienteNome}>
                             {shortenName(ag.pacienteNome)}
                           </TableCell>
