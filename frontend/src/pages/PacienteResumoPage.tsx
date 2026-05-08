@@ -127,8 +127,10 @@ export function PacienteResumoPage() {
       setUploadDescricao("")
       setUploadFile(null)
     },
-    onError: () => {
-      toast({ title: "Erro", description: "Falha ao enviar o arquivo. Verifique a configuracao do Supabase Storage.", variant: "destructive" })
+    onError: (err: unknown) => {
+      const data = (err as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data
+      const msg = data?.mensagem || data?.message || "Falha ao enviar o arquivo. Verifique o tamanho (máx 10MB) e o tipo (PDF, JPEG, PNG, DOC, DOCX)."
+      toast({ title: "Erro ao anexar arquivo", description: msg, variant: "destructive" })
     },
   })
 
