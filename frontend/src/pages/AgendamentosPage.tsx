@@ -82,7 +82,9 @@ const nextStatuses: Partial<Record<StatusAgendamento, { status: StatusAgendament
 
 export function AgendamentosPage() {
   const [page, setPage] = useState(0)
-  const [statusFilter, setStatusFilter] = useState<StatusAgendamento | "TODOS">("TODOS")
+  // Default "AGENDADO" — recepção quase sempre quer ver o que ainda está em aberto.
+  // Pode trocar para "TODOS" pelo filtro acima da tabela.
+  const [statusFilter, setStatusFilter] = useState<StatusAgendamento | "TODOS">("AGENDADO")
   const [search, setSearch] = useState("")
   const [sheetOpen, setSheetOpen] = useState(false)
   const [selectedAg, setSelectedAg] = useState<Agendamento | null>(null)

@@ -105,7 +105,8 @@ export function DashboardPage() {
 
   const { data: proximosAgendamentos, isLoading: loadingProximos } = useQuery({
     queryKey: ["proximos-agendamentos"],
-    queryFn: () => getAgendamentos({ dataInicio: today, sort: "dataHora,asc", size: 5 }),
+    // Filtro por status "AGENDADO" — não polui o dashboard com aulas já realizadas/canceladas
+    queryFn: () => getAgendamentos({ status: "AGENDADO", dataInicio: today, sort: "dataHora,asc", size: 5 }),
   })
 
   const { data: pagamentosPendentesLista, isLoading: loadingPagLista } = useQuery({
