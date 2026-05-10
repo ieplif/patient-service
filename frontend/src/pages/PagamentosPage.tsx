@@ -79,7 +79,10 @@ export function PagamentosPage() {
       getPagamentos({
         page,
         size: PAGE_SIZE,
-        sort: "createdAt,desc",
+        // Ordena por data de vencimento (mais recente primeiro). Suporta lançamentos
+        // retroativos: um pagamento criado hoje com vencimento de abril aparece
+        // depois dos pagamentos com vencimento em maio.
+        sort: "dataVencimento,desc",
         status: statusFilter !== "TODOS" ? statusFilter : undefined,
       }),
   })
