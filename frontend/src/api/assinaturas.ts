@@ -82,6 +82,28 @@ export async function deleteAssinatura(id: string): Promise<void> {
   await apiClient.delete(`/api/v1/assinaturas/${id}`)
 }
 
+export async function suspenderAssinatura(
+  id: string,
+  payload: { motivo: string; dataPrevistaRetomada?: string }
+): Promise<Assinatura> {
+  const { data } = await apiClient.post<Assinatura>(
+    `/api/v1/assinaturas/${id}/suspender`,
+    payload
+  )
+  return data
+}
+
+export async function reativarAssinatura(
+  id: string,
+  payload?: { dataInicio?: string; recriarAgendamentos?: boolean }
+): Promise<Assinatura> {
+  const { data } = await apiClient.post<Assinatura>(
+    `/api/v1/assinaturas/${id}/reativar`,
+    payload ?? {}
+  )
+  return data
+}
+
 export async function regenerarHorarios(
   id: string,
   payload: RegenerarHorariosPayload

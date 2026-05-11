@@ -55,6 +55,16 @@ public class Assinatura {
     @Column(name = "renovacao_automatica", columnDefinition = "boolean default false")
     private Boolean renovacaoAutomatica = false;
 
+    // Campos de suspensão (ex.: paciente grávida que pausa o pilates)
+    @Column(name = "data_suspensao")
+    private LocalDate dataSuspensao;
+
+    @Column(name = "motivo_suspensao", columnDefinition = "TEXT")
+    private String motivoSuspensao;
+
+    @Column(name = "data_prevista_retomada")
+    private LocalDate dataPrevistaRetomada;
+
     @Column(columnDefinition = "boolean default true")
     private Boolean ativo = true;
 

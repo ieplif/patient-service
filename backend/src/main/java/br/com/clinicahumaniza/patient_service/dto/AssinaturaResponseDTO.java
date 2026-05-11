@@ -29,6 +29,9 @@ public class AssinaturaResponseDTO {
     private BigDecimal valor;
     private String observacoes;
     private boolean renovacaoAutomatica;
+    private LocalDate dataSuspensao;
+    private String motivoSuspensao;
+    private LocalDate dataPrevistaRetomada;
     private boolean ativo;
     private LocalDateTime createdAt;
 }

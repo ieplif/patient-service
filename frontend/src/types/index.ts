@@ -77,7 +77,7 @@ export type StatusPagamento =
   | "CANCELADO"
   | "REEMBOLSADO"
 
-export type StatusAssinatura = "ATIVO" | "CANCELADO" | "VENCIDO" | "FINALIZADO"
+export type StatusAssinatura = "ATIVO" | "SUSPENSO" | "CANCELADO" | "VENCIDO" | "FINALIZADO"
 
 export type FormaPagamento = "PIX" | "CARTAO_CREDITO" | "CARTAO_DEBITO" | "DINHEIRO"
 
@@ -153,6 +153,9 @@ export interface Assinatura {
   valor: number
   observacoes?: string
   renovacaoAutomatica: boolean
+  dataSuspensao?: string
+  motivoSuspensao?: string
+  dataPrevistaRetomada?: string
   ativo: boolean
   createdAt: string
 }

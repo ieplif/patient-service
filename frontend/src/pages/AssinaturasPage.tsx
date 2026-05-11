@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Star, Plus, Pencil, Ban, MoreHorizontal, Search, RefreshCw } from "lucide-react"
+import { Star, Plus, Pencil, Ban, MoreHorizontal, Search, RefreshCw, Pause, Play } from "lucide-react"
 import { format } from "date-fns"
-import { getAssinaturas, createAssinatura, updateAssinatura, updateAssinaturaStatus, regenerarHorarios } from "@/api/assinaturas"
+import { getAssinaturas, createAssinatura, updateAssinatura, updateAssinaturaStatus, regenerarHorarios, suspenderAssinatura, reativarAssinatura } from "@/api/assinaturas"
 import type { HorarioFixoSlotDTO } from "@/api/assinaturas"
 import { shortenName } from "@/lib/names"
 import { createAgendamento, createAgendamentoRecorrente } from "@/api/agendamentos"
@@ -36,6 +36,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Pagination } from "@/components/shared/Pagination"
 import { AssinaturaFormSheet } from "@/components/shared/AssinaturaFormSheet"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 
 const PAGE_SIZE = 15
 
@@ -51,6 +60,7 @@ const DAY_TO_JAVA: Record<string, string> = {
 
 const statusConfig: Record<StatusAssinatura, { label: string; className: string }> = {
   ATIVO: { label: "Ativo", className: "bg-primary/15 text-primary border-primary/30" },
+  SUSPENSO: { label: "Suspensa", className: "bg-amber-100 text-amber-800 border-amber-300" },
   CANCELADO: { label: "Cancelado", className: "bg-destructive/10 text-destructive border-destructive/20" },
   VENCIDO: { label: "Vencido", className: "bg-accent/15 text-accent border-accent/30" },
   FINALIZADO: { label: "Finalizado", className: "bg-muted text-muted-foreground border-border" },
@@ -63,6 +73,7 @@ function formatCurrency(v: number) {
 const statusOptions: { value: StatusAssinatura | "TODOS"; label: string }[] = [
   { value: "TODOS", label: "Todos os status" },
   { value: "ATIVO", label: "Ativo" },
+  { value: "SUSPENSO", label: "Suspensa" },
   { value: "CANCELADO", label: "Cancelado" },
   { value: "VENCIDO", label: "Vencido" },
   { value: "FINALIZADO", label: "Finalizado" },
@@ -74,6 +85,11 @@ export function AssinaturasPage() {
   const [search, setSearch] = useState("")
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editAssinatura, setEditAssinatura] = useState<Assinatura | null>(null)
+  // Suspensão/reativação
+  const [suspenderOpen, setSuspenderOpen] = useState(false)
+  const [suspenderAlvo, setSuspenderAlvo] = useState<Assinatura | null>(null)
+  const [motivoSuspensao, setMotivoSuspensao] = useState("")
+  const [dataPrevistaRetomada, setDataPrevistaRetomada] = useState("")
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
@@ -221,6 +237,74 @@ export function AssinaturasPage() {
       toast({ title: "Erro", description: msg, variant: "destructive" })
     },
   })
+
+  const suspenderMutation = useMutation({
+    mutationFn: ({ id, motivo, dataPrevistaRetomada }: { id: string; motivo: string; dataPrevistaRetomada?: string }) =>
+      suspenderAssinatura(id, { motivo, dataPrevistaRetomada }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assinaturas"] })
+      queryClient.invalidateQueries({ queryKey: ["agendamentos"] })
+      toast({ title: "Assinatura suspensa", description: "Agendamentos futuros foram cancelados." })
+      setSuspenderOpen(false)
+      setSuspenderAlvo(null)
+      setMotivoSuspensao("")
+      setDataPrevistaRetomada("")
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
+        || (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        || "Erro ao suspender assinatura."
+      toast({ title: "Erro", description: msg, variant: "destructive" })
+    },
+  })
+
+  const reativarMutation = useMutation({
+    mutationFn: (id: string) => reativarAssinatura(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assinaturas"] })
+      toast({
+        title: "Assinatura reativada",
+        description: "Vencimento recalculado. Agende os novos horários quando combinar com a paciente.",
+      })
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
+        || (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        || "Erro ao reativar assinatura."
+      toast({ title: "Erro", description: msg, variant: "destructive" })
+    },
+  })
+
+  function openSuspenderDialog(as: Assinatura) {
+    setSuspenderAlvo(as)
+    setMotivoSuspensao("")
+    setDataPrevistaRetomada("")
+    setSuspenderOpen(true)
+  }
+
+  function handleConfirmSuspender() {
+    if (!suspenderAlvo) return
+    if (!motivoSuspensao.trim()) {
+      toast({ title: "Motivo obrigatório", description: "Informe por que está suspendendo (ex.: gravidez).", variant: "destructive" })
+      return
+    }
+    suspenderMutation.mutate({
+      id: suspenderAlvo.id,
+      motivo: motivoSuspensao.trim(),
+      dataPrevistaRetomada: dataPrevistaRetomada || undefined,
+    })
+  }
+
+  function handleReativar(as: Assinatura) {
+    const ok = window.confirm(
+      `Reativar a assinatura de ${as.pacienteNome}?\n\n` +
+      `O vencimento será recalculado (hoje + validade do plano) e os campos de suspensão serão limpos. ` +
+      `O saldo de sessões permanece.\n\n` +
+      `Continuar?`
+    )
+    if (!ok) return
+    reativarMutation.mutate(as.id)
+  }
 
   async function handleSubmit(formData: AssinaturaFormData) {
     if (editAssinatura) {
@@ -396,7 +480,14 @@ export function AssinaturasPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1.5">
-                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold font-primary ${cfg.className}`}>
+                              <span
+                                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold font-primary ${cfg.className}`}
+                                title={
+                                  as.status === "SUSPENSO" && as.motivoSuspensao
+                                    ? `Motivo: ${as.motivoSuspensao}${as.dataPrevistaRetomada ? ` · Retomada prevista: ${format(new Date(as.dataPrevistaRetomada + "T00:00:00"), "dd/MM/yyyy")}` : ""}`
+                                    : undefined
+                                }
+                              >
                                 {cfg.label}
                               </span>
                               {as.renovacaoAutomatica && (
@@ -425,6 +516,25 @@ export function AssinaturasPage() {
                                     })}>
                                       <RefreshCw className="h-4 w-4 mr-2" />
                                       {as.renovacaoAutomatica ? "Desativar renovação auto." : "Ativar renovação auto."}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => openSuspenderDialog(as)}>
+                                      <Pause className="h-4 w-4 mr-2" /> Suspender
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-destructive"
+                                      onClick={() => statusMutation.mutate({ id: as.id, status: "CANCELADO" })}
+                                    >
+                                      <Ban className="h-4 w-4 mr-2" /> Cancelar
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {as.status === "SUSPENSO" && (
+                                  <>
+                                    <DropdownMenuItem onClick={() => handleReativar(as)}>
+                                      <Play className="h-4 w-4 mr-2" /> Reativar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleEdit(as)}>
+                                      <Pencil className="h-4 w-4 mr-2" /> Editar
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       className="text-destructive"
@@ -476,6 +586,55 @@ export function AssinaturasPage() {
         assinatura={editAssinatura}
         isPending={createMutation.isPending || updateMutation.isPending}
       />
+
+      <Dialog open={suspenderOpen} onOpenChange={setSuspenderOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-primary">Suspender assinatura</DialogTitle>
+            <DialogDescription className="font-secondary">
+              {suspenderAlvo ? `${suspenderAlvo.pacienteNome} — ${suspenderAlvo.servicoDescricao}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm font-secondary text-amber-800">
+            Vai cancelar todos os agendamentos futuros pendentes desta assinatura. O saldo de
+            sessões será preservado e a renovação automática não roda enquanto suspensa.
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="font-primary text-sm">Motivo da suspensão *</Label>
+            <textarea
+              value={motivoSuspensao}
+              onChange={(e) => setMotivoSuspensao(e.target.value)}
+              placeholder="Ex.: Gravidez, lesão, viagem prolongada..."
+              className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-secondary ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="font-primary text-sm">Data prevista de retomada (opcional)</Label>
+            <Input
+              type="date"
+              value={dataPrevistaRetomada}
+              onChange={(e) => setDataPrevistaRetomada(e.target.value)}
+              className="font-secondary"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" className="font-primary" onClick={() => setSuspenderOpen(false)}>
+              Voltar
+            </Button>
+            <Button
+              className="font-primary bg-amber-600 hover:bg-amber-700 text-white"
+              onClick={handleConfirmSuspender}
+              disabled={suspenderMutation.isPending}
+            >
+              {suspenderMutation.isPending ? "Suspendendo..." : "Confirmar suspensão"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -42,6 +42,9 @@ public class AssinaturaMapper {
         dto.setValor(entity.getValor());
         dto.setObservacoes(entity.getObservacoes());
         dto.setRenovacaoAutomatica(Boolean.TRUE.equals(entity.getRenovacaoAutomatica()));
+        dto.setDataSuspensao(entity.getDataSuspensao());
+        dto.setMotivoSuspensao(entity.getMotivoSuspensao());
+        dto.setDataPrevistaRetomada(entity.getDataPrevistaRetomada());
         dto.setAtivo(Boolean.TRUE.equals(entity.getAtivo()));
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;

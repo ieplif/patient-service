@@ -4,8 +4,10 @@ import br.com.clinicahumaniza.patient_service.dto.AssinaturaRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaStatusDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaUpdateDTO;
+import br.com.clinicahumaniza.patient_service.dto.ReativarAssinaturaRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.RegenerarHorariosRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.RegenerarHorariosResponseDTO;
+import br.com.clinicahumaniza.patient_service.dto.SuspenderAssinaturaRequestDTO;
 import br.com.clinicahumaniza.patient_service.mapper.AssinaturaMapper;
 import br.com.clinicahumaniza.patient_service.model.Assinatura;
 import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
@@ -152,6 +154,36 @@ public class AssinaturaController {
     public ResponseEntity<Map<String, Object>> renovarAssinaturas() {
         int renovadas = renovacaoService.renovarAssinaturasProximasDoVencimento();
         return ResponseEntity.ok(Map.of("renovadas", renovadas));
+    }
+
+    @PostMapping("/{id}/suspender")
+    @Operation(summary = "Suspender assinatura",
+            description = "Suspende a assinatura (ex.: paciente grávida). Cancela agendamentos futuros pendentes e preserva o saldo de sessões.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Suspensa com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
+            @ApiResponse(responseCode = "422", description = "Status atual não permite suspensão")
+    })
+    public ResponseEntity<AssinaturaResponseDTO> suspender(
+            @PathVariable UUID id,
+            @Valid @RequestBody SuspenderAssinaturaRequestDTO dto) {
+        Assinatura assinatura = assinaturaService.suspender(id, dto);
+        return ResponseEntity.ok(assinaturaMapper.toResponseDTO(assinatura));
+    }
+
+    @PostMapping("/{id}/reativar")
+    @Operation(summary = "Reativar assinatura suspensa",
+            description = "Reativa uma assinatura SUSPENSO. Recalcula a data de vencimento e limpa os campos de suspensão.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reativada com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
+            @ApiResponse(responseCode = "422", description = "Status atual não permite reativação")
+    })
+    public ResponseEntity<AssinaturaResponseDTO> reativar(
+            @PathVariable UUID id,
+            @RequestBody(required = false) ReativarAssinaturaRequestDTO dto) {
+        Assinatura assinatura = assinaturaService.reativar(id, dto);
+        return ResponseEntity.ok(assinaturaMapper.toResponseDTO(assinatura));
     }
 
     @PostMapping("/{id}/regenerar-horarios")
