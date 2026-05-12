@@ -20,13 +20,12 @@ ALTER TABLE assinaturas
 ALTER TABLE assinaturas
     ADD COLUMN IF NOT EXISTS data_prevista_retomada DATE;
 
--- 2. Verificar se ha CHECK constraint no campo status que precisa ser ajustada.
---    Spring Boot + @Enumerated(EnumType.STRING) NORMALMENTE nao cria CHECK
---    (Postgres aceita qualquer string ate o length). Se tiver, descomente:
---
--- ALTER TABLE assinaturas DROP CONSTRAINT IF EXISTS assinaturas_status_check;
--- ALTER TABLE assinaturas ADD CONSTRAINT assinaturas_status_check
---     CHECK (status IN ('ATIVO','SUSPENSO','CANCELADO','VENCIDO','FINALIZADO'));
+-- 2. CHECK constraint do campo status — precisa aceitar o novo valor SUSPENSO.
+--    Hibernate criou um CHECK quando a tabela foi gerada e ele NAO atualiza
+--    automaticamente com novos valores de enum em ddl-auto=update.
+ALTER TABLE assinaturas DROP CONSTRAINT IF EXISTS assinaturas_status_check;
+ALTER TABLE assinaturas ADD CONSTRAINT assinaturas_status_check
+    CHECK (status IN ('ATIVO','SUSPENSO','CANCELADO','VENCIDO','FINALIZADO'));
 
 -- Verificacao
 SELECT column_name, data_type, is_nullable
