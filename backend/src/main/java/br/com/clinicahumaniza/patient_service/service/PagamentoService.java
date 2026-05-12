@@ -82,12 +82,14 @@ public class PagamentoService {
 
     public Page<Pagamento> getAllPagamentos(StatusPagamento status, FormaPagamento formaPagamento,
                                             UUID pacienteId, LocalDate inicio, LocalDate fim,
+                                            LocalDate pagamentoInicio, LocalDate pagamentoFim,
                                             Pageable pageable) {
         Specification<Pagamento> spec = Specification.allOf(
                 PagamentoSpecification.hasStatus(status),
                 PagamentoSpecification.hasFormaPagamento(formaPagamento),
                 PagamentoSpecification.hasPaciente(pacienteId),
-                PagamentoSpecification.betweenVencimento(inicio, fim));
+                PagamentoSpecification.betweenVencimento(inicio, fim),
+                PagamentoSpecification.betweenDataPagamento(pagamentoInicio, pagamentoFim));
         return pagamentoRepository.findAll(spec, pageable);
     }
 

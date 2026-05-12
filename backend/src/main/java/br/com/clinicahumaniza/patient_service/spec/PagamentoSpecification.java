@@ -6,6 +6,7 @@ import br.com.clinicahumaniza.patient_service.model.StatusPagamento;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.UUID;
 
 public class PagamentoSpecification {
@@ -37,6 +38,24 @@ public class PagamentoSpecification {
             if (inicio == null) return cb.lessThanOrEqualTo(root.get("dataVencimento"), fim);
             if (fim == null) return cb.greaterThanOrEqualTo(root.get("dataVencimento"), inicio);
             return cb.between(root.get("dataVencimento"), inicio, fim);
+        };
+    }
+
+    /**
+     * Filtro por data efetiva do pagamento (dataPagamento) — útil para o card
+     * "Receita do mês", relatórios contábeis, etc. Compara com LocalDateTime
+     * usando o início do dia para inicio e o fim do dia para fim.
+     */
+    public static Specification<Pagamento> betweenDataPagamento(LocalDate inicio, LocalDate fim) {
+        return (root, query, cb) -> {
+            if (inicio == null && fim == null) return null;
+            if (inicio == null) {
+                return cb.lessThanOrEqualTo(root.get("dataPagamento"), fim.atTime(LocalTime.MAX));
+            }
+            if (fim == null) {
+                return cb.greaterThanOrEqualTo(root.get("dataPagamento"), inicio.atStartOfDay());
+            }
+            return cb.between(root.get("dataPagamento"), inicio.atStartOfDay(), fim.atTime(LocalTime.MAX));
         };
     }
 }

@@ -64,9 +64,11 @@ public class PagamentoController {
             @RequestParam(required = false) UUID pacienteId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate pagamentoInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate pagamentoFim,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(pagamentoService.getAllPagamentos(status, formaPagamento, pacienteId,
-                inicio, fim, pageable).map(pagamentoMapper::toResponseDTO));
+                inicio, fim, pagamentoInicio, pagamentoFim, pageable).map(pagamentoMapper::toResponseDTO));
     }
 
     @GetMapping("/export/csv")

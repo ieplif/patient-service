@@ -8,8 +8,12 @@ export async function getPagamentos(params?: {
   status?: StatusPagamento
   formaPagamento?: FormaPagamento
   pacienteId?: string
+  /** Filtro por dataVencimento. */
   inicio?: string
   fim?: string
+  /** Filtro por dataPagamento (data efetiva). Use para Receita do mês, relatórios. */
+  pagamentoInicio?: string
+  pagamentoFim?: string
 }): Promise<PageResponse<Pagamento>> {
   const { data } = await apiClient.get<PageResponse<Pagamento>>("/api/v1/pagamentos", { params })
   return data
