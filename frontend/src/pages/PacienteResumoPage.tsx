@@ -63,6 +63,7 @@ const statusAgConfig: Record<string, { label: string; className: string }> = {
 
 const statusAssConfig: Record<string, { label: string; className: string }> = {
   ATIVO: { label: "Ativo", className: "bg-primary/15 text-primary border-primary/30" },
+  SUSPENSO: { label: "Suspensa", className: "bg-amber-100 text-amber-800 border-amber-300" },
   CANCELADO: { label: "Cancelado", className: "bg-destructive/10 text-destructive border-destructive/20" },
   VENCIDO: { label: "Vencido", className: "bg-accent/15 text-accent border-accent/30" },
   FINALIZADO: { label: "Finalizado", className: "bg-muted text-muted-foreground border-border" },
