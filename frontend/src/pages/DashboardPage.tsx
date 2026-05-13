@@ -93,10 +93,10 @@ export function DashboardPage() {
   const { data: pagamentosMes, isLoading: loadingReceitaMes } = useQuery({
     queryKey: ["receita-mes"],
     queryFn: () =>
-      // Filtra pela data EFETIVA do pagamento (dataPagamento), não vencimento —
-      // assim um pagamento criado retroativamente com vencimento de abril, mas
-      // pago em maio, conta corretamente na receita de maio.
-      getPagamentos({ status: "PAGO", pagamentoInicio: monthStart, pagamentoFim: today, size: 1000 }),
+      // Filtra por data de VENCIMENTO — uma mensalidade de abril, mesmo paga
+      // em maio, conta como receita de abril (o pagamento "pertence" ao mês
+      // de competência do vencimento).
+      getPagamentos({ status: "PAGO", inicio: monthStart, fim: today, size: 1000 }),
     enabled: !isProfissional,
   })
 

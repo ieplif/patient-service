@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { CreditCard, Plus, Search, MoreHorizontal, CheckCircle, Ban, RotateCcw } from "lucide-react"
+import { CreditCard, Plus, Search, MoreHorizontal, CheckCircle, Ban, RotateCcw, Pencil } from "lucide-react"
 import { format } from "date-fns"
-import { getPagamentos, createPagamento, updatePagamentoStatus } from "@/api/pagamentos"
+import { getPagamentos, createPagamento, updatePagamentoStatus, updatePagamento } from "@/api/pagamentos"
 import { shortenName } from "@/lib/names"
 import type { StatusPagamento, FormaPagamento } from "@/types"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -34,6 +34,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Pagination } from "@/components/shared/Pagination"
 import { PagamentoFormSheet } from "@/components/shared/PagamentoFormSheet"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import type { Pagamento } from "@/types"
 
 const PAGE_SIZE = 15
 
@@ -70,6 +80,12 @@ export function PagamentosPage() {
   const [statusFilter, setStatusFilter] = useState<StatusPagamento | "TODOS">("TODOS")
   const [search, setSearch] = useState("")
   const [sheetOpen, setSheetOpen] = useState(false)
+  // Edição de pagamento
+  const [editOpen, setEditOpen] = useState(false)
+  const [editAlvo, setEditAlvo] = useState<Pagamento | null>(null)
+  const [editFormaPagamento, setEditFormaPagamento] = useState<FormaPagamento | "">("")
+  const [editDataVencimento, setEditDataVencimento] = useState("")
+  const [editObservacoes, setEditObservacoes] = useState("")
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
@@ -117,6 +133,42 @@ export function PagamentosPage() {
       toast({ title: "Erro", description: msg, variant: "destructive" })
     },
   })
+
+  const editMutation = useMutation({
+    mutationFn: ({ id, ...payload }:
+      { id: string; formaPagamento?: FormaPagamento; dataVencimento?: string; observacoes?: string }) =>
+      updatePagamento(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pagamentos"] })
+      toast({ title: "Pagamento atualizado", description: "Os dados foram salvos." })
+      setEditOpen(false)
+      setEditAlvo(null)
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
+        || (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        || "Erro ao atualizar pagamento."
+      toast({ title: "Erro", description: msg, variant: "destructive" })
+    },
+  })
+
+  function openEditDialog(pag: Pagamento) {
+    setEditAlvo(pag)
+    setEditFormaPagamento(pag.formaPagamento)
+    setEditDataVencimento(pag.dataVencimento.split("T")[0])
+    setEditObservacoes(pag.observacoes ?? "")
+    setEditOpen(true)
+  }
+
+  function handleConfirmEdit() {
+    if (!editAlvo) return
+    editMutation.mutate({
+      id: editAlvo.id,
+      formaPagamento: editFormaPagamento || undefined,
+      dataVencimento: editDataVencimento || undefined,
+      observacoes: editObservacoes || undefined,
+    })
+  }
 
   // Pergunta a data do pagamento ao marcar como PAGO (permite registrar pagamento retroativo)
   function marcarComoPago(id: string) {
@@ -246,6 +298,11 @@ export function PagamentosPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="font-secondary">
+                                {/* Editar disponível em todos os status — permite ajustar forma de pagamento,
+                                    vencimento ou observações sem mexer no status atual */}
+                                <DropdownMenuItem onClick={() => openEditDialog(pag)}>
+                                  <Pencil className="h-4 w-4 mr-2" /> Editar
+                                </DropdownMenuItem>
                                 {pag.status === "PENDENTE" && (
                                   <>
                                     <DropdownMenuItem onClick={() => marcarComoPago(pag.id)}>
@@ -305,6 +362,65 @@ export function PagamentosPage() {
         onSubmit={(formData) => createMutation.mutate(formData)}
         isPending={createMutation.isPending}
       />
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-primary">Editar pagamento</DialogTitle>
+            <DialogDescription className="font-secondary">
+              {editAlvo ? `${editAlvo.pacienteNome} — ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(editAlvo.valor)}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-1.5">
+            <Label className="font-primary text-sm">Forma de pagamento</Label>
+            <Select value={editFormaPagamento} onValueChange={(v) => setEditFormaPagamento(v as FormaPagamento)}>
+              <SelectTrigger className="font-secondary text-sm">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="PIX" className="font-secondary text-sm">Pix</SelectItem>
+                <SelectItem value="CARTAO_CREDITO" className="font-secondary text-sm">Cartão Crédito</SelectItem>
+                <SelectItem value="CARTAO_DEBITO" className="font-secondary text-sm">Cartão Débito</SelectItem>
+                <SelectItem value="DINHEIRO" className="font-secondary text-sm">Dinheiro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="font-primary text-sm">Data de vencimento</Label>
+            <Input
+              type="date"
+              value={editDataVencimento}
+              onChange={(e) => setEditDataVencimento(e.target.value)}
+              className="font-secondary"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="font-primary text-sm">Observações</Label>
+            <textarea
+              value={editObservacoes}
+              onChange={(e) => setEditObservacoes(e.target.value)}
+              placeholder="Observações sobre o pagamento..."
+              className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-secondary ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </div>
+
+          <p className="text-xs text-muted-foreground font-secondary">
+            Valor, parcelas e paciente não podem ser editados — para mudar esses dados, cancele e crie um novo pagamento.
+          </p>
+
+          <DialogFooter>
+            <Button variant="outline" className="font-primary" onClick={() => setEditOpen(false)}>
+              Cancelar
+            </Button>
+            <Button className="font-primary" onClick={handleConfirmEdit} disabled={editMutation.isPending}>
+              {editMutation.isPending ? "Salvando..." : "Salvar alterações"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

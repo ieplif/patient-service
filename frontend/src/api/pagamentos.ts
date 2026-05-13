@@ -38,6 +38,18 @@ export async function createPagamento(payload: {
   return data
 }
 
+export async function updatePagamento(
+  id: string,
+  payload: {
+    formaPagamento?: FormaPagamento
+    dataVencimento?: string
+    observacoes?: string
+  }
+): Promise<Pagamento> {
+  const { data } = await apiClient.put<Pagamento>(`/api/v1/pagamentos/${id}`, payload)
+  return data
+}
+
 export async function updatePagamentoStatus(
   id: string,
   status: StatusPagamento,
