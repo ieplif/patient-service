@@ -192,9 +192,19 @@ export function PacienteResumoPage() {
           </p>
         </div>
         <div className="ml-auto">
-          <Badge variant={paciente.statusAtivo ? "default" : "destructive"} className="font-primary">
-            {paciente.statusAtivo ? "Ativo" : "Inativo"}
-          </Badge>
+          {(() => {
+            // Status efetivo: "Inativo" se o paciente foi excluido OU se tem
+            // assinaturas mas nenhuma esta ATIVO (todas suspensas/canceladas/etc.).
+            // Pacientes sem assinaturas (so agendamentos avulsos) continuam Ativo.
+            const lista = assinaturas?.content ?? []
+            const temAssinaturaAtiva = lista.some(a => a.status === "ATIVO")
+            const efetivamenteAtivo = paciente.statusAtivo && (lista.length === 0 || temAssinaturaAtiva)
+            return (
+              <Badge variant={efetivamenteAtivo ? "default" : "destructive"} className="font-primary">
+                {efetivamenteAtivo ? "Ativo" : "Inativo"}
+              </Badge>
+            )
+          })()}
         </div>
       </div>
 
