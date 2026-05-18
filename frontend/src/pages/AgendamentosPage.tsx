@@ -262,7 +262,7 @@ export function AgendamentosPage() {
                           key={ag.id}
                           className={
                             fisio
-                              ? "border-border/40 bg-sky-50/60 border-l-4 border-l-sky-400 hover:bg-sky-100/60"
+                              ? "border-border/40 bg-[#B47C64]/10 border-l-4 border-l-[#B47C64] hover:bg-[#B47C64]/20"
                               : "border-border/40 hover:bg-muted/20"
                           }
                         >
