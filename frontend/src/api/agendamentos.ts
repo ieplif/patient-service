@@ -15,6 +15,9 @@ export interface AgendamentoUpdateData {
   dataHora?: string
   duracaoMinutos?: number
   observacoes?: string
+  // Troca de profissional da sessão — só aplicada quando alterarProfissional=true
+  profissionalId?: string | null
+  alterarProfissional?: boolean
 }
 
 export async function getAgendamentos(params?: {

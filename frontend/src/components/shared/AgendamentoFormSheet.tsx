@@ -31,6 +31,9 @@ interface AgendamentoFormSheetProps {
   agendamento?: Agendamento | null  // se fornecido, modo reagendar
 }
 
+// Valor sentinela para "Sem profissional" no Select (Radix não aceita value vazio)
+const SEM_PROFISSIONAL = "__sem_profissional__"
+
 function toLocalDateTimeInputs(iso: string) {
   const d = new Date(iso)
   const date = d.toISOString().slice(0, 10)
@@ -57,10 +60,11 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
     enabled: open && !isReagendar,
   })
 
+  // Carregado também no modo reagendar — permite trocar o profissional da sessão
   const { data: profissionais } = useQuery({
     queryKey: ["profissionais-select"],
     queryFn: () => getProfissionais({ size: 100, sort: "nome,asc" }),
-    enabled: open && !isReagendar,
+    enabled: open,
   })
 
   const { data: servicos } = useQuery({
@@ -76,6 +80,7 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
       setTime(t)
       setDuracaoMinutos(agendamento.duracaoMinutos?.toString() ?? "60")
       setObservacoes(agendamento.observacoes ?? "")
+      setProfissionalId(agendamento.profissionalId ?? SEM_PROFISSIONAL)
     } else {
       setPacienteId("")
       setProfissionalId("")
@@ -95,6 +100,9 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
           dataHora,
           duracaoMinutos: duracaoMinutos ? parseInt(duracaoMinutos) : undefined,
           observacoes: observacoes || undefined,
+          // Sempre envia o profissional escolhido (a sentinela vira null = "Sem profissional")
+          alterarProfissional: true,
+          profissionalId: profissionalId === SEM_PROFISSIONAL ? null : profissionalId,
         })
       }
       return createAgendamento({
@@ -216,12 +224,34 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
           )}
 
           {isReagendar && (
-            <div className="rounded-md bg-muted/40 border border-border/50 p-3 space-y-0.5">
-              <p className="text-xs font-primary text-muted-foreground uppercase tracking-wide">Serviço</p>
-              <p className="text-sm font-secondary text-foreground">{agendamento!.servicoDescricao}</p>
-              <p className="text-xs font-primary text-muted-foreground uppercase tracking-wide mt-2">Profissional</p>
-              <p className="text-sm font-secondary text-foreground">{agendamento!.profissionalNome || "Sem profissional"}</p>
-            </div>
+            <>
+              <div className="rounded-md bg-muted/40 border border-border/50 p-3 space-y-0.5">
+                <p className="text-xs font-primary text-muted-foreground uppercase tracking-wide">Serviço</p>
+                <p className="text-sm font-secondary text-foreground">{agendamento!.servicoDescricao}</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="font-primary text-sm">Profissional</Label>
+                <Select value={profissionalId} onValueChange={setProfissionalId}>
+                  <SelectTrigger className="font-secondary text-sm">
+                    <SelectValue placeholder="Selecione o profissional" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SEM_PROFISSIONAL} className="font-secondary text-sm">
+                      Sem profissional
+                    </SelectItem>
+                    {profissionais?.content.map((p) => (
+                      <SelectItem key={p.id} value={p.id} className="font-secondary text-sm">
+                        {p.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground font-secondary">
+                  Altera o profissional apenas desta sessão — não afeta os outros agendamentos da assinatura.
+                </p>
+              </div>
+            </>
           )}
 
           <div className="grid grid-cols-2 gap-3">

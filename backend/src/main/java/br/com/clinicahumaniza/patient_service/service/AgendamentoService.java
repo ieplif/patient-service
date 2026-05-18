@@ -200,19 +200,41 @@ public class AgendamentoService {
             throw new BusinessException("Não é possível alterar um agendamento com status " + agendamento.getStatus());
         }
 
-        // Se mudou dataHora ou duração, revalidar conflitos e disponibilidade
+        // Resolver o profissional efetivo da sessão.
+        // alterarProfissional=true aplica o novo (pode ser null = "Sem profissional");
+        // caso contrário mantém o atual.
+        Profissional profissionalEfetivo = agendamento.getProfissional();
+        boolean trocouProfissional = Boolean.TRUE.equals(dto.getAlterarProfissional());
+        if (trocouProfissional) {
+            if (dto.getProfissionalId() != null) {
+                profissionalEfetivo = profissionalRepository.findById(dto.getProfissionalId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
+                validarProfissionalAtendeAtividade(profissionalEfetivo, agendamento.getServico());
+            } else {
+                profissionalEfetivo = null;
+            }
+        }
+
+        // Se mudou dataHora, duração ou profissional, revalidar conflitos e disponibilidade
         LocalDateTime novaDataHora = dto.getDataHora() != null ? dto.getDataHora() : agendamento.getDataHora();
         Integer novaDuracao = dto.getDuracaoMinutos() != null ? dto.getDuracaoMinutos() : agendamento.getDuracaoMinutos();
 
-        if ((dto.getDataHora() != null || dto.getDuracaoMinutos() != null)
-                && agendamento.getProfissional() != null) {
-            validarDentroDoHorarioDisponivel(agendamento.getProfissional().getId(), novaDataHora, novaDuracao);
+        boolean precisaRevalidar = dto.getDataHora() != null || dto.getDuracaoMinutos() != null || trocouProfissional;
+        if (precisaRevalidar && profissionalEfetivo != null) {
+            // Pula validação de HorarioDisponivel para sessões retroativas
+            boolean ehRetroativo = novaDataHora != null && novaDataHora.isBefore(LocalDateTime.now());
+            if (!ehRetroativo) {
+                validarDentroDoHorarioDisponivel(profissionalEfetivo.getId(), novaDataHora, novaDuracao);
+            }
             int capacidade = agendamento.getServico().getAtividade().getCapacidadeMaxima() != null
                     ? agendamento.getServico().getAtividade().getCapacidadeMaxima() : 1;
-            validarConflitoHorarioExcluindo(agendamento.getProfissional().getId(), novaDataHora, novaDuracao,
+            validarConflitoHorarioExcluindo(profissionalEfetivo.getId(), novaDataHora, novaDuracao,
                     agendamento.getId(), capacidade);
         }
 
+        if (trocouProfissional) {
+            agendamento.setProfissional(profissionalEfetivo);
+        }
         agendamentoMapper.updateEntityFromDto(dto, agendamento);
         Agendamento saved = agendamentoRepository.save(agendamento);
         if (saved.getProfissional() != null) {
