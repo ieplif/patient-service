@@ -3,10 +3,14 @@ package br.com.clinicahumaniza.patient_service.service;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaStatusDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaUpdateDTO;
+import br.com.clinicahumaniza.patient_service.dto.ReativarAssinaturaRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.SuspenderAssinaturaRequestDTO;
 import br.com.clinicahumaniza.patient_service.exception.BusinessException;
 import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
 import br.com.clinicahumaniza.patient_service.mapper.AssinaturaMapper;
 import br.com.clinicahumaniza.patient_service.model.*;
+import br.com.clinicahumaniza.patient_service.repository.AgendamentoRecorrenteRepository;
+import br.com.clinicahumaniza.patient_service.repository.AgendamentoRepository;
 import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
 import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
 import br.com.clinicahumaniza.patient_service.repository.ServicoRepository;
@@ -49,6 +53,12 @@ class AssinaturaServiceTest {
 
     @Mock
     private AssinaturaMapper assinaturaMapper;
+
+    @Mock
+    private AgendamentoRepository agendamentoRepository;
+
+    @Mock
+    private AgendamentoRecorrenteRepository recorrenteRepository;
 
     @InjectMocks
     private AssinaturaService assinaturaService;
@@ -304,5 +314,90 @@ class AssinaturaServiceTest {
 
         assertThat(assinatura.getAtivo()).isFalse();
         verify(assinaturaRepository).save(assinatura);
+    }
+
+    // --- Suspensao ---
+
+    @Test
+    @DisplayName("Deve suspender assinatura ATIVO")
+    void suspender_Success() {
+        when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
+        when(assinaturaRepository.save(any(Assinatura.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(any(), any(), any()))
+                .thenReturn(List.of());
+        when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId))
+                .thenReturn(List.of());
+
+        SuspenderAssinaturaRequestDTO dto = new SuspenderAssinaturaRequestDTO("Gravidez", null);
+        Assinatura result = assinaturaService.suspender(assinaturaId, dto);
+
+        assertThat(result.getStatus()).isEqualTo(StatusAssinatura.SUSPENSO);
+        assertThat(result.getMotivoSuspensao()).isEqualTo("Gravidez");
+        assertThat(result.getDataSuspensao()).isEqualTo(LocalDate.now());
+    }
+
+    @Test
+    @DisplayName("Deve cancelar agendamentos futuros pendentes ao suspender")
+    void suspender_CancelaAgendamentosFuturos() {
+        Agendamento futuro = new Agendamento();
+        futuro.setId(UUID.randomUUID());
+        futuro.setStatus(StatusAgendamento.AGENDADO);
+
+        when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
+        when(assinaturaRepository.save(any(Assinatura.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(any(), any(), any()))
+                .thenReturn(List.of(futuro));
+        when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId))
+                .thenReturn(List.of());
+
+        assinaturaService.suspender(assinaturaId, new SuspenderAssinaturaRequestDTO("Lesão", null));
+
+        assertThat(futuro.getStatus()).isEqualTo(StatusAgendamento.CANCELADO);
+        assertThat(futuro.getDireitoReposicao()).isFalse();
+        verify(agendamentoRepository).save(futuro);
+    }
+
+    @Test
+    @DisplayName("Não deve suspender assinatura que não está ATIVO")
+    void suspender_StatusInvalido() {
+        assinatura.setStatus(StatusAssinatura.CANCELADO);
+        when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
+
+        assertThatThrownBy(() -> assinaturaService.suspender(
+                assinaturaId, new SuspenderAssinaturaRequestDTO("Motivo", null)))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("ATIVO");
+    }
+
+    // --- Reativacao ---
+
+    @Test
+    @DisplayName("Deve reativar assinatura SUSPENSO e recalcular vencimento")
+    void reativar_Success() {
+        assinatura.setStatus(StatusAssinatura.SUSPENSO);
+        assinatura.setMotivoSuspensao("Gravidez");
+        assinatura.setDataSuspensao(LocalDate.now().minusDays(60));
+        when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
+        when(assinaturaRepository.save(any(Assinatura.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Assinatura result = assinaturaService.reativar(assinaturaId, new ReativarAssinaturaRequestDTO());
+
+        assertThat(result.getStatus()).isEqualTo(StatusAssinatura.ATIVO);
+        assertThat(result.getDataInicio()).isEqualTo(LocalDate.now());
+        // plano.validadeDias = 30 -> vencimento = hoje + 29
+        assertThat(result.getDataVencimento()).isEqualTo(LocalDate.now().plusDays(29));
+        assertThat(result.getMotivoSuspensao()).isNull();
+        assertThat(result.getDataSuspensao()).isNull();
+    }
+
+    @Test
+    @DisplayName("Não deve reativar assinatura que não está SUSPENSO")
+    void reativar_StatusInvalido() {
+        assinatura.setStatus(StatusAssinatura.ATIVO);
+        when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
+
+        assertThatThrownBy(() -> assinaturaService.reativar(assinaturaId, new ReativarAssinaturaRequestDTO()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("SUSPENSO");
     }
 }

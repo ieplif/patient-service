@@ -562,4 +562,73 @@ class AgendamentoRecorrenteServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("não faz parte de uma recorrência");
     }
+
+    // --- Testes de regenerarHorarios ---
+
+    @Test
+    @DisplayName("regenerarHorarios deve lançar exceção quando assinatura não existe")
+    void regenerarHorarios_AssinaturaNaoEncontrada() {
+        UUID id = UUID.randomUUID();
+        when(assinaturaRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.regenerarHorarios(id, new RegenerarHorariosRequestDTO()))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("regenerarHorarios deve recusar assinatura que não está ATIVO")
+    void regenerarHorarios_StatusNaoAtivo() {
+        assinatura.setStatus(StatusAssinatura.SUSPENSO);
+        when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
+
+        assertThatThrownBy(() -> service.regenerarHorarios(assinaturaId, new RegenerarHorariosRequestDTO()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("ativas");
+    }
+
+    @Test
+    @DisplayName("regenerarHorarios deve recusar assinatura sem data de vencimento")
+    void regenerarHorarios_SemDataVencimento() {
+        assinatura.setStatus(StatusAssinatura.ATIVO);
+        assinatura.setDataVencimento(null);
+        when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
+
+        assertThatThrownBy(() -> service.regenerarHorarios(assinaturaId, new RegenerarHorariosRequestDTO()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("vencimento");
+    }
+
+    @Test
+    @DisplayName("regenerarHorarios deve desativar templates antigos e retornar resultado")
+    void regenerarHorarios_Success() {
+        assinatura.setStatus(StatusAssinatura.ATIVO);
+        assinatura.setDataVencimento(LocalDate.now().plusDays(30));
+
+        AgendamentoRecorrente templateAntigo = new AgendamentoRecorrente();
+        templateAntigo.setId(UUID.randomUUID());
+        templateAntigo.setAtivo(true);
+
+        when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
+        // Sem agendamentos futuros pendentes -> 0 cancelados, 0 novos
+        when(agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
+                any(), any(), any())).thenReturn(List.of());
+        when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId))
+                .thenReturn(List.of(templateAntigo));
+
+        // Spy para nao executar o createRecorrente real
+        AgendamentoRecorrenteService spy = spy(service);
+        doReturn(new AgendamentoRecorrenteResponseDTO()).when(spy).createRecorrente(any());
+
+        RegenerarHorariosRequestDTO dto = new RegenerarHorariosRequestDTO();
+        dto.setHorariosFixos(List.of(
+                new RegenerarHorariosRequestDTO.HorarioFixoDTO(DayOfWeek.MONDAY, LocalTime.of(8, 0))));
+
+        RegenerarHorariosResponseDTO result = spy.regenerarHorarios(assinaturaId, dto);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getAgendamentosCancelados()).isZero();
+        // Template antigo desativado
+        assertThat(templateAntigo.isAtivo()).isFalse();
+        verify(recorrenteRepository).save(templateAntigo);
+    }
 }
