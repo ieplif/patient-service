@@ -1,5 +1,35 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import br.com.clinicahumaniza.patient_service.dto.*;
 import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
 import br.com.clinicahumaniza.patient_service.mapper.PagamentoMapper;
@@ -8,35 +38,6 @@ import br.com.clinicahumaniza.patient_service.security.JwtAuthenticationFilter;
 import br.com.clinicahumaniza.patient_service.security.JwtService;
 import br.com.clinicahumaniza.patient_service.security.SecurityConfig;
 import br.com.clinicahumaniza.patient_service.service.PagamentoService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PagamentoController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class})
@@ -181,8 +182,7 @@ class PagamentoControllerTest {
         when(pagamentoService.getPagamentoById(pagamentoId))
                 .thenThrow(new ResourceNotFoundException("Pagamento", pagamentoId));
 
-        mockMvc.perform(get("/api/v1/pagamentos/{id}", pagamentoId))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/pagamentos/{id}", pagamentoId)).andExpect(status().isNotFound());
     }
 
     @Test
@@ -231,7 +231,8 @@ class PagamentoControllerTest {
         PagamentoUpdateDTO updateDTO = new PagamentoUpdateDTO();
         updateDTO.setFormaPagamento(FormaPagamento.CARTAO_CREDITO);
 
-        when(pagamentoService.updatePagamento(any(UUID.class), any(PagamentoUpdateDTO.class))).thenReturn(pagamento);
+        when(pagamentoService.updatePagamento(any(UUID.class), any(PagamentoUpdateDTO.class)))
+                .thenReturn(pagamento);
         when(pagamentoMapper.toResponseDTO(pagamento)).thenReturn(responseDTO);
 
         mockMvc.perform(put("/api/v1/pagamentos/{id}", pagamentoId)
@@ -247,7 +248,8 @@ class PagamentoControllerTest {
     void updateStatus_Authenticated_200() throws Exception {
         PagamentoStatusDTO statusDTO = new PagamentoStatusDTO(StatusPagamento.PAGO, null);
 
-        when(pagamentoService.updateStatus(any(UUID.class), any(PagamentoStatusDTO.class))).thenReturn(pagamento);
+        when(pagamentoService.updateStatus(any(UUID.class), any(PagamentoStatusDTO.class)))
+                .thenReturn(pagamento);
         when(pagamentoMapper.toResponseDTO(pagamento)).thenReturn(responseDTO);
 
         mockMvc.perform(patch("/api/v1/pagamentos/{id}/status", pagamentoId)
@@ -281,15 +283,13 @@ class PagamentoControllerTest {
     void deletePagamento_Authenticated_204() throws Exception {
         doNothing().when(pagamentoService).deletePagamento(pagamentoId);
 
-        mockMvc.perform(delete("/api/v1/pagamentos/{id}", pagamentoId)
-                        .with(csrf()))
+        mockMvc.perform(delete("/api/v1/pagamentos/{id}", pagamentoId).with(csrf()))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("Deve retornar 401 sem autenticação")
     void getAllPagamentos_Unauthenticated_401() throws Exception {
-        mockMvc.perform(get("/api/v1/pagamentos"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/pagamentos")).andExpect(status().isUnauthorized());
     }
 }

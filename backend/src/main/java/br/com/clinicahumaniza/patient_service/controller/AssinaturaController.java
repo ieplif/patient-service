@@ -1,5 +1,21 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaStatusDTO;
@@ -18,20 +34,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/assinaturas")
@@ -44,10 +46,11 @@ public class AssinaturaController {
     private final AssinaturaMapper assinaturaMapper;
 
     @Autowired
-    public AssinaturaController(AssinaturaService assinaturaService,
-                                 AssinaturaRenovacaoService renovacaoService,
-                                 AgendamentoRecorrenteService recorrenteService,
-                                 AssinaturaMapper assinaturaMapper) {
+    public AssinaturaController(
+            AssinaturaService assinaturaService,
+            AssinaturaRenovacaoService renovacaoService,
+            AgendamentoRecorrenteService recorrenteService,
+            AssinaturaMapper assinaturaMapper) {
         this.assinaturaService = assinaturaService;
         this.renovacaoService = renovacaoService;
         this.recorrenteService = recorrenteService;
@@ -57,9 +60,9 @@ public class AssinaturaController {
     @PostMapping
     @Operation(summary = "Criar assinatura", description = "Cria uma nova assinatura vinculando paciente a serviço")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Assinatura criada com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
-            @ApiResponse(responseCode = "404", description = "Paciente ou Serviço não encontrado")
+        @ApiResponse(responseCode = "201", description = "Assinatura criada com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "404", description = "Paciente ou Serviço não encontrado")
     })
     public ResponseEntity<AssinaturaResponseDTO> createAssinatura(@Valid @RequestBody AssinaturaRequestDTO dto) {
         Assinatura assinatura = assinaturaService.createAssinatura(dto);
@@ -67,21 +70,24 @@ public class AssinaturaController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar assinaturas", description = "Retorna assinaturas ativas com paginação e filtros opcionais")
+    @Operation(
+            summary = "Listar assinaturas",
+            description = "Retorna assinaturas ativas com paginação e filtros opcionais")
     @ApiResponse(responseCode = "200", description = "Lista paginada de assinaturas retornada com sucesso")
     public ResponseEntity<Page<AssinaturaResponseDTO>> getAllAssinaturas(
             @RequestParam(required = false) StatusAssinatura status,
             @RequestParam(required = false) UUID pacienteId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(assinaturaService.getAllAssinaturas(status, pacienteId, pageable)
+        return ResponseEntity.ok(assinaturaService
+                .getAllAssinaturas(status, pacienteId, pageable)
                 .map(assinaturaMapper::toResponseDTO));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Buscar assinatura por ID", description = "Retorna uma assinatura pelo seu ID")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Assinatura encontrada"),
-            @ApiResponse(responseCode = "404", description = "Assinatura não encontrada")
+        @ApiResponse(responseCode = "200", description = "Assinatura encontrada"),
+        @ApiResponse(responseCode = "404", description = "Assinatura não encontrada")
     })
     public ResponseEntity<AssinaturaResponseDTO> getAssinaturaById(@PathVariable UUID id) {
         Assinatura assinatura = assinaturaService.getAssinaturaById(id);
@@ -111,13 +117,12 @@ public class AssinaturaController {
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar assinatura", description = "Atualiza os dados de uma assinatura existente")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Assinatura atualizada com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
-            @ApiResponse(responseCode = "404", description = "Assinatura não encontrada")
+        @ApiResponse(responseCode = "200", description = "Assinatura atualizada com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "404", description = "Assinatura não encontrada")
     })
     public ResponseEntity<AssinaturaResponseDTO> updateAssinatura(
-            @PathVariable UUID id,
-            @Valid @RequestBody AssinaturaUpdateDTO dto) {
+            @PathVariable UUID id, @Valid @RequestBody AssinaturaUpdateDTO dto) {
         Assinatura assinatura = assinaturaService.updateAssinatura(id, dto);
         return ResponseEntity.ok(assinaturaMapper.toResponseDTO(assinatura));
     }
@@ -125,13 +130,12 @@ public class AssinaturaController {
     @PatchMapping("/{id}/status")
     @Operation(summary = "Alterar status da assinatura", description = "Altera o status de uma assinatura")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Status alterado com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
-            @ApiResponse(responseCode = "422", description = "Transição de status inválida")
+        @ApiResponse(responseCode = "200", description = "Status alterado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
+        @ApiResponse(responseCode = "422", description = "Transição de status inválida")
     })
     public ResponseEntity<AssinaturaResponseDTO> updateStatus(
-            @PathVariable UUID id,
-            @Valid @RequestBody AssinaturaStatusDTO dto) {
+            @PathVariable UUID id, @Valid @RequestBody AssinaturaStatusDTO dto) {
         Assinatura assinatura = assinaturaService.updateStatus(id, dto);
         return ResponseEntity.ok(assinaturaMapper.toResponseDTO(assinatura));
     }
@@ -139,9 +143,9 @@ public class AssinaturaController {
     @PatchMapping("/{id}/registrar-sessao")
     @Operation(summary = "Registrar sessão realizada", description = "Registra uma sessão realizada na assinatura")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Sessão registrada com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
-            @ApiResponse(responseCode = "422", description = "Não é possível registrar sessão")
+        @ApiResponse(responseCode = "200", description = "Sessão registrada com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
+        @ApiResponse(responseCode = "422", description = "Não é possível registrar sessão")
     })
     public ResponseEntity<AssinaturaResponseDTO> registrarSessao(@PathVariable UUID id) {
         Assinatura assinatura = assinaturaService.registrarSessao(id);
@@ -149,7 +153,9 @@ public class AssinaturaController {
     }
 
     @PostMapping("/renovar")
-    @Operation(summary = "Renovar assinaturas", description = "Dispara manualmente a renovação automática de assinaturas próximas do vencimento")
+    @Operation(
+            summary = "Renovar assinaturas",
+            description = "Dispara manualmente a renovação automática de assinaturas próximas do vencimento")
     @ApiResponse(responseCode = "200", description = "Renovação executada")
     public ResponseEntity<Map<String, Object>> renovarAssinaturas() {
         int renovadas = renovacaoService.renovarAssinaturasProximasDoVencimento();
@@ -157,54 +163,58 @@ public class AssinaturaController {
     }
 
     @PostMapping("/{id}/suspender")
-    @Operation(summary = "Suspender assinatura",
-            description = "Suspende a assinatura (ex.: paciente grávida). Cancela agendamentos futuros pendentes e preserva o saldo de sessões.")
+    @Operation(
+            summary = "Suspender assinatura",
+            description =
+                    "Suspende a assinatura (ex.: paciente grávida). Cancela agendamentos futuros pendentes e preserva o saldo de sessões.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Suspensa com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
-            @ApiResponse(responseCode = "422", description = "Status atual não permite suspensão")
+        @ApiResponse(responseCode = "200", description = "Suspensa com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
+        @ApiResponse(responseCode = "422", description = "Status atual não permite suspensão")
     })
     public ResponseEntity<AssinaturaResponseDTO> suspender(
-            @PathVariable UUID id,
-            @Valid @RequestBody SuspenderAssinaturaRequestDTO dto) {
+            @PathVariable UUID id, @Valid @RequestBody SuspenderAssinaturaRequestDTO dto) {
         Assinatura assinatura = assinaturaService.suspender(id, dto);
         return ResponseEntity.ok(assinaturaMapper.toResponseDTO(assinatura));
     }
 
     @PostMapping("/{id}/reativar")
-    @Operation(summary = "Reativar assinatura suspensa",
-            description = "Reativa uma assinatura SUSPENSO. Recalcula a data de vencimento e limpa os campos de suspensão.")
+    @Operation(
+            summary = "Reativar assinatura suspensa",
+            description =
+                    "Reativa uma assinatura SUSPENSO. Recalcula a data de vencimento e limpa os campos de suspensão.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Reativada com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
-            @ApiResponse(responseCode = "422", description = "Status atual não permite reativação")
+        @ApiResponse(responseCode = "200", description = "Reativada com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
+        @ApiResponse(responseCode = "422", description = "Status atual não permite reativação")
     })
     public ResponseEntity<AssinaturaResponseDTO> reativar(
-            @PathVariable UUID id,
-            @RequestBody(required = false) ReativarAssinaturaRequestDTO dto) {
+            @PathVariable UUID id, @RequestBody(required = false) ReativarAssinaturaRequestDTO dto) {
         Assinatura assinatura = assinaturaService.reativar(id, dto);
         return ResponseEntity.ok(assinaturaMapper.toResponseDTO(assinatura));
     }
 
     @PostMapping("/{id}/regenerar-horarios")
-    @Operation(summary = "Regenerar horários fixos",
+    @Operation(
+            summary = "Regenerar horários fixos",
             description = "Cancela agendamentos futuros pendentes e cria novos a partir dos slots informados")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Horários regenerados"),
-            @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
-            @ApiResponse(responseCode = "422", description = "Erro de regra de negócio (assinatura inativa, sem vencimento, etc.)")
+        @ApiResponse(responseCode = "200", description = "Horários regenerados"),
+        @ApiResponse(responseCode = "404", description = "Assinatura não encontrada"),
+        @ApiResponse(
+                responseCode = "422",
+                description = "Erro de regra de negócio (assinatura inativa, sem vencimento, etc.)")
     })
     public ResponseEntity<RegenerarHorariosResponseDTO> regenerarHorarios(
-            @PathVariable UUID id,
-            @Valid @RequestBody RegenerarHorariosRequestDTO dto) {
+            @PathVariable UUID id, @Valid @RequestBody RegenerarHorariosRequestDTO dto) {
         return ResponseEntity.ok(recorrenteService.regenerarHorarios(id, dto));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Desativar assinatura", description = "Desativa uma assinatura (soft delete)")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Assinatura desativada com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Assinatura não encontrada")
+        @ApiResponse(responseCode = "204", description = "Assinatura desativada com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Assinatura não encontrada")
     })
     public ResponseEntity<Void> deleteAssinatura(@PathVariable UUID id) {
         assinaturaService.deleteAssinatura(id);

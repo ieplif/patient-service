@@ -1,5 +1,21 @@
 package br.com.clinicahumaniza.patient_service.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import br.com.clinicahumaniza.patient_service.dto.PatientExportDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientUpdateDTO;
@@ -15,21 +31,6 @@ import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
 import br.com.clinicahumaniza.patient_service.repository.PagamentoRepository;
 import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
 import br.com.clinicahumaniza.patient_service.spec.PatientSpecification;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class PatientService {
@@ -43,11 +44,12 @@ public class PatientService {
     private final PagamentoRepository pagamentoRepository;
 
     @Autowired
-    public PatientService(PatientRepository patientRepository,
-                          PatientMapper patientMapper,
-                          AssinaturaRepository assinaturaRepository,
-                          AgendamentoRepository agendamentoRepository,
-                          PagamentoRepository pagamentoRepository) {
+    public PatientService(
+            PatientRepository patientRepository,
+            PatientMapper patientMapper,
+            AssinaturaRepository assinaturaRepository,
+            AgendamentoRepository agendamentoRepository,
+            PagamentoRepository pagamentoRepository) {
         this.patientRepository = patientRepository;
         this.patientMapper = patientMapper;
         this.assinaturaRepository = assinaturaRepository;
@@ -82,7 +84,8 @@ public class PatientService {
         if (id == null) {
             throw new IllegalArgumentException("Patient ID cannot be null");
         }
-        return patientRepository.findById(id)
+        return patientRepository
+                .findById(id)
                 .filter(Patient::isStatusAtivo)
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
@@ -101,8 +104,7 @@ public class PatientService {
         if (id == null) {
             throw new IllegalArgumentException("Patient ID cannot be null");
         }
-        Patient existingPatient = patientRepository.findById(id)
-                .orElseThrow(() -> new PatientNotFoundException(id));
+        Patient existingPatient = patientRepository.findById(id).orElseThrow(() -> new PatientNotFoundException(id));
 
         boolean consentimentoAnterior = existingPatient.isConsentimentoLgpd();
 
@@ -141,8 +143,7 @@ public class PatientService {
         if (id == null) {
             throw new IllegalArgumentException("Patient ID cannot be null");
         }
-        Patient patient = patientRepository.findById(id)
-                .orElseThrow(() -> new PatientNotFoundException(id));
+        Patient patient = patientRepository.findById(id).orElseThrow(() -> new PatientNotFoundException(id));
 
         patient.setStatusAtivo(false);
         patientRepository.save(patient);
@@ -153,8 +154,7 @@ public class PatientService {
         if (id == null) {
             throw new IllegalArgumentException("Patient ID cannot be null");
         }
-        Patient patient = patientRepository.findById(id)
-                .orElseThrow(() -> new PatientNotFoundException(id));
+        Patient patient = patientRepository.findById(id).orElseThrow(() -> new PatientNotFoundException(id));
 
         patient.setNomeCompleto("DADOS REMOVIDOS");
         patient.setCpf("000.000.000-00");
@@ -171,8 +171,7 @@ public class PatientService {
         if (id == null) {
             throw new IllegalArgumentException("Patient ID cannot be null");
         }
-        Patient patient = patientRepository.findById(id)
-                .orElseThrow(() -> new PatientNotFoundException(id));
+        Patient patient = patientRepository.findById(id).orElseThrow(() -> new PatientNotFoundException(id));
 
         List<Assinatura> assinaturas = assinaturaRepository.findByPacienteId(id);
         List<Agendamento> agendamentos = agendamentoRepository.findByPacienteId(id);
@@ -181,8 +180,10 @@ public class PatientService {
         List<PatientExportDTO.AssinaturaResumoDTO> assinaturasResumo = assinaturas.stream()
                 .map(a -> PatientExportDTO.AssinaturaResumoDTO.builder()
                         .id(a.getId())
-                        .servico(a.getServico() != null && a.getServico().getAtividade() != null
-                                ? a.getServico().getAtividade().getNome() : null)
+                        .servico(
+                                a.getServico() != null && a.getServico().getAtividade() != null
+                                        ? a.getServico().getAtividade().getNome()
+                                        : null)
                         .status(a.getStatus() != null ? a.getStatus().name() : null)
                         .dataInicio(a.getDataInicio())
                         .dataVencimento(a.getDataVencimento())
@@ -193,9 +194,14 @@ public class PatientService {
         List<PatientExportDTO.AgendamentoResumoDTO> agendamentosResumo = agendamentos.stream()
                 .map(a -> PatientExportDTO.AgendamentoResumoDTO.builder()
                         .id(a.getId())
-                        .servico(a.getServico() != null && a.getServico().getAtividade() != null
-                                ? a.getServico().getAtividade().getNome() : null)
-                        .profissional(a.getProfissional() != null ? a.getProfissional().getNome() : null)
+                        .servico(
+                                a.getServico() != null && a.getServico().getAtividade() != null
+                                        ? a.getServico().getAtividade().getNome()
+                                        : null)
+                        .profissional(
+                                a.getProfissional() != null
+                                        ? a.getProfissional().getNome()
+                                        : null)
                         .dataHora(a.getDataHora())
                         .status(a.getStatus() != null ? a.getStatus().name() : null)
                         .build())
@@ -206,7 +212,10 @@ public class PatientService {
                         .id(p.getId())
                         .valor(p.getValor())
                         .status(p.getStatus() != null ? p.getStatus().name() : null)
-                        .formaPagamento(p.getFormaPagamento() != null ? p.getFormaPagamento().name() : null)
+                        .formaPagamento(
+                                p.getFormaPagamento() != null
+                                        ? p.getFormaPagamento().name()
+                                        : null)
                         .dataVencimento(p.getDataVencimento())
                         .dataPagamento(p.getDataPagamento())
                         .build())

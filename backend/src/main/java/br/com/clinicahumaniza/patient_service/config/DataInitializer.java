@@ -1,14 +1,15 @@
 package br.com.clinicahumaniza.patient_service.config;
 
-import br.com.clinicahumaniza.patient_service.model.Role;
-import br.com.clinicahumaniza.patient_service.model.User;
-import br.com.clinicahumaniza.patient_service.repository.UserRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import br.com.clinicahumaniza.patient_service.model.Role;
+import br.com.clinicahumaniza.patient_service.model.User;
+import br.com.clinicahumaniza.patient_service.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Cria os usuários iniciais do sistema na primeira execução.
@@ -84,7 +85,9 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
         if (password.equals("Humaniza@2025") || password.equals("Prof@2025")) {
-            log.warn("⚠️  ATENÇÃO: Usuário {} criado com senha padrão. Altere imediatamente via /api/auth/alterar-senha", email);
+            log.warn(
+                    "⚠️  ATENÇÃO: Usuário {} criado com senha padrão. Altere imediatamente via /api/auth/alterar-senha",
+                    email);
         }
 
         User user = new User();

@@ -1,7 +1,17 @@
 package br.com.clinicahumaniza.patient_service.integration;
 
-import br.com.clinicahumaniza.patient_service.dto.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Set;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,17 +23,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.math.BigDecimal;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.Set;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import br.com.clinicahumaniza.patient_service.dto.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -68,7 +70,10 @@ class AgendamentoIntegrationTest {
                         .content(objectMapper.writeValueAsString(pacienteDTO)))
                 .andExpect(status().isCreated())
                 .andReturn();
-        pacienteId = objectMapper.readTree(pacienteResult.getResponse().getContentAsString()).get("id").asText();
+        pacienteId = objectMapper
+                .readTree(pacienteResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar atividade
         AtividadeRequestDTO atividadeDTO = new AtividadeRequestDTO();
@@ -82,7 +87,10 @@ class AgendamentoIntegrationTest {
                         .content(objectMapper.writeValueAsString(atividadeDTO)))
                 .andExpect(status().isCreated())
                 .andReturn();
-        atividadeId = objectMapper.readTree(atividadeResult.getResponse().getContentAsString()).get("id").asText();
+        atividadeId = objectMapper
+                .readTree(atividadeResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar plano
         PlanoRequestDTO planoDTO = new PlanoRequestDTO();
@@ -98,7 +106,10 @@ class AgendamentoIntegrationTest {
                         .content(objectMapper.writeValueAsString(planoDTO)))
                 .andExpect(status().isCreated())
                 .andReturn();
-        String planoId = objectMapper.readTree(planoResult.getResponse().getContentAsString()).get("id").asText();
+        String planoId = objectMapper
+                .readTree(planoResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar serviço
         ServicoRequestDTO servicoDTO = new ServicoRequestDTO();
@@ -116,7 +127,10 @@ class AgendamentoIntegrationTest {
                         .content(objectMapper.writeValueAsString(servicoDTO)))
                 .andExpect(status().isCreated())
                 .andReturn();
-        servicoId = objectMapper.readTree(servicoResult.getResponse().getContentAsString()).get("id").asText();
+        servicoId = objectMapper
+                .readTree(servicoResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar profissional
         ProfissionalRequestDTO profissionalDTO = new ProfissionalRequestDTO();
@@ -132,7 +146,10 @@ class AgendamentoIntegrationTest {
                         .content(objectMapper.writeValueAsString(profissionalDTO)))
                 .andExpect(status().isCreated())
                 .andReturn();
-        profissionalId = objectMapper.readTree(profissionalResult.getResponse().getContentAsString()).get("id").asText();
+        profissionalId = objectMapper
+                .readTree(profissionalResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar disponibilidade — Segunda 08:00-18:00
         HorarioDisponivelRequestDTO horarioDTO = new HorarioDisponivelRequestDTO();
@@ -165,7 +182,10 @@ class AgendamentoIntegrationTest {
                         .content(objectMapper.writeValueAsString(assinaturaDTO)))
                 .andExpect(status().isCreated())
                 .andReturn();
-        String assinaturaId = objectMapper.readTree(assinaturaResult.getResponse().getContentAsString()).get("id").asText();
+        String assinaturaId = objectMapper
+                .readTree(assinaturaResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar agendamento vinculado à assinatura — Monday 2025-06-02 10:00
         AgendamentoRequestDTO agendamentoDTO = new AgendamentoRequestDTO();
@@ -186,7 +206,10 @@ class AgendamentoIntegrationTest {
                 .andExpect(jsonPath("$.status").value("AGENDADO"))
                 .andExpect(jsonPath("$.duracaoMinutos").value(50))
                 .andReturn();
-        String agendamentoId = objectMapper.readTree(agendamentoResult.getResponse().getContentAsString()).get("id").asText();
+        String agendamentoId = objectMapper
+                .readTree(agendamentoResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Confirmar
         AgendamentoStatusDTO confirmDTO = new AgendamentoStatusDTO();
@@ -211,8 +234,7 @@ class AgendamentoIntegrationTest {
                 .andExpect(jsonPath("$.status").value("REALIZADO"));
 
         // Verificar assinatura — sessão registrada
-        mockMvc.perform(get("/api/v1/assinaturas/{id}", assinaturaId)
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(get("/api/v1/assinaturas/{id}", assinaturaId).header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sessoesRealizadas").value(1))
                 .andExpect(jsonPath("$.sessoesRestantes").value(1));
@@ -335,7 +357,10 @@ class AgendamentoIntegrationTest {
                         .content(objectMapper.writeValueAsString(agendamentoDTO)))
                 .andExpect(status().isCreated())
                 .andReturn();
-        String agendamentoId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+        String agendamentoId = objectMapper
+                .readTree(result.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Cancela primeiro
         AgendamentoStatusDTO cancelar = new AgendamentoStatusDTO();
@@ -360,7 +385,6 @@ class AgendamentoIntegrationTest {
     @Test
     @DisplayName("Deve retornar 401 sem token")
     void accessWithoutToken_401() throws Exception {
-        mockMvc.perform(get("/api/v1/agendamentos"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/agendamentos")).andExpect(status().isUnauthorized());
     }
 }

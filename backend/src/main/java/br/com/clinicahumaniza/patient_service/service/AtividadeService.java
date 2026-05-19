@@ -1,5 +1,13 @@
 package br.com.clinicahumaniza.patient_service.service;
 
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import br.com.clinicahumaniza.patient_service.dto.AtividadeRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AtividadeUpdateDTO;
 import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
@@ -7,13 +15,6 @@ import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundExceptio
 import br.com.clinicahumaniza.patient_service.mapper.AtividadeMapper;
 import br.com.clinicahumaniza.patient_service.model.Atividade;
 import br.com.clinicahumaniza.patient_service.repository.AtividadeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 public class AtividadeService {
@@ -37,8 +38,7 @@ public class AtividadeService {
     }
 
     public Atividade getAtividadeById(UUID id) {
-        return atividadeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Atividade", id));
+        return atividadeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Atividade", id));
     }
 
     public Page<Atividade> getAllAtividades(Pageable pageable) {
@@ -47,8 +47,8 @@ public class AtividadeService {
 
     @Transactional
     public Atividade updateAtividade(UUID id, AtividadeUpdateDTO dto) {
-        Atividade atividade = atividadeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Atividade", id));
+        Atividade atividade =
+                atividadeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Atividade", id));
 
         if (dto.getNome() != null && !dto.getNome().equals(atividade.getNome())) {
             if (atividadeRepository.existsByNome(dto.getNome())) {
@@ -62,8 +62,8 @@ public class AtividadeService {
 
     @Transactional
     public void deleteAtividade(UUID id) {
-        Atividade atividade = atividadeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Atividade", id));
+        Atividade atividade =
+                atividadeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Atividade", id));
         atividade.setAtivo(false);
         atividadeRepository.save(atividade);
     }

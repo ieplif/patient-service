@@ -1,11 +1,12 @@
 package br.com.clinicahumaniza.patient_service.spec;
 
-import br.com.clinicahumaniza.patient_service.model.Agendamento;
-import br.com.clinicahumaniza.patient_service.model.StatusAgendamento;
-import org.springframework.data.jpa.domain.Specification;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import org.springframework.data.jpa.domain.Specification;
+
+import br.com.clinicahumaniza.patient_service.model.Agendamento;
+import br.com.clinicahumaniza.patient_service.model.StatusAgendamento;
 
 public class AgendamentoSpecification {
 

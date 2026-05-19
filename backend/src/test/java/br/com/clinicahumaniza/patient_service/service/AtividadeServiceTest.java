@@ -1,12 +1,14 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.dto.AtividadeRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.AtividadeUpdateDTO;
-import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
-import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
-import br.com.clinicahumaniza.patient_service.mapper.AtividadeMapper;
-import br.com.clinicahumaniza.patient_service.model.Atividade;
-import br.com.clinicahumaniza.patient_service.repository.AtividadeRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,20 +16,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import br.com.clinicahumaniza.patient_service.dto.AtividadeRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.AtividadeUpdateDTO;
+import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
+import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
+import br.com.clinicahumaniza.patient_service.mapper.AtividadeMapper;
+import br.com.clinicahumaniza.patient_service.model.Atividade;
+import br.com.clinicahumaniza.patient_service.repository.AtividadeRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AtividadeServiceTest {
@@ -111,8 +111,7 @@ class AtividadeServiceTest {
     @DisplayName("Deve listar todas as atividades")
     void getAllAtividades_Success() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(atividadeRepository.findAll(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(atividade)));
+        when(atividadeRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(atividade)));
 
         Page<Atividade> result = atividadeService.getAllAtividades(pageable);
 

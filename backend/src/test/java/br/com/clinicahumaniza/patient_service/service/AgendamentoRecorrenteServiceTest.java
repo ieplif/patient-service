@@ -1,17 +1,9 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.dto.*;
-import br.com.clinicahumaniza.patient_service.exception.BusinessException;
-import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
-import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
-import br.com.clinicahumaniza.patient_service.model.*;
-import br.com.clinicahumaniza.patient_service.repository.*;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
@@ -20,10 +12,19 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import br.com.clinicahumaniza.patient_service.dto.*;
+import br.com.clinicahumaniza.patient_service.exception.BusinessException;
+import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
+import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
+import br.com.clinicahumaniza.patient_service.model.*;
+import br.com.clinicahumaniza.patient_service.repository.*;
 
 @ExtendWith(MockitoExtension.class)
 class AgendamentoRecorrenteServiceTest {
@@ -68,9 +69,14 @@ class AgendamentoRecorrenteServiceTest {
     @BeforeEach
     void setUp() {
         service = new AgendamentoRecorrenteService(
-                agendamentoService, agendamentoRepository, recorrenteRepository,
-                patientRepository, profissionalRepository, servicoRepository,
-                assinaturaRepository, agendamentoMapper);
+                agendamentoService,
+                agendamentoRepository,
+                recorrenteRepository,
+                patientRepository,
+                profissionalRepository,
+                servicoRepository,
+                assinaturaRepository,
+                agendamentoMapper);
 
         pacienteId = UUID.randomUUID();
         profissionalId = UUID.randomUUID();
@@ -111,7 +117,8 @@ class AgendamentoRecorrenteServiceTest {
         assinatura.setSessoesRealizadas(0);
     }
 
-    private AgendamentoRecorrenteRequestDTO buildRequestDTO(List<DayOfWeek> dias, Integer totalSessoes, LocalDate dataFim) {
+    private AgendamentoRecorrenteRequestDTO buildRequestDTO(
+            List<DayOfWeek> dias, Integer totalSessoes, LocalDate dataFim) {
         AgendamentoRecorrenteRequestDTO dto = new AgendamentoRecorrenteRequestDTO();
         dto.setPacienteId(pacienteId);
         dto.setProfissionalId(profissionalId);
@@ -152,12 +159,13 @@ class AgendamentoRecorrenteServiceTest {
     }
 
     private void mockAgendamentoCreation(int count) {
-        when(agendamentoService.createAgendamento(any(AgendamentoRequestDTO.class))).thenAnswer(invocation -> {
-            Agendamento ag = createMockAgendamento(UUID.randomUUID());
-            AgendamentoRequestDTO req = invocation.getArgument(0);
-            ag.setDataHora(req.getDataHora());
-            return ag;
-        });
+        when(agendamentoService.createAgendamento(any(AgendamentoRequestDTO.class)))
+                .thenAnswer(invocation -> {
+                    Agendamento ag = createMockAgendamento(UUID.randomUUID());
+                    AgendamentoRequestDTO req = invocation.getArgument(0);
+                    ag.setDataHora(req.getDataHora());
+                    return ag;
+                });
         when(agendamentoRepository.save(any(Agendamento.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(agendamentoMapper.toResponseDTO(any(Agendamento.class))).thenReturn(new AgendamentoResponseDTO());
     }
@@ -168,10 +176,7 @@ class AgendamentoRecorrenteServiceTest {
     @DisplayName("Deve gerar 4 datas semanais com 1 dia (segunda) por 4 sessões")
     void gerarDatas_Semanal_1Dia_4Sessoes() {
         List<LocalDateTime> datas = service.gerarDatas(
-                FrequenciaRecorrencia.SEMANAL,
-                List.of(DayOfWeek.MONDAY),
-                LocalTime.of(10, 0),
-                4, null, null);
+                FrequenciaRecorrencia.SEMANAL, List.of(DayOfWeek.MONDAY), LocalTime.of(10, 0), 4, null, null);
 
         assertThat(datas).hasSize(4);
         datas.forEach(d -> assertThat(d.getDayOfWeek()).isEqualTo(DayOfWeek.MONDAY));
@@ -185,21 +190,19 @@ class AgendamentoRecorrenteServiceTest {
                 FrequenciaRecorrencia.SEMANAL,
                 List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY),
                 LocalTime.of(10, 0),
-                4, null, null);
+                4,
+                null,
+                null);
 
         assertThat(datas).hasSize(4);
-        datas.forEach(d ->
-                assertThat(d.getDayOfWeek()).isIn(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY));
+        datas.forEach(d -> assertThat(d.getDayOfWeek()).isIn(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY));
     }
 
     @Test
     @DisplayName("Deve gerar datas quinzenais por 6 sessões")
     void gerarDatas_Quinzenal_6Sessoes() {
         List<LocalDateTime> datas = service.gerarDatas(
-                FrequenciaRecorrencia.QUINZENAL,
-                List.of(DayOfWeek.TUESDAY),
-                LocalTime.of(14, 0),
-                6, null, null);
+                FrequenciaRecorrencia.QUINZENAL, List.of(DayOfWeek.TUESDAY), LocalTime.of(14, 0), 6, null, null);
 
         assertThat(datas).hasSize(6);
         datas.forEach(d -> assertThat(d.getDayOfWeek()).isEqualTo(DayOfWeek.TUESDAY));
@@ -216,10 +219,7 @@ class AgendamentoRecorrenteServiceTest {
     @DisplayName("Deve gerar datas mensais por 3 sessões")
     void gerarDatas_Mensal_3Sessoes() {
         List<LocalDateTime> datas = service.gerarDatas(
-                FrequenciaRecorrencia.MENSAL,
-                List.of(DayOfWeek.MONDAY),
-                LocalTime.of(10, 0),
-                3, null, null);
+                FrequenciaRecorrencia.MENSAL, List.of(DayOfWeek.MONDAY), LocalTime.of(10, 0), 3, null, null);
 
         assertThat(datas).hasSize(3);
     }
@@ -230,13 +230,9 @@ class AgendamentoRecorrenteServiceTest {
         LocalDate dataFim = LocalDate.now().plusWeeks(3);
 
         List<LocalDateTime> datas = service.gerarDatas(
-                FrequenciaRecorrencia.SEMANAL,
-                List.of(DayOfWeek.MONDAY),
-                LocalTime.of(10, 0),
-                null, dataFim, null);
+                FrequenciaRecorrencia.SEMANAL, List.of(DayOfWeek.MONDAY), LocalTime.of(10, 0), null, dataFim, null);
 
-        datas.forEach(d ->
-                assertThat(d.toLocalDate()).isBeforeOrEqualTo(dataFim));
+        datas.forEach(d -> assertThat(d.toLocalDate()).isBeforeOrEqualTo(dataFim));
     }
 
     @Test
@@ -248,7 +244,9 @@ class AgendamentoRecorrenteServiceTest {
                 FrequenciaRecorrencia.SEMANAL,
                 List.of(DayOfWeek.MONDAY),
                 LocalTime.of(10, 0),
-                3, dataFimDistante, null);
+                3,
+                dataFimDistante,
+                null);
 
         assertThat(datas).hasSize(3);
     }
@@ -262,7 +260,9 @@ class AgendamentoRecorrenteServiceTest {
                 FrequenciaRecorrencia.SEMANAL,
                 List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY),
                 LocalTime.of(10, 0),
-                null, dataFimDistante, null);
+                null,
+                dataFimDistante,
+                null);
 
         assertThat(datas).hasSizeLessThanOrEqualTo(52);
     }
@@ -272,8 +272,7 @@ class AgendamentoRecorrenteServiceTest {
     @Test
     @DisplayName("Deve criar recorrência semanal com sucesso")
     void createRecorrente_Semanal_Success() {
-        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(
-                List.of(DayOfWeek.MONDAY), 4, null);
+        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(List.of(DayOfWeek.MONDAY), 4, null);
 
         mockBasicLookups();
         mockRecorrenteRepositorySave();
@@ -290,8 +289,7 @@ class AgendamentoRecorrenteServiceTest {
     @Test
     @DisplayName("Deve criar recorrência com 2 dias por semana")
     void createRecorrente_2DiasPorSemana() {
-        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(
-                List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY), 4, null);
+        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY), 4, null);
 
         mockBasicLookups();
         mockRecorrenteRepositorySave();
@@ -305,8 +303,7 @@ class AgendamentoRecorrenteServiceTest {
     @Test
     @DisplayName("Deve lidar com conflito em 1 data - 3 criados + 1 ignorada")
     void createRecorrente_ComConflito() {
-        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(
-                List.of(DayOfWeek.MONDAY), 4, null);
+        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(List.of(DayOfWeek.MONDAY), 4, null);
 
         mockBasicLookups();
         mockRecorrenteRepositorySave();
@@ -346,8 +343,7 @@ class AgendamentoRecorrenteServiceTest {
     @Test
     @DisplayName("Deve retornar 0 criados quando todas as datas têm conflito")
     void createRecorrente_TodosConflitos() {
-        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(
-                List.of(DayOfWeek.MONDAY), 3, null);
+        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(List.of(DayOfWeek.MONDAY), 3, null);
 
         mockBasicLookups();
         mockRecorrenteRepositorySave();
@@ -364,8 +360,7 @@ class AgendamentoRecorrenteServiceTest {
     @Test
     @DisplayName("Deve lançar exceção sem totalSessoes nem dataFim")
     void createRecorrente_SemLimite() {
-        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(
-                List.of(DayOfWeek.MONDAY), null, null);
+        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(List.of(DayOfWeek.MONDAY), null, null);
 
         assertThatThrownBy(() -> service.createRecorrente(dto))
                 .isInstanceOf(BusinessException.class)
@@ -375,47 +370,40 @@ class AgendamentoRecorrenteServiceTest {
     @Test
     @DisplayName("Deve lançar exceção com paciente inexistente")
     void createRecorrente_PacienteNotFound() {
-        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(
-                List.of(DayOfWeek.MONDAY), 4, null);
+        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(List.of(DayOfWeek.MONDAY), 4, null);
 
         when(patientRepository.findById(pacienteId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.createRecorrente(dto))
-                .isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> service.createRecorrente(dto)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     @DisplayName("Deve lançar exceção com profissional inexistente")
     void createRecorrente_ProfissionalNotFound() {
-        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(
-                List.of(DayOfWeek.MONDAY), 4, null);
+        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(List.of(DayOfWeek.MONDAY), 4, null);
 
         when(patientRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
         when(servicoRepository.findById(servicoId)).thenReturn(Optional.of(servico));
         when(profissionalRepository.findById(profissionalId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.createRecorrente(dto))
-                .isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> service.createRecorrente(dto)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     @DisplayName("Deve lançar exceção com serviço inexistente")
     void createRecorrente_ServicoNotFound() {
-        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(
-                List.of(DayOfWeek.MONDAY), 4, null);
+        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(List.of(DayOfWeek.MONDAY), 4, null);
 
         when(patientRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
         when(servicoRepository.findById(servicoId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.createRecorrente(dto))
-                .isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> service.createRecorrente(dto)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     @DisplayName("Deve lançar exceção quando profissional não atende atividade")
     void createRecorrente_ProfissionalNaoAtendeAtividade() {
-        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(
-                List.of(DayOfWeek.MONDAY), 4, null);
+        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(List.of(DayOfWeek.MONDAY), 4, null);
 
         Atividade outraAtividade = new Atividade();
         outraAtividade.setId(UUID.randomUUID());
@@ -432,8 +420,7 @@ class AgendamentoRecorrenteServiceTest {
     @Test
     @DisplayName("Deve usar duração padrão da atividade quando não informada")
     void createRecorrente_DuracaoPadrao() {
-        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(
-                List.of(DayOfWeek.MONDAY), 2, null);
+        AgendamentoRecorrenteRequestDTO dto = buildRequestDTO(List.of(DayOfWeek.MONDAY), 2, null);
         dto.setDuracaoMinutos(null);
 
         mockBasicLookups();
@@ -489,7 +476,7 @@ class AgendamentoRecorrenteServiceTest {
 
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.findByAgendamentoRecorrenteIdAndDataHoraGreaterThanEqualAndStatusIn(
-                eq(recorrenteId), any(), any()))
+                        eq(recorrenteId), any(), any()))
                 .thenReturn(List.of(futuro1, futuro2, futuro3));
         when(agendamentoService.updateStatus(any(UUID.class), any(AgendamentoStatusDTO.class)))
                 .thenAnswer(invocation -> {
@@ -610,18 +597,17 @@ class AgendamentoRecorrenteServiceTest {
 
         when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
         // Sem agendamentos futuros pendentes -> 0 cancelados, 0 novos
-        when(agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
-                any(), any(), any())).thenReturn(List.of());
-        when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId))
-                .thenReturn(List.of(templateAntigo));
+        when(agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(any(), any(), any()))
+                .thenReturn(List.of());
+        when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId)).thenReturn(List.of(templateAntigo));
 
         // Spy para nao executar o createRecorrente real
         AgendamentoRecorrenteService spy = spy(service);
         doReturn(new AgendamentoRecorrenteResponseDTO()).when(spy).createRecorrente(any());
 
         RegenerarHorariosRequestDTO dto = new RegenerarHorariosRequestDTO();
-        dto.setHorariosFixos(List.of(
-                new RegenerarHorariosRequestDTO.HorarioFixoDTO(DayOfWeek.MONDAY, LocalTime.of(8, 0))));
+        dto.setHorariosFixos(
+                List.of(new RegenerarHorariosRequestDTO.HorarioFixoDTO(DayOfWeek.MONDAY, LocalTime.of(8, 0))));
 
         RegenerarHorariosResponseDTO result = spy.regenerarHorarios(assinaturaId, dto);
 

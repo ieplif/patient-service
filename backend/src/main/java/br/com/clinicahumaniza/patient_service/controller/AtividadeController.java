@@ -1,5 +1,18 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
+import java.util.UUID;
+
+import jakarta.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import br.com.clinicahumaniza.patient_service.dto.AtividadeRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AtividadeResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.AtividadeUpdateDTO;
@@ -10,17 +23,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/atividades")
@@ -39,9 +41,9 @@ public class AtividadeController {
     @PostMapping
     @Operation(summary = "Criar atividade", description = "Cria uma nova atividade no sistema")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Atividade criada com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
-            @ApiResponse(responseCode = "409", description = "Nome já cadastrado")
+        @ApiResponse(responseCode = "201", description = "Atividade criada com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "409", description = "Nome já cadastrado")
     })
     public ResponseEntity<AtividadeResponseDTO> createAtividade(@Valid @RequestBody AtividadeRequestDTO dto) {
         Atividade atividade = atividadeService.createAtividade(dto);
@@ -59,8 +61,8 @@ public class AtividadeController {
     @GetMapping("/{id}")
     @Operation(summary = "Buscar atividade por ID", description = "Retorna uma atividade pelo seu ID")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Atividade encontrada"),
-            @ApiResponse(responseCode = "404", description = "Atividade não encontrada")
+        @ApiResponse(responseCode = "200", description = "Atividade encontrada"),
+        @ApiResponse(responseCode = "404", description = "Atividade não encontrada")
     })
     public ResponseEntity<AtividadeResponseDTO> getAtividadeById(@PathVariable UUID id) {
         Atividade atividade = atividadeService.getAtividadeById(id);
@@ -70,13 +72,12 @@ public class AtividadeController {
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar atividade", description = "Atualiza os dados de uma atividade existente")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Atividade atualizada com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
-            @ApiResponse(responseCode = "404", description = "Atividade não encontrada")
+        @ApiResponse(responseCode = "200", description = "Atividade atualizada com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "404", description = "Atividade não encontrada")
     })
     public ResponseEntity<AtividadeResponseDTO> updateAtividade(
-            @PathVariable UUID id,
-            @Valid @RequestBody AtividadeUpdateDTO dto) {
+            @PathVariable UUID id, @Valid @RequestBody AtividadeUpdateDTO dto) {
         Atividade atividade = atividadeService.updateAtividade(id, dto);
         return ResponseEntity.ok(atividadeMapper.toResponseDTO(atividade));
     }
@@ -84,8 +85,8 @@ public class AtividadeController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Desativar atividade", description = "Desativa uma atividade (soft delete)")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Atividade desativada com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Atividade não encontrada")
+        @ApiResponse(responseCode = "204", description = "Atividade desativada com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Atividade não encontrada")
     })
     public ResponseEntity<Void> deleteAtividade(@PathVariable UUID id) {
         atividadeService.deleteAtividade(id);

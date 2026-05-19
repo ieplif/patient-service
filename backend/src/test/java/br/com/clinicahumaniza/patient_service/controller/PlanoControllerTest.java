@@ -1,5 +1,33 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import br.com.clinicahumaniza.patient_service.dto.PlanoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PlanoResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.PlanoUpdateDTO;
@@ -9,33 +37,6 @@ import br.com.clinicahumaniza.patient_service.security.JwtAuthenticationFilter;
 import br.com.clinicahumaniza.patient_service.security.JwtService;
 import br.com.clinicahumaniza.patient_service.security.SecurityConfig;
 import br.com.clinicahumaniza.patient_service.service.PlanoService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PlanoController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class})
@@ -114,8 +115,7 @@ class PlanoControllerTest {
     @DisplayName("Deve listar planos com autenticação - 200")
     @WithMockUser
     void getAllPlanos_Authenticated_200() throws Exception {
-        when(planoService.getAllPlanos(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(plano)));
+        when(planoService.getAllPlanos(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(plano)));
         when(planoMapper.toResponseDTO(plano)).thenReturn(responseDTO);
 
         mockMvc.perform(get("/api/v1/planos"))
@@ -142,7 +142,8 @@ class PlanoControllerTest {
         PlanoUpdateDTO updateDTO = new PlanoUpdateDTO();
         updateDTO.setNome("Mensal Premium");
 
-        when(planoService.updatePlano(any(UUID.class), any(PlanoUpdateDTO.class))).thenReturn(plano);
+        when(planoService.updatePlano(any(UUID.class), any(PlanoUpdateDTO.class)))
+                .thenReturn(plano);
         when(planoMapper.toResponseDTO(plano)).thenReturn(responseDTO);
 
         mockMvc.perform(put("/api/v1/planos/{id}", planoId)
@@ -158,15 +159,12 @@ class PlanoControllerTest {
     void deletePlano_Authenticated_204() throws Exception {
         doNothing().when(planoService).deletePlano(planoId);
 
-        mockMvc.perform(delete("/api/v1/planos/{id}", planoId)
-                        .with(csrf()))
-                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/v1/planos/{id}", planoId).with(csrf())).andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("Deve retornar 401 sem autenticação")
     void getAllPlanos_Unauthenticated_401() throws Exception {
-        mockMvc.perform(get("/api/v1/planos"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/planos")).andExpect(status().isUnauthorized());
     }
 }

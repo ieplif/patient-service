@@ -1,5 +1,13 @@
 package br.com.clinicahumaniza.patient_service.service;
 
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import br.com.clinicahumaniza.patient_service.dto.PlanoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PlanoUpdateDTO;
 import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
@@ -7,13 +15,6 @@ import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundExceptio
 import br.com.clinicahumaniza.patient_service.mapper.PlanoMapper;
 import br.com.clinicahumaniza.patient_service.model.Plano;
 import br.com.clinicahumaniza.patient_service.repository.PlanoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 public class PlanoService {
@@ -37,8 +38,7 @@ public class PlanoService {
     }
 
     public Plano getPlanoById(UUID id) {
-        return planoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Plano", id));
+        return planoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Plano", id));
     }
 
     public Page<Plano> getAllPlanos(Pageable pageable) {
@@ -47,8 +47,7 @@ public class PlanoService {
 
     @Transactional
     public Plano updatePlano(UUID id, PlanoUpdateDTO dto) {
-        Plano plano = planoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Plano", id));
+        Plano plano = planoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Plano", id));
 
         if (dto.getNome() != null && !dto.getNome().equals(plano.getNome())) {
             if (planoRepository.existsByNome(dto.getNome())) {
@@ -62,8 +61,7 @@ public class PlanoService {
 
     @Transactional
     public void deletePlano(UUID id) {
-        Plano plano = planoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Plano", id));
+        Plano plano = planoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Plano", id));
         plano.setAtivo(false);
         planoRepository.save(plano);
     }

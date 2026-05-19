@@ -1,11 +1,9 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.model.Agendamento;
-import br.com.clinicahumaniza.patient_service.repository.AgendamentoRepository;
-import com.google.api.client.util.DateTime;
-import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.model.Event;
-import com.google.api.services.calendar.model.EventDateTime;
+import java.io.IOException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,9 +11,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import com.google.api.client.util.DateTime;
+import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventDateTime;
+
+import br.com.clinicahumaniza.patient_service.model.Agendamento;
+import br.com.clinicahumaniza.patient_service.repository.AgendamentoRepository;
 
 @Service
 @ConditionalOnProperty(name = "google.calendar.enabled", havingValue = "true")
@@ -41,7 +43,8 @@ public class GoogleCalendarService {
             Event event = buildEvent(agendamento);
 
             // Create on clinic calendar
-            Event createdEvent = calendar.events().insert(clinicCalendarId, event).execute();
+            Event createdEvent =
+                    calendar.events().insert(clinicCalendarId, event).execute();
             String eventId = createdEvent.getId();
 
             // Save event ID on agendamento
@@ -61,7 +64,10 @@ public class GoogleCalendarService {
                 }
             }
         } catch (IOException e) {
-            log.error("Failed to create Google Calendar event for agendamento {}: {}", agendamento.getId(), e.getMessage());
+            log.error(
+                    "Failed to create Google Calendar event for agendamento {}: {}",
+                    agendamento.getId(),
+                    e.getMessage());
         }
     }
 
@@ -92,7 +98,10 @@ public class GoogleCalendarService {
                 }
             }
         } catch (IOException e) {
-            log.error("Failed to update Google Calendar event for agendamento {}: {}", agendamento.getId(), e.getMessage());
+            log.error(
+                    "Failed to update Google Calendar event for agendamento {}: {}",
+                    agendamento.getId(),
+                    e.getMessage());
         }
     }
 
@@ -116,11 +125,15 @@ public class GoogleCalendarService {
                     calendar.events().delete(profCalendarId, eventId).execute();
                     log.info("Google Calendar event deleted from professional calendar: {}", profCalendarId);
                 } catch (IOException e) {
-                    log.warn("Failed to delete event from professional calendar {}: {}", profCalendarId, e.getMessage());
+                    log.warn(
+                            "Failed to delete event from professional calendar {}: {}", profCalendarId, e.getMessage());
                 }
             }
         } catch (IOException e) {
-            log.error("Failed to delete Google Calendar event for agendamento {}: {}", agendamento.getId(), e.getMessage());
+            log.error(
+                    "Failed to delete Google Calendar event for agendamento {}: {}",
+                    agendamento.getId(),
+                    e.getMessage());
         }
     }
 
@@ -135,8 +148,14 @@ public class GoogleCalendarService {
         StringBuilder description = new StringBuilder();
         description.append("Profissional: ").append(profissionalNome).append("\n");
         description.append("Paciente: ").append(pacienteNome).append("\n");
-        description.append("Serviço: ").append(atividadeNome).append(" - ").append(planoNome).append("\n");
-        if (agendamento.getObservacoes() != null && !agendamento.getObservacoes().isBlank()) {
+        description
+                .append("Serviço: ")
+                .append(atividadeNome)
+                .append(" - ")
+                .append(planoNome)
+                .append("\n");
+        if (agendamento.getObservacoes() != null
+                && !agendamento.getObservacoes().isBlank()) {
             description.append("Observações: ").append(agendamento.getObservacoes());
         }
 

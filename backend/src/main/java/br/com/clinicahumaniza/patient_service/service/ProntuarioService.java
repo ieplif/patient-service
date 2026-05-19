@@ -1,13 +1,11 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.dto.ProntuarioResponseDTO;
-import br.com.clinicahumaniza.patient_service.model.Patient;
-import br.com.clinicahumaniza.patient_service.model.Prontuario;
-import br.com.clinicahumaniza.patient_service.model.TipoDocumento;
-import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
-import br.com.clinicahumaniza.patient_service.repository.ProntuarioRepository;
+import java.io.IOException;
+import java.util.Set;
+import java.util.UUID;
+
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -18,9 +16,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
-import java.util.Set;
-import java.util.UUID;
+import br.com.clinicahumaniza.patient_service.dto.ProntuarioResponseDTO;
+import br.com.clinicahumaniza.patient_service.model.Patient;
+import br.com.clinicahumaniza.patient_service.model.Prontuario;
+import br.com.clinicahumaniza.patient_service.model.TipoDocumento;
+import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
+import br.com.clinicahumaniza.patient_service.repository.ProntuarioRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -33,12 +35,11 @@ public class ProntuarioService {
     private final SupabaseStorageService storageService;
 
     private static final Set<String> ALLOWED_TYPES = Set.of(
-        "application/pdf",
-        "image/jpeg",
-        "image/png",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    );
+            "application/pdf",
+            "image/jpeg",
+            "image/png",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
     private static final long MAX_FILE_SIZE = 10_485_760L; // 10MB
 
     private void validateFile(MultipartFile file) {
@@ -50,8 +51,8 @@ public class ProntuarioService {
         }
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_TYPES.contains(contentType)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Tipo de arquivo não permitido. Use: PDF, JPEG, PNG, DOC ou DOCX");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Tipo de arquivo não permitido. Use: PDF, JPEG, PNG, DOC ou DOCX");
         }
         // Sanitize filename
         String originalName = file.getOriginalFilename();
@@ -60,16 +61,20 @@ public class ProntuarioService {
         }
     }
 
-    public ProntuarioResponseDTO upload(UUID pacienteId, TipoDocumento tipo, String titulo, String descricao, MultipartFile file) throws IOException {
+    public ProntuarioResponseDTO upload(
+            UUID pacienteId, TipoDocumento tipo, String titulo, String descricao, MultipartFile file)
+            throws IOException {
         validateFile(file);
-        Patient paciente = patientRepository.findById(pacienteId)
+        Patient paciente = patientRepository
+                .findById(pacienteId)
                 .orElseThrow(() -> new EntityNotFoundException("Paciente não encontrado"));
 
         // Sobe primeiro no Storage (chamada externa, fora da transação JPA)
         String storagePath = storageService.upload(pacienteId, file);
         String storageUrl = storageService.getSignedUrl(storagePath);
 
-        String uploadedBy = SecurityContextHolder.getContext().getAuthentication().getName();
+        String uploadedBy =
+                SecurityContextHolder.getContext().getAuthentication().getName();
 
         Prontuario prontuario = Prontuario.builder()
                 .paciente(paciente)
@@ -109,7 +114,8 @@ public class ProntuarioService {
     }
 
     public ProntuarioResponseDTO getById(UUID id) {
-        Prontuario p = prontuarioRepository.findById(id)
+        Prontuario p = prontuarioRepository
+                .findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Prontuário não encontrado"));
         // Refresh signed URL
         p.setStorageUrl(storageService.getSignedUrl(p.getStoragePath()));
@@ -117,7 +123,8 @@ public class ProntuarioService {
     }
 
     public void delete(UUID id) {
-        Prontuario p = prontuarioRepository.findById(id)
+        Prontuario p = prontuarioRepository
+                .findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Prontuário não encontrado"));
         storageService.delete(p.getStoragePath());
         prontuarioRepository.delete(p);

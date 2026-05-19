@@ -1,12 +1,15 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.PatientUpdateDTO;
-import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
-import br.com.clinicahumaniza.patient_service.exception.PatientNotFoundException;
-import br.com.clinicahumaniza.patient_service.mapper.PatientMapper;
-import br.com.clinicahumaniza.patient_service.model.Patient;
-import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,22 +17,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.PatientUpdateDTO;
+import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
+import br.com.clinicahumaniza.patient_service.exception.PatientNotFoundException;
+import br.com.clinicahumaniza.patient_service.mapper.PatientMapper;
+import br.com.clinicahumaniza.patient_service.model.Patient;
+import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
 
 @ExtendWith(MockitoExtension.class)
 class PatientServiceTest {
@@ -120,15 +120,13 @@ class PatientServiceTest {
     void getPatientById_NotFound() {
         when(patientRepository.findById(patientId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> patientService.getPatientById(patientId))
-                .isInstanceOf(PatientNotFoundException.class);
+        assertThatThrownBy(() -> patientService.getPatientById(patientId)).isInstanceOf(PatientNotFoundException.class);
     }
 
     @Test
     @DisplayName("Deve lançar exceção quando ID é nulo")
     void getPatientById_NullId() {
-        assertThatThrownBy(() -> patientService.getPatientById(null))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> patientService.getPatientById(null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

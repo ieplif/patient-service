@@ -1,11 +1,12 @@
 package br.com.clinicahumaniza.patient_service.mapper;
 
+import org.springframework.stereotype.Component;
+
 import br.com.clinicahumaniza.patient_service.dto.HorarioDisponivelRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.HorarioDisponivelResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.HorarioDisponivelUpdateDTO;
 import br.com.clinicahumaniza.patient_service.model.HorarioDisponivel;
 import br.com.clinicahumaniza.patient_service.model.Profissional;
-import org.springframework.stereotype.Component;
 
 @Component
 public class HorarioDisponivelMapper {

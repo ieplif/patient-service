@@ -1,5 +1,20 @@
 package br.com.clinicahumaniza.patient_service.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import br.com.clinicahumaniza.patient_service.dto.PagamentoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PagamentoStatusDTO;
 import br.com.clinicahumaniza.patient_service.dto.PagamentoUpdateDTO;
@@ -13,20 +28,6 @@ import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
 import br.com.clinicahumaniza.patient_service.repository.PagamentoRepository;
 import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
 import br.com.clinicahumaniza.patient_service.spec.PagamentoSpecification;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 public class PagamentoService {
@@ -38,11 +39,12 @@ public class PagamentoService {
     private final PagamentoMapper pagamentoMapper;
 
     @Autowired
-    public PagamentoService(PagamentoRepository pagamentoRepository,
-                            PatientRepository patientRepository,
-                            AssinaturaRepository assinaturaRepository,
-                            AgendamentoRepository agendamentoRepository,
-                            PagamentoMapper pagamentoMapper) {
+    public PagamentoService(
+            PagamentoRepository pagamentoRepository,
+            PatientRepository patientRepository,
+            AssinaturaRepository assinaturaRepository,
+            AgendamentoRepository agendamentoRepository,
+            PagamentoMapper pagamentoMapper) {
         this.pagamentoRepository = pagamentoRepository;
         this.patientRepository = patientRepository;
         this.assinaturaRepository = assinaturaRepository;
@@ -52,18 +54,21 @@ public class PagamentoService {
 
     @Transactional
     public Pagamento createPagamento(PagamentoRequestDTO dto) {
-        Patient paciente = patientRepository.findById(dto.getPacienteId())
+        Patient paciente = patientRepository
+                .findById(dto.getPacienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Paciente", dto.getPacienteId()));
 
         Assinatura assinatura = null;
         if (dto.getAssinaturaId() != null) {
-            assinatura = assinaturaRepository.findById(dto.getAssinaturaId())
+            assinatura = assinaturaRepository
+                    .findById(dto.getAssinaturaId())
                     .orElseThrow(() -> new ResourceNotFoundException("Assinatura", dto.getAssinaturaId()));
         }
 
         Agendamento agendamento = null;
         if (dto.getAgendamentoId() != null) {
-            agendamento = agendamentoRepository.findById(dto.getAgendamentoId())
+            agendamento = agendamentoRepository
+                    .findById(dto.getAgendamentoId())
                     .orElseThrow(() -> new ResourceNotFoundException("Agendamento", dto.getAgendamentoId()));
         }
 
@@ -76,14 +81,18 @@ public class PagamentoService {
     }
 
     public Pagamento getPagamentoById(UUID id) {
-        return pagamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pagamento", id));
+        return pagamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pagamento", id));
     }
 
-    public Page<Pagamento> getAllPagamentos(StatusPagamento status, FormaPagamento formaPagamento,
-                                            UUID pacienteId, LocalDate inicio, LocalDate fim,
-                                            LocalDate pagamentoInicio, LocalDate pagamentoFim,
-                                            Pageable pageable) {
+    public Page<Pagamento> getAllPagamentos(
+            StatusPagamento status,
+            FormaPagamento formaPagamento,
+            UUID pacienteId,
+            LocalDate inicio,
+            LocalDate fim,
+            LocalDate pagamentoInicio,
+            LocalDate pagamentoFim,
+            Pageable pageable) {
         Specification<Pagamento> spec = Specification.allOf(
                 PagamentoSpecification.hasStatus(status),
                 PagamentoSpecification.hasFormaPagamento(formaPagamento),
@@ -95,21 +104,23 @@ public class PagamentoService {
 
     public byte[] exportCsv(LocalDate inicio, LocalDate fim, StatusPagamento status) {
         Specification<Pagamento> spec = Specification.allOf(
-                PagamentoSpecification.hasStatus(status),
-                PagamentoSpecification.betweenVencimento(inicio, fim));
+                PagamentoSpecification.hasStatus(status), PagamentoSpecification.betweenVencimento(inicio, fim));
         List<Pagamento> pagamentos = pagamentoRepository.findAll(spec);
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Paciente,Valor,FormaPagamento,Status,DataVencimento,DataPagamento\n");
         for (Pagamento p : pagamentos) {
-            csv.append(String.join(",",
-                    p.getId().toString(),
-                    escapeCsv(p.getPaciente().getNomeCompleto()),
-                    p.getValor().toString(),
-                    p.getFormaPagamento().name(),
-                    p.getStatus().name(),
-                    p.getDataVencimento() != null ? p.getDataVencimento().toString() : "",
-                    p.getDataPagamento() != null ? p.getDataPagamento().toString() : ""
-            )).append("\n");
+            csv.append(String.join(
+                            ",",
+                            p.getId().toString(),
+                            escapeCsv(p.getPaciente().getNomeCompleto()),
+                            p.getValor().toString(),
+                            p.getFormaPagamento().name(),
+                            p.getStatus().name(),
+                            p.getDataVencimento() != null
+                                    ? p.getDataVencimento().toString()
+                                    : "",
+                            p.getDataPagamento() != null ? p.getDataPagamento().toString() : ""))
+                    .append("\n");
         }
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
@@ -140,8 +151,8 @@ public class PagamentoService {
 
     @Transactional
     public Pagamento updatePagamento(UUID id, PagamentoUpdateDTO dto) {
-        Pagamento pagamento = pagamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pagamento", id));
+        Pagamento pagamento =
+                pagamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pagamento", id));
 
         pagamentoMapper.updateEntityFromDto(dto, pagamento);
         return pagamentoRepository.save(pagamento);
@@ -149,8 +160,8 @@ public class PagamentoService {
 
     @Transactional
     public Pagamento updateStatus(UUID id, PagamentoStatusDTO dto) {
-        Pagamento pagamento = pagamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pagamento", id));
+        Pagamento pagamento =
+                pagamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pagamento", id));
 
         validarTransicaoStatus(pagamento.getStatus(), dto.getStatus());
 
@@ -159,9 +170,7 @@ public class PagamentoService {
         if (dto.getStatus() == StatusPagamento.PAGO) {
             // Permite registrar pagamentos retroativos com a data correta do recibo
             pagamento.setDataPagamento(
-                    dto.getDataPagamento() != null
-                            ? dto.getDataPagamento().atStartOfDay()
-                            : LocalDateTime.now());
+                    dto.getDataPagamento() != null ? dto.getDataPagamento().atStartOfDay() : LocalDateTime.now());
         }
 
         return pagamentoRepository.save(pagamento);
@@ -169,7 +178,8 @@ public class PagamentoService {
 
     @Transactional
     public Pagamento updateParcelaStatus(UUID pagamentoId, UUID parcelaId, ParcelaStatusDTO dto) {
-        Pagamento pagamento = pagamentoRepository.findById(pagamentoId)
+        Pagamento pagamento = pagamentoRepository
+                .findById(pagamentoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pagamento", pagamentoId));
 
         Parcela parcela = pagamento.getParcelas().stream()
@@ -190,8 +200,8 @@ public class PagamentoService {
 
     @Transactional
     public void deletePagamento(UUID id) {
-        Pagamento pagamento = pagamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pagamento", id));
+        Pagamento pagamento =
+                pagamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pagamento", id));
         pagamento.setAtivo(false);
         pagamentoRepository.save(pagamento);
     }
@@ -234,17 +244,16 @@ public class PagamentoService {
     }
 
     private void validarTransicaoStatus(StatusPagamento atual, StatusPagamento novo) {
-        boolean transicaoValida = switch (atual) {
-            case PENDENTE -> novo == StatusPagamento.PAGO || novo == StatusPagamento.CANCELADO;
-            case PARCIALMENTE_PAGO -> novo == StatusPagamento.PAGO || novo == StatusPagamento.CANCELADO;
-            case PAGO -> novo == StatusPagamento.REEMBOLSADO;
-            default -> false;
-        };
+        boolean transicaoValida =
+                switch (atual) {
+                    case PENDENTE -> novo == StatusPagamento.PAGO || novo == StatusPagamento.CANCELADO;
+                    case PARCIALMENTE_PAGO -> novo == StatusPagamento.PAGO || novo == StatusPagamento.CANCELADO;
+                    case PAGO -> novo == StatusPagamento.REEMBOLSADO;
+                    default -> false;
+                };
 
         if (!transicaoValida) {
-            throw new BusinessException(
-                    "Transição de status inválida: " + atual + " → " + novo
-            );
+            throw new BusinessException("Transição de status inválida: " + atual + " → " + novo);
         }
     }
 }

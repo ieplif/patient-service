@@ -1,12 +1,13 @@
 package br.com.clinicahumaniza.patient_service.repository;
 
-import br.com.clinicahumaniza.patient_service.model.Servico;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.UUID;
+import br.com.clinicahumaniza.patient_service.model.Servico;
 
 @Repository
 public interface ServicoRepository extends JpaRepository<Servico, UUID> {

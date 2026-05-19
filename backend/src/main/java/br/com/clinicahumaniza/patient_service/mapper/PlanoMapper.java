@@ -1,10 +1,11 @@
 package br.com.clinicahumaniza.patient_service.mapper;
 
+import org.springframework.stereotype.Component;
+
 import br.com.clinicahumaniza.patient_service.dto.PlanoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PlanoResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.PlanoUpdateDTO;
 import br.com.clinicahumaniza.patient_service.model.Plano;
-import org.springframework.stereotype.Component;
 
 @Component
 public class PlanoMapper {

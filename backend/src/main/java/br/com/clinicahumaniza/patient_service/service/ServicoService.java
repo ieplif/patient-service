@@ -1,5 +1,14 @@
 package br.com.clinicahumaniza.patient_service.service;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import br.com.clinicahumaniza.patient_service.dto.ServicoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.ServicoUpdateDTO;
 import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
@@ -10,14 +19,6 @@ import br.com.clinicahumaniza.patient_service.model.Servico;
 import br.com.clinicahumaniza.patient_service.repository.AtividadeRepository;
 import br.com.clinicahumaniza.patient_service.repository.PlanoRepository;
 import br.com.clinicahumaniza.patient_service.repository.ServicoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
 public class ServicoService {
@@ -28,10 +29,11 @@ public class ServicoService {
     private final ServicoMapper servicoMapper;
 
     @Autowired
-    public ServicoService(ServicoRepository servicoRepository,
-                          AtividadeRepository atividadeRepository,
-                          PlanoRepository planoRepository,
-                          ServicoMapper servicoMapper) {
+    public ServicoService(
+            ServicoRepository servicoRepository,
+            AtividadeRepository atividadeRepository,
+            PlanoRepository planoRepository,
+            ServicoMapper servicoMapper) {
         this.servicoRepository = servicoRepository;
         this.atividadeRepository = atividadeRepository;
         this.planoRepository = planoRepository;
@@ -40,9 +42,11 @@ public class ServicoService {
 
     @Transactional
     public Servico createServico(ServicoRequestDTO dto) {
-        Atividade atividade = atividadeRepository.findById(dto.getAtividadeId())
+        Atividade atividade = atividadeRepository
+                .findById(dto.getAtividadeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Atividade", dto.getAtividadeId()));
-        Plano plano = planoRepository.findById(dto.getPlanoId())
+        Plano plano = planoRepository
+                .findById(dto.getPlanoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Plano", dto.getPlanoId()));
 
         Servico servico = servicoMapper.toEntity(dto, atividade, plano);
@@ -50,8 +54,7 @@ public class ServicoService {
     }
 
     public Servico getServicoById(UUID id) {
-        return servicoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
+        return servicoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
     }
 
     public Page<Servico> getAllServicos(Pageable pageable) {
@@ -68,18 +71,20 @@ public class ServicoService {
 
     @Transactional
     public Servico updateServico(UUID id, ServicoUpdateDTO dto) {
-        Servico servico = servicoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
+        Servico servico =
+                servicoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
 
         Atividade atividade = null;
         Plano plano = null;
 
         if (dto.getAtividadeId() != null) {
-            atividade = atividadeRepository.findById(dto.getAtividadeId())
+            atividade = atividadeRepository
+                    .findById(dto.getAtividadeId())
                     .orElseThrow(() -> new ResourceNotFoundException("Atividade", dto.getAtividadeId()));
         }
         if (dto.getPlanoId() != null) {
-            plano = planoRepository.findById(dto.getPlanoId())
+            plano = planoRepository
+                    .findById(dto.getPlanoId())
                     .orElseThrow(() -> new ResourceNotFoundException("Plano", dto.getPlanoId()));
         }
 
@@ -89,8 +94,8 @@ public class ServicoService {
 
     @Transactional
     public void deleteServico(UUID id) {
-        Servico servico = servicoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
+        Servico servico =
+                servicoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
         servico.setAtivo(false);
         servicoRepository.save(servico);
     }

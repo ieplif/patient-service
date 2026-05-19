@@ -1,14 +1,19 @@
 package br.com.clinicahumaniza.patient_service.model;
 
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import jakarta.persistence.*;
+
+import lombok.*;
+
 @Entity
 @Table(name = "prontuarios")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Prontuario {
 
     @Id

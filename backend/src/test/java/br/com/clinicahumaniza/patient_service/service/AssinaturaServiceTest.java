@@ -1,5 +1,29 @@
 package br.com.clinicahumaniza.patient_service.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaStatusDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaUpdateDTO;
@@ -14,30 +38,6 @@ import br.com.clinicahumaniza.patient_service.repository.AgendamentoRepository;
 import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
 import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
 import br.com.clinicahumaniza.patient_service.repository.ServicoRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AssinaturaServiceTest {
@@ -207,7 +207,8 @@ class AssinaturaServiceTest {
     @DisplayName("Deve listar todas as assinaturas")
     void getAllAssinaturas_Success() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(assinaturaRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Assinatura>>any(), any(Pageable.class)))
+        when(assinaturaRepository.findAll(
+                        org.mockito.ArgumentMatchers.<Specification<Assinatura>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(assinatura)));
 
         Page<Assinatura> result = assinaturaService.getAllAssinaturas(null, null, pageable);
@@ -325,8 +326,7 @@ class AssinaturaServiceTest {
         when(assinaturaRepository.save(any(Assinatura.class))).thenAnswer(inv -> inv.getArgument(0));
         when(agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(any(), any(), any()))
                 .thenReturn(List.of());
-        when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId))
-                .thenReturn(List.of());
+        when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId)).thenReturn(List.of());
 
         SuspenderAssinaturaRequestDTO dto = new SuspenderAssinaturaRequestDTO("Gravidez", null);
         Assinatura result = assinaturaService.suspender(assinaturaId, dto);
@@ -347,8 +347,7 @@ class AssinaturaServiceTest {
         when(assinaturaRepository.save(any(Assinatura.class))).thenAnswer(inv -> inv.getArgument(0));
         when(agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(any(), any(), any()))
                 .thenReturn(List.of(futuro));
-        when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId))
-                .thenReturn(List.of());
+        when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId)).thenReturn(List.of());
 
         assinaturaService.suspender(assinaturaId, new SuspenderAssinaturaRequestDTO("Lesão", null));
 
@@ -363,8 +362,8 @@ class AssinaturaServiceTest {
         assinatura.setStatus(StatusAssinatura.CANCELADO);
         when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
 
-        assertThatThrownBy(() -> assinaturaService.suspender(
-                assinaturaId, new SuspenderAssinaturaRequestDTO("Motivo", null)))
+        assertThatThrownBy(() ->
+                        assinaturaService.suspender(assinaturaId, new SuspenderAssinaturaRequestDTO("Motivo", null)))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("ATIVO");
     }

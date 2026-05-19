@@ -1,17 +1,19 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
-import br.com.clinicahumaniza.patient_service.dto.AuthResponseDTO;
-import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.RegisterRequestDTO;
-import br.com.clinicahumaniza.patient_service.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import br.com.clinicahumaniza.patient_service.dto.AuthResponseDTO;
+import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.RegisterRequestDTO;
+import br.com.clinicahumaniza.patient_service.service.AuthService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -31,8 +33,8 @@ public class AuthController {
     }
 
     @PostMapping("/registrar")
-    public ResponseEntity<AuthResponseDTO> registrar(@Valid @RequestBody RegisterRequestDTO request,
-                                                      HttpServletResponse response) {
+    public ResponseEntity<AuthResponseDTO> registrar(
+            @Valid @RequestBody RegisterRequestDTO request, HttpServletResponse response) {
         AuthResponseDTO authResponse = authService.registrar(request);
         setTokenCookie(response, authResponse.getToken());
         authResponse.setToken(null); // não expõe o token no body
@@ -40,8 +42,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO request,
-                                                  HttpServletResponse response) {
+    public ResponseEntity<AuthResponseDTO> login(
+            @Valid @RequestBody LoginRequestDTO request, HttpServletResponse response) {
         AuthResponseDTO authResponse = authService.login(request);
         setTokenCookie(response, authResponse.getToken());
         authResponse.setToken(null); // não expõe o token no body

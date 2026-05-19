@@ -1,11 +1,12 @@
 package br.com.clinicahumaniza.patient_service.repository;
 
-import br.com.clinicahumaniza.patient_service.model.AgendamentoRecorrente;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.UUID;
+import br.com.clinicahumaniza.patient_service.model.AgendamentoRecorrente;
 
 @Repository
 public interface AgendamentoRecorrenteRepository extends JpaRepository<AgendamentoRecorrente, UUID> {

@@ -1,8 +1,9 @@
 package br.com.clinicahumaniza.patient_service.integration;
 
-import br.com.clinicahumaniza.patient_service.dto.AtividadeRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,9 +15,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import br.com.clinicahumaniza.patient_service.dto.AtividadeRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -38,9 +40,8 @@ class AtividadeIntegrationTest {
         LoginRequestDTO loginRequest = new LoginRequestDTO("admin@test.com", "senha123");
 
         String body = objectMapper.writeValueAsString(loginRequest);
-        MvcResult result = mockMvc.perform(post("/api/auth/login")
-                        .contentType("application/json")
-                        .content(body))
+        MvcResult result = mockMvc.perform(
+                        post("/api/auth/login").contentType("application/json").content(body))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -64,31 +65,30 @@ class AtividadeIntegrationTest {
                 .andExpect(jsonPath("$.nome").value("Pilates"))
                 .andReturn();
 
-        String atividadeId = objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText();
+        String atividadeId = objectMapper
+                .readTree(createResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Listar atividades
-        mockMvc.perform(get("/api/v1/atividades")
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(get("/api/v1/atividades").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].nome").value("Pilates"));
 
         // Buscar por ID
-        mockMvc.perform(get("/api/v1/atividades/{id}", atividadeId)
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(get("/api/v1/atividades/{id}", atividadeId).header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nome").value("Pilates"));
 
         // Deletar (soft delete)
-        mockMvc.perform(delete("/api/v1/atividades/{id}", atividadeId)
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(delete("/api/v1/atividades/{id}", atividadeId).header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("Deve retornar 401 sem token")
     void accessWithoutToken_401() throws Exception {
-        mockMvc.perform(get("/api/v1/atividades"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/atividades")).andExpect(status().isUnauthorized());
     }
 
     @Test

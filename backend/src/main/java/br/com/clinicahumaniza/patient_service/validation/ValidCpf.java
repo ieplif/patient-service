@@ -1,9 +1,9 @@
 package br.com.clinicahumaniza.patient_service.validation;
 
+import java.lang.annotation.*;
+
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
-
-import java.lang.annotation.*;
 
 @Documented
 @Constraint(validatedBy = CpfValidator.class)
@@ -11,6 +11,8 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidCpf {
     String message() default "CPF inválido";
+
     Class<?>[] groups() default {};
+
     Class<? extends Payload>[] payload() default {};
 }

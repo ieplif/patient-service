@@ -1,13 +1,14 @@
 package br.com.clinicahumaniza.patient_service.spec;
 
-import br.com.clinicahumaniza.patient_service.model.FormaPagamento;
-import br.com.clinicahumaniza.patient_service.model.Pagamento;
-import br.com.clinicahumaniza.patient_service.model.StatusPagamento;
-import org.springframework.data.jpa.domain.Specification;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
+
+import org.springframework.data.jpa.domain.Specification;
+
+import br.com.clinicahumaniza.patient_service.model.FormaPagamento;
+import br.com.clinicahumaniza.patient_service.model.Pagamento;
+import br.com.clinicahumaniza.patient_service.model.StatusPagamento;
 
 public class PagamentoSpecification {
 

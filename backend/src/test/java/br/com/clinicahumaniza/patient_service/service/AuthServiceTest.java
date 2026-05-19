@@ -1,13 +1,15 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.dto.AuthResponseDTO;
-import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.RegisterRequestDTO;
-import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
-import br.com.clinicahumaniza.patient_service.model.Role;
-import br.com.clinicahumaniza.patient_service.model.User;
-import br.com.clinicahumaniza.patient_service.repository.UserRepository;
-import br.com.clinicahumaniza.patient_service.security.JwtService;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+import java.util.Collections;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,15 +24,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Collections;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import br.com.clinicahumaniza.patient_service.dto.AuthResponseDTO;
+import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.RegisterRequestDTO;
+import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
+import br.com.clinicahumaniza.patient_service.model.Role;
+import br.com.clinicahumaniza.patient_service.model.User;
+import br.com.clinicahumaniza.patient_service.repository.UserRepository;
+import br.com.clinicahumaniza.patient_service.security.JwtService;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -71,10 +72,7 @@ class AuthServiceTest {
         user.setRole(Role.ROLE_USER);
 
         userDetails = new org.springframework.security.core.userdetails.User(
-                "maria@email.com",
-                "$2a$10$encodedPassword",
-                Collections.emptyList()
-        );
+                "maria@email.com", "$2a$10$encodedPassword", Collections.emptyList());
     }
 
     @Test
@@ -100,8 +98,7 @@ class AuthServiceTest {
     void registrar_DuplicateEmail() {
         when(userRepository.existsByEmail(registerRequest.getEmail())).thenReturn(true);
 
-        assertThatThrownBy(() -> authService.registrar(registerRequest))
-                .isInstanceOf(DuplicateResourceException.class);
+        assertThatThrownBy(() -> authService.registrar(registerRequest)).isInstanceOf(DuplicateResourceException.class);
 
         verify(userRepository, never()).save(any());
     }
@@ -127,7 +124,6 @@ class AuthServiceTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
-        assertThatThrownBy(() -> authService.login(loginRequest))
-                .isInstanceOf(BadCredentialsException.class);
+        assertThatThrownBy(() -> authService.login(loginRequest)).isInstanceOf(BadCredentialsException.class);
     }
 }

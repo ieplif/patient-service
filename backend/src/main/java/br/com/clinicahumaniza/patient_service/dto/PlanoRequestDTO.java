@@ -1,9 +1,10 @@
 package br.com.clinicahumaniza.patient_service.dto;
 
 import jakarta.validation.constraints.NotBlank;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 @Data
 @NoArgsConstructor

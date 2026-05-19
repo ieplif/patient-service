@@ -1,7 +1,8 @@
 package br.com.clinicahumaniza.patient_service.dto;
 
-import br.com.clinicahumaniza.patient_service.model.StatusAgendamento;
 import jakarta.validation.constraints.NotNull;
+
+import br.com.clinicahumaniza.patient_service.model.StatusAgendamento;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -1,11 +1,15 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.model.AgendamentoRecorrente;
-import br.com.clinicahumaniza.patient_service.model.Assinatura;
-import br.com.clinicahumaniza.patient_service.model.Patient;
-import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
-import br.com.clinicahumaniza.patient_service.repository.AgendamentoRecorrenteRepository;
-import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,15 +18,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import br.com.clinicahumaniza.patient_service.model.AgendamentoRecorrente;
+import br.com.clinicahumaniza.patient_service.model.Assinatura;
+import br.com.clinicahumaniza.patient_service.model.Patient;
+import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
+import br.com.clinicahumaniza.patient_service.repository.AgendamentoRecorrenteRepository;
+import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AssinaturaRenovacaoService")
@@ -61,7 +62,7 @@ class AssinaturaRenovacaoServiceTest {
     @DisplayName("Deve retornar 0 quando não há assinaturas próximas do vencimento")
     void renovar_NenhumaAssinatura() {
         when(assinaturaRepository.findByRenovacaoAutomaticaTrueAndStatusAndDataVencimentoLessThanEqual(
-                eq(StatusAssinatura.ATIVO), any(LocalDate.class)))
+                        eq(StatusAssinatura.ATIVO), any(LocalDate.class)))
                 .thenReturn(List.of());
 
         int renovadas = renovacaoService.renovarAssinaturasProximasDoVencimento();
@@ -73,7 +74,7 @@ class AssinaturaRenovacaoServiceTest {
     @DisplayName("Deve pular assinatura sem agendamentos recorrentes vinculados")
     void renovar_AssinaturaSemTemplates() {
         when(assinaturaRepository.findByRenovacaoAutomaticaTrueAndStatusAndDataVencimentoLessThanEqual(
-                eq(StatusAssinatura.ATIVO), any(LocalDate.class)))
+                        eq(StatusAssinatura.ATIVO), any(LocalDate.class)))
                 .thenReturn(List.of(assinatura));
         when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinatura.getId()))
                 .thenReturn(List.of());
@@ -88,7 +89,7 @@ class AssinaturaRenovacaoServiceTest {
     @DisplayName("Deve capturar erro de renovação e anotar nas observações")
     void renovar_ErroNaRenovacao() {
         when(assinaturaRepository.findByRenovacaoAutomaticaTrueAndStatusAndDataVencimentoLessThanEqual(
-                eq(StatusAssinatura.ATIVO), any(LocalDate.class)))
+                        eq(StatusAssinatura.ATIVO), any(LocalDate.class)))
                 .thenReturn(List.of(assinatura));
         // Template presente mas servico null -> NPE dentro de renovarAssinatura,
         // capturada pelo loop externo

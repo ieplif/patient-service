@@ -1,17 +1,21 @@
 package br.com.clinicahumaniza.patient_service.mapper;
 
+import org.springframework.stereotype.Component;
+
 import br.com.clinicahumaniza.patient_service.dto.AgendamentoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AgendamentoResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.AgendamentoUpdateDTO;
 import br.com.clinicahumaniza.patient_service.model.*;
-import org.springframework.stereotype.Component;
 
 @Component
 public class AgendamentoMapper {
 
-    public Agendamento toEntity(AgendamentoRequestDTO dto, Patient paciente,
-                                 Profissional profissional, Servico servico,
-                                 Assinatura assinatura) {
+    public Agendamento toEntity(
+            AgendamentoRequestDTO dto,
+            Patient paciente,
+            Profissional profissional,
+            Servico servico,
+            Assinatura assinatura) {
         Agendamento agendamento = new Agendamento();
         agendamento.setPaciente(paciente);
         agendamento.setProfissional(profissional);
@@ -36,9 +40,8 @@ public class AgendamentoMapper {
         }
         if (entity.getServico() != null) {
             dto.setServicoId(entity.getServico().getId());
-            dto.setServicoDescricao(
-                    entity.getServico().getAtividade().getNome() + " - " + entity.getServico().getPlano().getNome()
-            );
+            dto.setServicoDescricao(entity.getServico().getAtividade().getNome() + " - "
+                    + entity.getServico().getPlano().getNome());
         } else {
             dto.setServicoDescricao("(serviço removido)");
         }

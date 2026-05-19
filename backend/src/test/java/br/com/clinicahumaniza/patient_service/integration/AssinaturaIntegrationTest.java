@@ -1,7 +1,13 @@
 package br.com.clinicahumaniza.patient_service.integration;
 
-import br.com.clinicahumaniza.patient_service.dto.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,13 +19,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import br.com.clinicahumaniza.patient_service.dto.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -40,16 +42,16 @@ class AssinaturaIntegrationTest {
         // Login com admin seedado pelo DataInitializer (application-test.properties)
         LoginRequestDTO loginRequest = new LoginRequestDTO("admin@test.com", "senha123");
         String body = objectMapper.writeValueAsString(loginRequest);
-        MvcResult result = mockMvc.perform(post("/api/auth/login")
-                        .contentType("application/json")
-                        .content(body))
+        MvcResult result = mockMvc.perform(
+                        post("/api/auth/login").contentType("application/json").content(body))
                 .andExpect(status().isOk())
                 .andReturn();
         token = result.getResponse().getCookie("humaniza_token").getValue();
     }
 
     @Test
-    @DisplayName("Fluxo completo: criar paciente → criar atividade → criar plano → criar serviço → criar assinatura → registrar sessões → verificar finalização")
+    @DisplayName(
+            "Fluxo completo: criar paciente → criar atividade → criar plano → criar serviço → criar assinatura → registrar sessões → verificar finalização")
     void fullAssinaturaFlow() throws Exception {
         // Criar paciente
         PatientRequestDTO pacienteDTO = new PatientRequestDTO();
@@ -66,7 +68,10 @@ class AssinaturaIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String pacienteId = objectMapper.readTree(pacienteResult.getResponse().getContentAsString()).get("id").asText();
+        String pacienteId = objectMapper
+                .readTree(pacienteResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar atividade
         AtividadeRequestDTO atividadeDTO = new AtividadeRequestDTO();
@@ -81,7 +86,10 @@ class AssinaturaIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String atividadeId = objectMapper.readTree(atividadeResult.getResponse().getContentAsString()).get("id").asText();
+        String atividadeId = objectMapper
+                .readTree(atividadeResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar plano
         PlanoRequestDTO planoDTO = new PlanoRequestDTO();
@@ -98,7 +106,10 @@ class AssinaturaIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String planoId = objectMapper.readTree(planoResult.getResponse().getContentAsString()).get("id").asText();
+        String planoId = objectMapper
+                .readTree(planoResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar serviço
         ServicoRequestDTO servicoDTO = new ServicoRequestDTO();
@@ -117,7 +128,10 @@ class AssinaturaIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String servicoId = objectMapper.readTree(servicoResult.getResponse().getContentAsString()).get("id").asText();
+        String servicoId = objectMapper
+                .readTree(servicoResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar assinatura
         AssinaturaRequestDTO assinaturaDTO = new AssinaturaRequestDTO();
@@ -141,7 +155,10 @@ class AssinaturaIntegrationTest {
                 .andExpect(jsonPath("$.dataVencimento").value("2025-01-31"))
                 .andReturn();
 
-        String assinaturaId = objectMapper.readTree(assinaturaResult.getResponse().getContentAsString()).get("id").asText();
+        String assinaturaId = objectMapper
+                .readTree(assinaturaResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Registrar sessão 1
         mockMvc.perform(patch("/api/v1/assinaturas/{id}/registrar-sessao", assinaturaId)
@@ -169,8 +186,7 @@ class AssinaturaIntegrationTest {
     @Test
     @DisplayName("Deve retornar 401 sem token")
     void accessWithoutToken_401() throws Exception {
-        mockMvc.perform(get("/api/v1/assinaturas"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/assinaturas")).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -189,7 +205,10 @@ class AssinaturaIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String atividadeId = objectMapper.readTree(atividadeResult.getResponse().getContentAsString()).get("id").asText();
+        String atividadeId = objectMapper
+                .readTree(atividadeResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar plano
         PlanoRequestDTO planoDTO = new PlanoRequestDTO();
@@ -205,7 +224,10 @@ class AssinaturaIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String planoId = objectMapper.readTree(planoResult.getResponse().getContentAsString()).get("id").asText();
+        String planoId = objectMapper
+                .readTree(planoResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar serviço
         ServicoRequestDTO servicoDTO = new ServicoRequestDTO();
@@ -220,7 +242,10 @@ class AssinaturaIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String servicoId = objectMapper.readTree(servicoResult.getResponse().getContentAsString()).get("id").asText();
+        String servicoId = objectMapper
+                .readTree(servicoResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar assinatura com paciente inexistente
         AssinaturaRequestDTO assinaturaDTO = new AssinaturaRequestDTO();

@@ -1,7 +1,8 @@
 package br.com.clinicahumaniza.patient_service.spec;
 
-import br.com.clinicahumaniza.patient_service.model.Patient;
 import org.springframework.data.jpa.domain.Specification;
+
+import br.com.clinicahumaniza.patient_service.model.Patient;
 
 public class PatientSpecification {
 

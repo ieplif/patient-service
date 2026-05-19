@@ -1,8 +1,14 @@
 package br.com.clinicahumaniza.patient_service.integration;
 
-import br.com.clinicahumaniza.patient_service.dto.*;
-import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.DayOfWeek;
+import java.time.LocalTime;
+import java.util.Set;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,14 +20,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.time.DayOfWeek;
-import java.time.LocalTime;
-import java.util.Set;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import br.com.clinicahumaniza.patient_service.dto.*;
+import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -42,9 +44,8 @@ class HorarioDisponivelIntegrationTest {
         LoginRequestDTO loginRequest = new LoginRequestDTO("admin@test.com", "senha123");
 
         String body = objectMapper.writeValueAsString(loginRequest);
-        MvcResult result = mockMvc.perform(post("/api/auth/login")
-                        .contentType("application/json")
-                        .content(body))
+        MvcResult result = mockMvc.perform(
+                        post("/api/auth/login").contentType("application/json").content(body))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -52,7 +53,8 @@ class HorarioDisponivelIntegrationTest {
     }
 
     @Test
-    @DisplayName("Fluxo completo: criar atividade → criar profissional → adicionar disponibilidade → listar por profissional")
+    @DisplayName(
+            "Fluxo completo: criar atividade → criar profissional → adicionar disponibilidade → listar por profissional")
     void fullHorarioDisponivelFlow() throws Exception {
         // Criar atividade
         AtividadeRequestDTO atividadeDTO = new AtividadeRequestDTO();
@@ -67,7 +69,10 @@ class HorarioDisponivelIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String atividadeId = objectMapper.readTree(atividadeResult.getResponse().getContentAsString()).get("id").asText();
+        String atividadeId = objectMapper
+                .readTree(atividadeResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar profissional
         ProfissionalRequestDTO profissionalDTO = new ProfissionalRequestDTO();
@@ -84,7 +89,10 @@ class HorarioDisponivelIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String profissionalId = objectMapper.readTree(profissionalResult.getResponse().getContentAsString()).get("id").asText();
+        String profissionalId = objectMapper
+                .readTree(profissionalResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar horário disponível - Segunda 08:00-12:00
         HorarioDisponivelRequestDTO horarioDTO = new HorarioDisponivelRequestDTO();
@@ -126,8 +134,7 @@ class HorarioDisponivelIntegrationTest {
     @Test
     @DisplayName("Deve retornar 401 sem token")
     void accessWithoutToken_401() throws Exception {
-        mockMvc.perform(get("/api/v1/disponibilidades"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/disponibilidades")).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -146,7 +153,10 @@ class HorarioDisponivelIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String atividadeId = objectMapper.readTree(atividadeResult.getResponse().getContentAsString()).get("id").asText();
+        String atividadeId = objectMapper
+                .readTree(atividadeResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar profissional
         ProfissionalRequestDTO profissionalDTO = new ProfissionalRequestDTO();
@@ -163,7 +173,10 @@ class HorarioDisponivelIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String profissionalId = objectMapper.readTree(profissionalResult.getResponse().getContentAsString()).get("id").asText();
+        String profissionalId = objectMapper
+                .readTree(profissionalResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Tentar criar horário com hora início > hora fim
         HorarioDisponivelRequestDTO horarioDTO = new HorarioDisponivelRequestDTO();

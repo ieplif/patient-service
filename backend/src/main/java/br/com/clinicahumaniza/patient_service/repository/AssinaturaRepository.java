@@ -1,15 +1,16 @@
 package br.com.clinicahumaniza.patient_service.repository;
 
-import br.com.clinicahumaniza.patient_service.model.Assinatura;
-import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
+import br.com.clinicahumaniza.patient_service.model.Assinatura;
+import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
 
 @Repository
 public interface AssinaturaRepository extends JpaRepository<Assinatura, UUID>, JpaSpecificationExecutor<Assinatura> {

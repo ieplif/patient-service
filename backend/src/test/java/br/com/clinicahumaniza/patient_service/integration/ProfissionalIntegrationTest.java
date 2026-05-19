@@ -1,10 +1,13 @@
 package br.com.clinicahumaniza.patient_service.integration;
 
-import br.com.clinicahumaniza.patient_service.dto.AtividadeRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.ProfissionalRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.ProfissionalUpdateDTO;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.Set;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,13 +19,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.util.Set;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import br.com.clinicahumaniza.patient_service.dto.AtividadeRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.ProfissionalRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.ProfissionalUpdateDTO;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -67,7 +69,10 @@ class ProfissionalIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String atividadeId = objectMapper.readTree(atividadeResult.getResponse().getContentAsString()).get("id").asText();
+        String atividadeId = objectMapper
+                .readTree(atividadeResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // 2. Criar segunda atividade
         AtividadeRequestDTO atividade2DTO = new AtividadeRequestDTO();
@@ -82,7 +87,10 @@ class ProfissionalIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String atividade2Id = objectMapper.readTree(atividade2Result.getResponse().getContentAsString()).get("id").asText();
+        String atividade2Id = objectMapper
+                .readTree(atividade2Result.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // 3. Criar profissional
         ProfissionalRequestDTO profDTO = new ProfissionalRequestDTO();
@@ -102,7 +110,10 @@ class ProfissionalIntegrationTest {
                 .andExpect(jsonPath("$.atividades[0].nome").value("Fisioterapia Pélvica"))
                 .andReturn();
 
-        String profissionalId = objectMapper.readTree(profResult.getResponse().getContentAsString()).get("id").asText();
+        String profissionalId = objectMapper
+                .readTree(profResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // 4. Listar profissionais por atividade
         mockMvc.perform(get("/api/v1/profissionais/atividade/{atividadeId}", atividadeId)
@@ -151,7 +162,10 @@ class ProfissionalIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String atividadeId = objectMapper.readTree(atividadeResult.getResponse().getContentAsString()).get("id").asText();
+        String atividadeId = objectMapper
+                .readTree(atividadeResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Criar profissional
         ProfissionalRequestDTO profDTO = new ProfissionalRequestDTO();
@@ -168,16 +182,14 @@ class ProfissionalIntegrationTest {
                 .andExpect(status().isCreated());
 
         // Login com credenciais do profissional
-        String loginBody = objectMapper.writeValueAsString(
-                new java.util.LinkedHashMap<>() {{
-                    put("email", "ana@email.com");
-                    put("senha", "senha123");
-                }}
-        );
+        String loginBody = objectMapper.writeValueAsString(new java.util.LinkedHashMap<>() {
+            {
+                put("email", "ana@email.com");
+                put("senha", "senha123");
+            }
+        });
 
-        mockMvc.perform(post("/api/auth/login")
-                        .contentType("application/json")
-                        .content(loginBody))
+        mockMvc.perform(post("/api/auth/login").contentType("application/json").content(loginBody))
                 .andExpect(status().isOk())
                 .andExpect(cookie().exists("humaniza_token"))
                 .andExpect(jsonPath("$.role").value("ROLE_PROFISSIONAL"));
@@ -186,7 +198,6 @@ class ProfissionalIntegrationTest {
     @Test
     @DisplayName("Deve retornar 401 sem token")
     void accessWithoutToken_401() throws Exception {
-        mockMvc.perform(get("/api/v1/profissionais"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/profissionais")).andExpect(status().isUnauthorized());
     }
 }

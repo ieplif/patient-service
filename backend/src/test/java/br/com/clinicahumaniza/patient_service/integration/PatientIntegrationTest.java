@@ -1,8 +1,13 @@
 package br.com.clinicahumaniza.patient_service.integration;
 
-import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,13 +19,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.time.LocalDate;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -41,9 +43,8 @@ class PatientIntegrationTest {
         LoginRequestDTO loginRequest = new LoginRequestDTO("admin@test.com", "senha123");
 
         String body = objectMapper.writeValueAsString(loginRequest);
-        MvcResult result = mockMvc.perform(post("/api/auth/login")
-                        .contentType("application/json")
-                        .content(body))
+        MvcResult result = mockMvc.perform(
+                        post("/api/auth/login").contentType("application/json").content(body))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -70,38 +71,36 @@ class PatientIntegrationTest {
                 .andExpect(jsonPath("$.nomeCompleto").value("Carlos Souza"))
                 .andReturn();
 
-        String patientId = objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText();
+        String patientId = objectMapper
+                .readTree(createResult.getResponse().getContentAsString())
+                .get("id")
+                .asText();
 
         // Listar pacientes
-        mockMvc.perform(get("/api/v1/patients")
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(get("/api/v1/patients").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].nomeCompleto").value("Carlos Souza"));
 
         // Buscar por ID
-        mockMvc.perform(get("/api/v1/patients/{id}", patientId)
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(get("/api/v1/patients/{id}", patientId).header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nomeCompleto").value("Carlos Souza"));
 
         // Deletar (soft delete)
-        mockMvc.perform(delete("/api/v1/patients/{id}", patientId)
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(delete("/api/v1/patients/{id}", patientId).header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("Deve retornar 401 sem token")
     void accessWithoutToken_401() throws Exception {
-        mockMvc.perform(get("/api/v1/patients"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/patients")).andExpect(status().isUnauthorized());
     }
 
     @Test
     @DisplayName("Deve retornar 401 com token inválido")
     void accessWithInvalidToken_401() throws Exception {
-        mockMvc.perform(get("/api/v1/patients")
-                        .header("Authorization", "Bearer token-invalido"))
+        mockMvc.perform(get("/api/v1/patients").header("Authorization", "Bearer token-invalido"))
                 .andExpect(status().isUnauthorized());
     }
 }

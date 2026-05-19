@@ -1,12 +1,14 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.dto.PlanoRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.PlanoUpdateDTO;
-import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
-import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
-import br.com.clinicahumaniza.patient_service.mapper.PlanoMapper;
-import br.com.clinicahumaniza.patient_service.model.Plano;
-import br.com.clinicahumaniza.patient_service.repository.PlanoRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,20 +16,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import br.com.clinicahumaniza.patient_service.dto.PlanoRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.PlanoUpdateDTO;
+import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
+import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
+import br.com.clinicahumaniza.patient_service.mapper.PlanoMapper;
+import br.com.clinicahumaniza.patient_service.model.Plano;
+import br.com.clinicahumaniza.patient_service.repository.PlanoRepository;
 
 @ExtendWith(MockitoExtension.class)
 class PlanoServiceTest {
@@ -86,8 +86,7 @@ class PlanoServiceTest {
     void createPlano_DuplicateName() {
         when(planoRepository.existsByNome(requestDTO.getNome())).thenReturn(true);
 
-        assertThatThrownBy(() -> planoService.createPlano(requestDTO))
-                .isInstanceOf(DuplicateResourceException.class);
+        assertThatThrownBy(() -> planoService.createPlano(requestDTO)).isInstanceOf(DuplicateResourceException.class);
 
         verify(planoRepository, never()).save(any());
     }
@@ -108,16 +107,14 @@ class PlanoServiceTest {
     void getPlanoById_NotFound() {
         when(planoRepository.findById(planoId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> planoService.getPlanoById(planoId))
-                .isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> planoService.getPlanoById(planoId)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     @DisplayName("Deve listar todos os planos")
     void getAllPlanos_Success() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(planoRepository.findAll(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(plano)));
+        when(planoRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(plano)));
 
         Page<Plano> result = planoService.getAllPlanos(pageable);
 

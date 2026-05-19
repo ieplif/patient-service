@@ -1,5 +1,17 @@
 package br.com.clinicahumaniza.patient_service.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaStatusDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaUpdateDTO;
@@ -21,17 +33,6 @@ import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
 import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
 import br.com.clinicahumaniza.patient_service.repository.ServicoRepository;
 import br.com.clinicahumaniza.patient_service.spec.AssinaturaSpecification;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 public class AssinaturaService {
@@ -44,12 +45,13 @@ public class AssinaturaService {
     private final AgendamentoRecorrenteRepository recorrenteRepository;
 
     @Autowired
-    public AssinaturaService(AssinaturaRepository assinaturaRepository,
-                             PatientRepository patientRepository,
-                             ServicoRepository servicoRepository,
-                             AssinaturaMapper assinaturaMapper,
-                             AgendamentoRepository agendamentoRepository,
-                             AgendamentoRecorrenteRepository recorrenteRepository) {
+    public AssinaturaService(
+            AssinaturaRepository assinaturaRepository,
+            PatientRepository patientRepository,
+            ServicoRepository servicoRepository,
+            AssinaturaMapper assinaturaMapper,
+            AgendamentoRepository agendamentoRepository,
+            AgendamentoRecorrenteRepository recorrenteRepository) {
         this.assinaturaRepository = assinaturaRepository;
         this.patientRepository = patientRepository;
         this.servicoRepository = servicoRepository;
@@ -60,10 +62,12 @@ public class AssinaturaService {
 
     @Transactional
     public Assinatura createAssinatura(AssinaturaRequestDTO dto) {
-        Patient paciente = patientRepository.findById(dto.getPacienteId())
+        Patient paciente = patientRepository
+                .findById(dto.getPacienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Paciente", dto.getPacienteId()));
 
-        Servico servico = servicoRepository.findById(dto.getServicoId())
+        Servico servico = servicoRepository
+                .findById(dto.getServicoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Serviço", dto.getServicoId()));
 
         Assinatura assinatura = assinaturaMapper.toEntity(dto, paciente, servico);
@@ -71,21 +75,20 @@ public class AssinaturaService {
         assinatura.setSessoesRealizadas(0);
 
         if (assinatura.getDataVencimento() == null && servico.getPlano().getValidadeDias() != null) {
-            assinatura.setDataVencimento(dto.getDataInicio().plusDays(servico.getPlano().getValidadeDias()));
+            assinatura.setDataVencimento(
+                    dto.getDataInicio().plusDays(servico.getPlano().getValidadeDias()));
         }
 
         return assinaturaRepository.save(assinatura);
     }
 
     public Assinatura getAssinaturaById(UUID id) {
-        return assinaturaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
+        return assinaturaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
     }
 
     public Page<Assinatura> getAllAssinaturas(StatusAssinatura status, UUID pacienteId, Pageable pageable) {
         Specification<Assinatura> spec = Specification.allOf(
-                AssinaturaSpecification.hasStatus(status),
-                AssinaturaSpecification.hasPaciente(pacienteId));
+                AssinaturaSpecification.hasStatus(status), AssinaturaSpecification.hasPaciente(pacienteId));
         return assinaturaRepository.findAll(spec, pageable);
     }
 
@@ -99,8 +102,8 @@ public class AssinaturaService {
 
     @Transactional
     public Assinatura updateAssinatura(UUID id, AssinaturaUpdateDTO dto) {
-        Assinatura assinatura = assinaturaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
+        Assinatura assinatura =
+                assinaturaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
 
         assinaturaMapper.updateEntityFromDto(dto, assinatura);
         return assinaturaRepository.save(assinatura);
@@ -108,8 +111,8 @@ public class AssinaturaService {
 
     @Transactional
     public Assinatura updateStatus(UUID id, AssinaturaStatusDTO dto) {
-        Assinatura assinatura = assinaturaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
+        Assinatura assinatura =
+                assinaturaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
 
         if (assinatura.getStatus() == StatusAssinatura.FINALIZADO) {
             throw new BusinessException("Não é possível alterar o status de uma assinatura finalizada");
@@ -121,11 +124,12 @@ public class AssinaturaService {
 
     @Transactional
     public Assinatura registrarSessao(UUID id) {
-        Assinatura assinatura = assinaturaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
+        Assinatura assinatura =
+                assinaturaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
 
         if (assinatura.getStatus() != StatusAssinatura.ATIVO) {
-            throw new BusinessException("Não é possível registrar sessão em assinatura com status " + assinatura.getStatus());
+            throw new BusinessException(
+                    "Não é possível registrar sessão em assinatura com status " + assinatura.getStatus());
         }
 
         assinatura.setSessoesRealizadas(assinatura.getSessoesRealizadas() + 1);
@@ -152,8 +156,8 @@ public class AssinaturaService {
      */
     @Transactional
     public Assinatura suspender(UUID id, SuspenderAssinaturaRequestDTO dto) {
-        Assinatura assinatura = assinaturaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
+        Assinatura assinatura =
+                assinaturaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
 
         if (assinatura.getStatus() != StatusAssinatura.ATIVO) {
             throw new BusinessException(
@@ -166,10 +170,8 @@ public class AssinaturaService {
         assinatura.setDataPrevistaRetomada(dto.getDataPrevistaRetomada());
 
         // Cancelar agendamentos futuros pendentes
-        List<Agendamento> futuros = agendamentoRepository
-                .findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
-                        id, LocalDateTime.now(),
-                        List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO));
+        List<Agendamento> futuros = agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
+                id, LocalDateTime.now(), List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO));
         for (Agendamento ag : futuros) {
             ag.setStatus(StatusAgendamento.CANCELADO);
             ag.setMotivoCancelamento("Suspensão da assinatura: " + dto.getMotivo());
@@ -197,22 +199,20 @@ public class AssinaturaService {
      */
     @Transactional
     public Assinatura reativar(UUID id, ReativarAssinaturaRequestDTO dto) {
-        Assinatura assinatura = assinaturaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
+        Assinatura assinatura =
+                assinaturaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
 
         if (assinatura.getStatus() != StatusAssinatura.SUSPENSO) {
             throw new BusinessException(
                     "Apenas assinaturas SUSPENSO podem ser reativadas (status atual: " + assinatura.getStatus() + ")");
         }
 
-        LocalDate novaInicio = (dto != null && dto.getDataInicio() != null)
-                ? dto.getDataInicio()
-                : LocalDate.now();
+        LocalDate novaInicio = (dto != null && dto.getDataInicio() != null) ? dto.getDataInicio() : LocalDate.now();
 
         // Recalcula vencimento com a validade do plano (default 30 dias se nao informada)
         Integer validadeDias = assinatura.getServico() != null
-                && assinatura.getServico().getPlano() != null
-                && assinatura.getServico().getPlano().getValidadeDias() != null
+                        && assinatura.getServico().getPlano() != null
+                        && assinatura.getServico().getPlano().getValidadeDias() != null
                 ? assinatura.getServico().getPlano().getValidadeDias()
                 : 30;
         LocalDate novoVencimento = novaInicio.plusDays(validadeDias - 1);
@@ -229,8 +229,8 @@ public class AssinaturaService {
 
     @Transactional
     public void deleteAssinatura(UUID id) {
-        Assinatura assinatura = assinaturaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
+        Assinatura assinatura =
+                assinaturaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
         assinatura.setAtivo(false);
         assinaturaRepository.save(assinatura);
     }

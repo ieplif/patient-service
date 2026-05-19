@@ -1,10 +1,11 @@
 package br.com.clinicahumaniza.patient_service.scheduler;
 
-import br.com.clinicahumaniza.patient_service.service.AssinaturaRenovacaoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import br.com.clinicahumaniza.patient_service.service.AssinaturaRenovacaoService;
 
 @Component
 public class AssinaturaRenovacaoScheduler {

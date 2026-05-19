@@ -1,5 +1,31 @@
 package br.com.clinicahumaniza.patient_service.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
 import br.com.clinicahumaniza.patient_service.dto.PagamentoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PagamentoStatusDTO;
 import br.com.clinicahumaniza.patient_service.dto.PagamentoUpdateDTO;
@@ -12,32 +38,6 @@ import br.com.clinicahumaniza.patient_service.repository.AgendamentoRepository;
 import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
 import br.com.clinicahumaniza.patient_service.repository.PagamentoRepository;
 import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PagamentoServiceTest {
@@ -294,9 +294,8 @@ class PagamentoServiceTest {
 
         assertThat(result.getParcelas()).hasSize(6);
         // 100.00 / 6 = 16.66 (DOWN), last = 100 - (16.66 * 5) = 100 - 83.30 = 16.70
-        BigDecimal somaTotal = result.getParcelas().stream()
-                .map(Parcela::getValor)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal somaTotal =
+                result.getParcelas().stream().map(Parcela::getValor).reduce(BigDecimal.ZERO, BigDecimal::add);
         assertThat(somaTotal).isEqualByComparingTo(new BigDecimal("100.00"));
 
         // Última parcela deve absorver a diferença
@@ -330,7 +329,8 @@ class PagamentoServiceTest {
     @DisplayName("Deve listar todos os pagamentos")
     void getAllPagamentos_Success() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(pagamentoRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Pagamento>>any(), any(Pageable.class)))
+        when(pagamentoRepository.findAll(
+                        org.mockito.ArgumentMatchers.<Specification<Pagamento>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(pagamento)));
 
         Page<Pagamento> result = pagamentoService.getAllPagamentos(null, null, null, null, null, null, null, pageable);
@@ -552,7 +552,8 @@ class PagamentoServiceTest {
 
         when(pagamentoRepository.findById(pagamentoId)).thenReturn(Optional.of(pagamento));
 
-        assertThatThrownBy(() -> pagamentoService.updateParcelaStatus(pagamentoId, parcelaIdInexistente, parcelaStatusDTO))
+        assertThatThrownBy(
+                        () -> pagamentoService.updateParcelaStatus(pagamentoId, parcelaIdInexistente, parcelaStatusDTO))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 

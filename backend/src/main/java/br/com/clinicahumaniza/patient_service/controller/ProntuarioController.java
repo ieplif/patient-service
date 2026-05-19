@@ -1,11 +1,8 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
-import br.com.clinicahumaniza.patient_service.dto.ProntuarioResponseDTO;
-import br.com.clinicahumaniza.patient_service.model.TipoDocumento;
-import br.com.clinicahumaniza.patient_service.service.ProntuarioService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
+import java.io.IOException;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -14,12 +11,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.UUID;
+import br.com.clinicahumaniza.patient_service.dto.ProntuarioResponseDTO;
+import br.com.clinicahumaniza.patient_service.model.TipoDocumento;
+import br.com.clinicahumaniza.patient_service.service.ProntuarioService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/prontuarios")
-@Tag(name = "Prontuários", description = "Upload e gestão de documentos (prontuários, termos, notas fiscais) via Supabase Storage")
+@Tag(
+        name = "Prontuários",
+        description = "Upload e gestão de documentos (prontuários, termos, notas fiscais) via Supabase Storage")
 @RequiredArgsConstructor
 public class ProntuarioController {
 
@@ -32,7 +35,8 @@ public class ProntuarioController {
             @RequestParam(required = false) TipoDocumento tipo,
             @RequestParam String titulo,
             @RequestParam(required = false) String descricao,
-            @RequestParam("file") MultipartFile file) throws IOException {
+            @RequestParam("file") MultipartFile file)
+            throws IOException {
         return ResponseEntity.ok(prontuarioService.upload(pacienteId, tipo, titulo, descricao, file));
     }
 

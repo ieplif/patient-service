@@ -1,10 +1,11 @@
 package br.com.clinicahumaniza.patient_service.dto;
 
-import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
 import jakarta.validation.constraints.NotNull;
+
+import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 @Data
 @NoArgsConstructor

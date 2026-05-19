@@ -1,5 +1,15 @@
 package br.com.clinicahumaniza.patient_service.service;
 
+import java.time.DayOfWeek;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import br.com.clinicahumaniza.patient_service.dto.HorarioDisponivelRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.HorarioDisponivelUpdateDTO;
 import br.com.clinicahumaniza.patient_service.exception.BusinessException;
@@ -9,15 +19,6 @@ import br.com.clinicahumaniza.patient_service.model.HorarioDisponivel;
 import br.com.clinicahumaniza.patient_service.model.Profissional;
 import br.com.clinicahumaniza.patient_service.repository.HorarioDisponivelRepository;
 import br.com.clinicahumaniza.patient_service.repository.ProfissionalRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.DayOfWeek;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 public class HorarioDisponivelService {
@@ -27,9 +28,10 @@ public class HorarioDisponivelService {
     private final HorarioDisponivelMapper horarioDisponivelMapper;
 
     @Autowired
-    public HorarioDisponivelService(HorarioDisponivelRepository horarioDisponivelRepository,
-                                     ProfissionalRepository profissionalRepository,
-                                     HorarioDisponivelMapper horarioDisponivelMapper) {
+    public HorarioDisponivelService(
+            HorarioDisponivelRepository horarioDisponivelRepository,
+            ProfissionalRepository profissionalRepository,
+            HorarioDisponivelMapper horarioDisponivelMapper) {
         this.horarioDisponivelRepository = horarioDisponivelRepository;
         this.profissionalRepository = profissionalRepository;
         this.horarioDisponivelMapper = horarioDisponivelMapper;
@@ -37,7 +39,8 @@ public class HorarioDisponivelService {
 
     @Transactional
     public HorarioDisponivel createHorarioDisponivel(HorarioDisponivelRequestDTO dto) {
-        Profissional profissional = profissionalRepository.findById(dto.getProfissionalId())
+        Profissional profissional = profissionalRepository
+                .findById(dto.getProfissionalId())
                 .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
 
         validarHorario(dto.getHoraInicio(), dto.getHoraFim());
@@ -47,7 +50,8 @@ public class HorarioDisponivelService {
     }
 
     public HorarioDisponivel getHorarioDisponivelById(UUID id) {
-        return horarioDisponivelRepository.findById(id)
+        return horarioDisponivelRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Horário disponível", id));
     }
 
@@ -65,7 +69,8 @@ public class HorarioDisponivelService {
 
     @Transactional
     public HorarioDisponivel updateHorarioDisponivel(UUID id, HorarioDisponivelUpdateDTO dto) {
-        HorarioDisponivel horario = horarioDisponivelRepository.findById(id)
+        HorarioDisponivel horario = horarioDisponivelRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Horário disponível", id));
 
         horarioDisponivelMapper.updateEntityFromDto(dto, horario);
@@ -77,7 +82,8 @@ public class HorarioDisponivelService {
 
     @Transactional
     public void deleteHorarioDisponivel(UUID id) {
-        HorarioDisponivel horario = horarioDisponivelRepository.findById(id)
+        HorarioDisponivel horario = horarioDisponivelRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Horário disponível", id));
         horario.setAtivo(false);
         horarioDisponivelRepository.save(horario);

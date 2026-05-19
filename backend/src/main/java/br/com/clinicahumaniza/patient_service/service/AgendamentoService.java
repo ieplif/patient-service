@@ -1,23 +1,5 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoStatusDTO;
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoUpdateDTO;
-import br.com.clinicahumaniza.patient_service.dto.ReposicaoInfoDTO;
-import br.com.clinicahumaniza.patient_service.dto.ReposicaoRequestDTO;
-import br.com.clinicahumaniza.patient_service.exception.BusinessException;
-import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
-import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
-import br.com.clinicahumaniza.patient_service.model.*;
-import br.com.clinicahumaniza.patient_service.repository.*;
-import br.com.clinicahumaniza.patient_service.spec.AgendamentoSpecification;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.nio.charset.StandardCharsets;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -29,6 +11,25 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.clinicahumaniza.patient_service.dto.AgendamentoRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.AgendamentoStatusDTO;
+import br.com.clinicahumaniza.patient_service.dto.AgendamentoUpdateDTO;
+import br.com.clinicahumaniza.patient_service.dto.ReposicaoInfoDTO;
+import br.com.clinicahumaniza.patient_service.dto.ReposicaoRequestDTO;
+import br.com.clinicahumaniza.patient_service.exception.BusinessException;
+import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
+import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
+import br.com.clinicahumaniza.patient_service.model.*;
+import br.com.clinicahumaniza.patient_service.repository.*;
+import br.com.clinicahumaniza.patient_service.spec.AgendamentoSpecification;
 
 @Service
 public class AgendamentoService {
@@ -48,16 +49,17 @@ public class AgendamentoService {
     private final Optional<GoogleCalendarService> googleCalendarService;
 
     @Autowired
-    public AgendamentoService(AgendamentoRepository agendamentoRepository,
-                               PatientRepository patientRepository,
-                               ProfissionalRepository profissionalRepository,
-                               ServicoRepository servicoRepository,
-                               AssinaturaRepository assinaturaRepository,
-                               HorarioDisponivelRepository horarioDisponivelRepository,
-                               FeriadoRepository feriadoRepository,
-                               AgendamentoMapper agendamentoMapper,
-                               AssinaturaService assinaturaService,
-                               Optional<GoogleCalendarService> googleCalendarService) {
+    public AgendamentoService(
+            AgendamentoRepository agendamentoRepository,
+            PatientRepository patientRepository,
+            ProfissionalRepository profissionalRepository,
+            ServicoRepository servicoRepository,
+            AssinaturaRepository assinaturaRepository,
+            HorarioDisponivelRepository horarioDisponivelRepository,
+            FeriadoRepository feriadoRepository,
+            AgendamentoMapper agendamentoMapper,
+            AssinaturaService assinaturaService,
+            Optional<GoogleCalendarService> googleCalendarService) {
         this.agendamentoRepository = agendamentoRepository;
         this.patientRepository = patientRepository;
         this.profissionalRepository = profissionalRepository;
@@ -72,16 +74,19 @@ public class AgendamentoService {
 
     @Transactional
     public Agendamento createAgendamento(AgendamentoRequestDTO dto) {
-        Patient paciente = patientRepository.findById(dto.getPacienteId())
+        Patient paciente = patientRepository
+                .findById(dto.getPacienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Paciente", dto.getPacienteId()));
 
         // Carrega serviço primeiro (sempre obrigatório); profissional só se for informado
-        Servico servico = servicoRepository.findById(dto.getServicoId())
+        Servico servico = servicoRepository
+                .findById(dto.getServicoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Serviço", dto.getServicoId()));
 
         Profissional profissional = null;
         if (dto.getProfissionalId() != null) {
-            profissional = profissionalRepository.findById(dto.getProfissionalId())
+            profissional = profissionalRepository
+                    .findById(dto.getProfissionalId())
                     .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
             // Validar que o profissional atende a atividade do serviço
             validarProfissionalAtendeAtividade(profissional, servico);
@@ -90,7 +95,8 @@ public class AgendamentoService {
         // Validar assinatura se fornecida
         Assinatura assinatura = null;
         if (dto.getAssinaturaId() != null) {
-            assinatura = assinaturaRepository.findById(dto.getAssinaturaId())
+            assinatura = assinaturaRepository
+                    .findById(dto.getAssinaturaId())
                     .orElseThrow(() -> new ResourceNotFoundException("Assinatura", dto.getAssinaturaId()));
             validarAssinatura(assinatura);
         }
@@ -110,12 +116,14 @@ public class AgendamentoService {
             // Para registros retroativos (dataHora no passado), pula a validação de
             // HorarioDisponivel — o profissional pode ter mudado de turnos desde então.
             // A validação de capacidade da turma continua valendo para integridade do histórico.
-            boolean ehRetroativo = dto.getDataHora() != null && dto.getDataHora().isBefore(LocalDateTime.now());
+            boolean ehRetroativo =
+                    dto.getDataHora() != null && dto.getDataHora().isBefore(LocalDateTime.now());
             if (!ehRetroativo) {
                 validarDentroDoHorarioDisponivel(profissional.getId(), dto.getDataHora(), dto.getDuracaoMinutos());
             }
             int capacidade = servico.getAtividade().getCapacidadeMaxima() != null
-                    ? servico.getAtividade().getCapacidadeMaxima() : 1;
+                    ? servico.getAtividade().getCapacidadeMaxima()
+                    : 1;
             validarConflitoHorario(profissional.getId(), dto.getDataHora(), dto.getDuracaoMinutos(), capacidade);
         }
 
@@ -130,14 +138,17 @@ public class AgendamentoService {
     }
 
     public Agendamento getAgendamentoById(UUID id) {
-        return agendamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
+        return agendamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
     }
 
-    public Page<Agendamento> getAllAgendamentos(StatusAgendamento status, UUID pacienteId,
-                                                UUID profissionalId, UUID assinaturaId,
-                                                LocalDateTime dataInicio, LocalDateTime dataFim,
-                                                Pageable pageable) {
+    public Page<Agendamento> getAllAgendamentos(
+            StatusAgendamento status,
+            UUID pacienteId,
+            UUID profissionalId,
+            UUID assinaturaId,
+            LocalDateTime dataInicio,
+            LocalDateTime dataFim,
+            Pageable pageable) {
         Specification<Agendamento> spec = Specification.allOf(
                 AgendamentoSpecification.hasStatus(status),
                 AgendamentoSpecification.hasPaciente(pacienteId),
@@ -151,22 +162,26 @@ public class AgendamentoService {
         LocalDateTime dtInicio = inicio != null ? inicio.atStartOfDay() : null;
         LocalDateTime dtFim = fim != null ? fim.atTime(LocalTime.MAX) : null;
         Specification<Agendamento> spec = Specification.allOf(
-                AgendamentoSpecification.hasStatus(status),
-                AgendamentoSpecification.betweenDatas(dtInicio, dtFim));
+                AgendamentoSpecification.hasStatus(status), AgendamentoSpecification.betweenDatas(dtInicio, dtFim));
         List<Agendamento> agendamentos = agendamentoRepository.findAll(spec);
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Paciente,Profissional,Servico,DataHora,Status,DuracaoMinutos\n");
         for (Agendamento a : agendamentos) {
-            String nomeProfissional = a.getProfissional() != null ? a.getProfissional().getNome() : "Sem profissional";
-            csv.append(String.join(",",
-                    a.getId().toString(),
-                    escapeCsv(a.getPaciente().getNomeCompleto()),
-                    escapeCsv(nomeProfissional),
-                    escapeCsv(a.getServico().getAtividade().getNome() + " - " + a.getServico().getPlano().getNome()),
-                    a.getDataHora() != null ? a.getDataHora().toString() : "",
-                    a.getStatus().name(),
-                    a.getDuracaoMinutos() != null ? a.getDuracaoMinutos().toString() : ""
-            )).append("\n");
+            String nomeProfissional =
+                    a.getProfissional() != null ? a.getProfissional().getNome() : "Sem profissional";
+            csv.append(String.join(
+                            ",",
+                            a.getId().toString(),
+                            escapeCsv(a.getPaciente().getNomeCompleto()),
+                            escapeCsv(nomeProfissional),
+                            escapeCsv(a.getServico().getAtividade().getNome() + " - "
+                                    + a.getServico().getPlano().getNome()),
+                            a.getDataHora() != null ? a.getDataHora().toString() : "",
+                            a.getStatus().name(),
+                            a.getDuracaoMinutos() != null
+                                    ? a.getDuracaoMinutos().toString()
+                                    : ""))
+                    .append("\n");
         }
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
@@ -193,8 +208,8 @@ public class AgendamentoService {
 
     @Transactional
     public Agendamento updateAgendamento(UUID id, AgendamentoUpdateDTO dto) {
-        Agendamento agendamento = agendamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
+        Agendamento agendamento =
+                agendamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
 
         if (isStatusFinal(agendamento.getStatus())) {
             throw new BusinessException("Não é possível alterar um agendamento com status " + agendamento.getStatus());
@@ -207,7 +222,8 @@ public class AgendamentoService {
         boolean trocouProfissional = Boolean.TRUE.equals(dto.getAlterarProfissional());
         if (trocouProfissional) {
             if (dto.getProfissionalId() != null) {
-                profissionalEfetivo = profissionalRepository.findById(dto.getProfissionalId())
+                profissionalEfetivo = profissionalRepository
+                        .findById(dto.getProfissionalId())
                         .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
                 validarProfissionalAtendeAtividade(profissionalEfetivo, agendamento.getServico());
             } else {
@@ -217,7 +233,8 @@ public class AgendamentoService {
 
         // Se mudou dataHora, duração ou profissional, revalidar conflitos e disponibilidade
         LocalDateTime novaDataHora = dto.getDataHora() != null ? dto.getDataHora() : agendamento.getDataHora();
-        Integer novaDuracao = dto.getDuracaoMinutos() != null ? dto.getDuracaoMinutos() : agendamento.getDuracaoMinutos();
+        Integer novaDuracao =
+                dto.getDuracaoMinutos() != null ? dto.getDuracaoMinutos() : agendamento.getDuracaoMinutos();
 
         boolean precisaRevalidar = dto.getDataHora() != null || dto.getDuracaoMinutos() != null || trocouProfissional;
         if (precisaRevalidar && profissionalEfetivo != null) {
@@ -227,9 +244,10 @@ public class AgendamentoService {
                 validarDentroDoHorarioDisponivel(profissionalEfetivo.getId(), novaDataHora, novaDuracao);
             }
             int capacidade = agendamento.getServico().getAtividade().getCapacidadeMaxima() != null
-                    ? agendamento.getServico().getAtividade().getCapacidadeMaxima() : 1;
-            validarConflitoHorarioExcluindo(profissionalEfetivo.getId(), novaDataHora, novaDuracao,
-                    agendamento.getId(), capacidade);
+                    ? agendamento.getServico().getAtividade().getCapacidadeMaxima()
+                    : 1;
+            validarConflitoHorarioExcluindo(
+                    profissionalEfetivo.getId(), novaDataHora, novaDuracao, agendamento.getId(), capacidade);
         }
 
         if (trocouProfissional) {
@@ -245,8 +263,8 @@ public class AgendamentoService {
 
     @Transactional
     public Agendamento updateStatus(UUID id, AgendamentoStatusDTO dto) {
-        Agendamento agendamento = agendamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
+        Agendamento agendamento =
+                agendamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
 
         validarTransicaoStatus(agendamento.getStatus(), dto.getStatus());
 
@@ -279,8 +297,8 @@ public class AgendamentoService {
 
     @Transactional
     public void deleteAgendamento(UUID id) {
-        Agendamento agendamento = agendamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
+        Agendamento agendamento =
+                agendamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
         if (agendamento.getProfissional() != null) {
             googleCalendarService.ifPresent(g -> g.deleteEvent(agendamento));
         }
@@ -288,11 +306,11 @@ public class AgendamentoService {
         agendamentoRepository.save(agendamento);
     }
 
-    public List<LocalDateTime> getAvailableSlots(UUID profissionalId, LocalDate data,
-                                                    Integer duracaoMinutos, int capacidadeMaxima) {
+    public List<LocalDateTime> getAvailableSlots(
+            UUID profissionalId, LocalDate data, Integer duracaoMinutos, int capacidadeMaxima) {
         DayOfWeek diaSemana = data.getDayOfWeek();
-        List<HorarioDisponivel> horarios = horarioDisponivelRepository
-                .findByProfissionalIdAndDiaSemana(profissionalId, diaSemana);
+        List<HorarioDisponivel> horarios =
+                horarioDisponivelRepository.findByProfissionalIdAndDiaSemana(profissionalId, diaSemana);
 
         if (horarios.isEmpty()) {
             return List.of();
@@ -301,12 +319,12 @@ public class AgendamentoService {
         // Buscar agendamentos existentes do dia (AGENDADO ou CONFIRMADO)
         LocalDateTime startOfDay = data.atStartOfDay();
         LocalDateTime endOfDay = data.atTime(LocalTime.MAX);
-        List<Agendamento> existingAppointments = agendamentoRepository
-                .findByProfissionalIdAndStatusInAndDataHoraBetween(
+        List<Agendamento> existingAppointments =
+                agendamentoRepository.findByProfissionalIdAndStatusInAndDataHoraBetween(
                         profissionalId,
                         List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO),
-                        startOfDay, endOfDay
-                );
+                        startOfDay,
+                        endOfDay);
 
         // Gerar slots disponíveis
         List<LocalDateTime> slots = new ArrayList<>();
@@ -316,11 +334,13 @@ public class AgendamentoService {
                 LocalDateTime slotDateTime = data.atTime(current);
                 LocalDateTime slotEnd = slotDateTime.plusMinutes(duracaoMinutos);
 
-                long overlappingCount = existingAppointments.stream().filter(a -> {
-                    LocalDateTime existingStart = a.getDataHora();
-                    LocalDateTime existingEnd = existingStart.plusMinutes(a.getDuracaoMinutos());
-                    return slotDateTime.isBefore(existingEnd) && slotEnd.isAfter(existingStart);
-                }).count();
+                long overlappingCount = existingAppointments.stream()
+                        .filter(a -> {
+                            LocalDateTime existingStart = a.getDataHora();
+                            LocalDateTime existingEnd = existingStart.plusMinutes(a.getDuracaoMinutos());
+                            return slotDateTime.isBefore(existingEnd) && slotEnd.isAfter(existingStart);
+                        })
+                        .count();
 
                 if (overlappingCount < capacidadeMaxima) {
                     slots.add(slotDateTime);
@@ -335,8 +355,10 @@ public class AgendamentoService {
 
     @Transactional
     public Agendamento criarReposicao(ReposicaoRequestDTO dto) {
-        Agendamento origem = agendamentoRepository.findById(dto.getAgendamentoOrigemId())
-                .orElseThrow(() -> new ResourceNotFoundException("Agendamento de origem", dto.getAgendamentoOrigemId()));
+        Agendamento origem = agendamentoRepository
+                .findById(dto.getAgendamentoOrigemId())
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Agendamento de origem", dto.getAgendamentoOrigemId()));
 
         // Validar que o agendamento de origem está cancelado e tem direito a reposição
         if (origem.getStatus() != StatusAgendamento.CANCELADO) {
@@ -360,17 +382,21 @@ public class AgendamentoService {
         // Validar que não existe reposição já criada para esta origem
         boolean existeReposicao = agendamentoRepository.existsByReposicaoOrigemIdAndStatusIn(
                 origem.getId(),
-                List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO, StatusAgendamento.REALIZADO)
-        );
+                List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO, StatusAgendamento.REALIZADO));
         if (existeReposicao) {
             throw new BusinessException("Já existe uma reposição para este agendamento de origem");
         }
 
         // Validar limite de 2 reposições por mês
-        LocalDateTime inicioMes = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime inicioMes = LocalDateTime.now()
+                .withDayOfMonth(1)
+                .withHour(0)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
         LocalDateTime fimMes = inicioMes.plusMonths(1).minusNanos(1);
-        long reposicoesNoMes = agendamentoRepository.countReposicoesNoMes(
-                origem.getPaciente().getId(), inicioMes, fimMes);
+        long reposicoesNoMes =
+                agendamentoRepository.countReposicoesNoMes(origem.getPaciente().getId(), inicioMes, fimMes);
         if (reposicoesNoMes >= LIMITE_REPOSICOES_MES) {
             throw new BusinessException("Limite de " + LIMITE_REPOSICOES_MES + " reposições por mês atingido");
         }
@@ -378,7 +404,8 @@ public class AgendamentoService {
         // Buscar profissional (opcional — pode ficar nulo, ex.: Pilates onde varia por dia)
         Profissional profissional = null;
         if (dto.getProfissionalId() != null) {
-            profissional = profissionalRepository.findById(dto.getProfissionalId())
+            profissional = profissionalRepository
+                    .findById(dto.getProfissionalId())
                     .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
             validarProfissionalAtendeAtividade(profissional, origem.getServico());
         }
@@ -390,7 +417,8 @@ public class AgendamentoService {
         if (profissional != null) {
             validarDentroDoHorarioDisponivel(profissional.getId(), dto.getDataHora(), duracao);
             int capacidade = origem.getServico().getAtividade().getCapacidadeMaxima() != null
-                    ? origem.getServico().getAtividade().getCapacidadeMaxima() : 1;
+                    ? origem.getServico().getAtividade().getCapacidadeMaxima()
+                    : 1;
             validarConflitoHorario(profissional.getId(), dto.getDataHora(), duracao, capacidade);
         }
 
@@ -416,11 +444,15 @@ public class AgendamentoService {
 
     public ReposicaoInfoDTO getReposicoesInfo(UUID pacienteId) {
         // Verificar que o paciente existe
-        patientRepository.findById(pacienteId)
-                .orElseThrow(() -> new ResourceNotFoundException("Paciente", pacienteId));
+        patientRepository.findById(pacienteId).orElseThrow(() -> new ResourceNotFoundException("Paciente", pacienteId));
 
         // Contar reposições usadas no mês corrente
-        LocalDateTime inicioMes = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime inicioMes = LocalDateTime.now()
+                .withDayOfMonth(1)
+                .withHour(0)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
         LocalDateTime fimMes = inicioMes.plusMonths(1).minusNanos(1);
         long reposicoesUsadas = agendamentoRepository.countReposicoesNoMes(pacienteId, inicioMes, fimMes);
 
@@ -432,8 +464,10 @@ public class AgendamentoService {
                     // Filtrar os que não têm reposição já criada
                     return !agendamentoRepository.existsByReposicaoOrigemIdAndStatusIn(
                             a.getId(),
-                            List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO, StatusAgendamento.REALIZADO)
-                    );
+                            List.of(
+                                    StatusAgendamento.AGENDADO,
+                                    StatusAgendamento.CONFIRMADO,
+                                    StatusAgendamento.REALIZADO));
                 })
                 .map(Agendamento::getId)
                 .collect(Collectors.toList());
@@ -448,10 +482,8 @@ public class AgendamentoService {
         boolean atende = atividades.stream()
                 .anyMatch(a -> a.getId().equals(servico.getAtividade().getId()));
         if (!atende) {
-            throw new BusinessException(
-                    "O profissional " + profissional.getNome() +
-                    " não atende a atividade " + servico.getAtividade().getNome()
-            );
+            throw new BusinessException("O profissional " + profissional.getNome() + " não atende a atividade "
+                    + servico.getAtividade().getNome());
         }
     }
 
@@ -469,56 +501,58 @@ public class AgendamentoService {
         LocalTime horaInicio = dataHora.toLocalTime();
         LocalTime horaFim = horaInicio.plusMinutes(duracaoMinutos);
 
-        List<HorarioDisponivel> horarios = horarioDisponivelRepository
-                .findByProfissionalIdAndDiaSemana(profissionalId, diaSemana);
+        List<HorarioDisponivel> horarios =
+                horarioDisponivelRepository.findByProfissionalIdAndDiaSemana(profissionalId, diaSemana);
 
-        boolean dentroDoHorario = horarios.stream().anyMatch(h ->
-                !horaInicio.isBefore(h.getHoraInicio()) && !horaFim.isAfter(h.getHoraFim())
-        );
+        boolean dentroDoHorario = horarios.stream()
+                .anyMatch(h -> !horaInicio.isBefore(h.getHoraInicio()) && !horaFim.isAfter(h.getHoraFim()));
 
         if (!dentroDoHorario) {
             throw new BusinessException("O horário solicitado está fora da disponibilidade do profissional");
         }
     }
 
-    private void validarConflitoHorario(UUID profissionalId, LocalDateTime dataHora,
-                                          Integer duracaoMinutos, int capacidadeMaxima) {
+    private void validarConflitoHorario(
+            UUID profissionalId, LocalDateTime dataHora, Integer duracaoMinutos, int capacidadeMaxima) {
         LocalDateTime fim = dataHora.plusMinutes(duracaoMinutos);
         LocalDateTime startOfDay = dataHora.toLocalDate().atStartOfDay();
         LocalDateTime endOfDay = dataHora.toLocalDate().atTime(LocalTime.MAX);
 
-        List<Agendamento> existing = agendamentoRepository
-                .findByProfissionalIdAndStatusInAndDataHoraBetween(
-                        profissionalId,
-                        List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO),
-                        startOfDay, endOfDay
-                );
+        List<Agendamento> existing = agendamentoRepository.findByProfissionalIdAndStatusInAndDataHoraBetween(
+                profissionalId,
+                List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO),
+                startOfDay,
+                endOfDay);
 
-        long overlappingCount = existing.stream().filter(a -> {
-            LocalDateTime existingStart = a.getDataHora();
-            LocalDateTime existingEnd = existingStart.plusMinutes(a.getDuracaoMinutos());
-            return dataHora.isBefore(existingEnd) && fim.isAfter(existingStart);
-        }).count();
+        long overlappingCount = existing.stream()
+                .filter(a -> {
+                    LocalDateTime existingStart = a.getDataHora();
+                    LocalDateTime existingEnd = existingStart.plusMinutes(a.getDuracaoMinutos());
+                    return dataHora.isBefore(existingEnd) && fim.isAfter(existingStart);
+                })
+                .count();
 
         if (overlappingCount >= capacidadeMaxima) {
-            throw new BusinessException("Conflito de horário: capacidade máxima (" + capacidadeMaxima +
-                    ") atingida neste período para o profissional");
+            throw new BusinessException("Conflito de horário: capacidade máxima (" + capacidadeMaxima
+                    + ") atingida neste período para o profissional");
         }
     }
 
-    private void validarConflitoHorarioExcluindo(UUID profissionalId, LocalDateTime dataHora,
-                                                   Integer duracaoMinutos, UUID agendamentoIdExcluir,
-                                                   int capacidadeMaxima) {
+    private void validarConflitoHorarioExcluindo(
+            UUID profissionalId,
+            LocalDateTime dataHora,
+            Integer duracaoMinutos,
+            UUID agendamentoIdExcluir,
+            int capacidadeMaxima) {
         LocalDateTime fim = dataHora.plusMinutes(duracaoMinutos);
         LocalDateTime startOfDay = dataHora.toLocalDate().atStartOfDay();
         LocalDateTime endOfDay = dataHora.toLocalDate().atTime(LocalTime.MAX);
 
-        List<Agendamento> existing = agendamentoRepository
-                .findByProfissionalIdAndStatusInAndDataHoraBetween(
-                        profissionalId,
-                        List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO),
-                        startOfDay, endOfDay
-                );
+        List<Agendamento> existing = agendamentoRepository.findByProfissionalIdAndStatusInAndDataHoraBetween(
+                profissionalId,
+                List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO),
+                startOfDay,
+                endOfDay);
 
         long overlappingCount = existing.stream()
                 .filter(a -> !a.getId().equals(agendamentoIdExcluir))
@@ -526,11 +560,12 @@ public class AgendamentoService {
                     LocalDateTime existingStart = a.getDataHora();
                     LocalDateTime existingEnd = existingStart.plusMinutes(a.getDuracaoMinutos());
                     return dataHora.isBefore(existingEnd) && fim.isAfter(existingStart);
-                }).count();
+                })
+                .count();
 
         if (overlappingCount >= capacidadeMaxima) {
-            throw new BusinessException("Conflito de horário: capacidade máxima (" + capacidadeMaxima +
-                    ") atingida neste período para o profissional");
+            throw new BusinessException("Conflito de horário: capacidade máxima (" + capacidadeMaxima
+                    + ") atingida neste período para o profissional");
         }
     }
 
@@ -539,30 +574,29 @@ public class AgendamentoService {
             throw new BusinessException("Não é possível alterar um agendamento com status " + atual);
         }
 
-        boolean transicaoValida = switch (atual) {
-            // AGENDADO → REALIZADO direto: atalho útil para registros retroativos e
-            // para casos em que a recepção esquece de confirmar antes da aula
-            case AGENDADO -> novo == StatusAgendamento.CONFIRMADO ||
-                             novo == StatusAgendamento.REALIZADO ||
-                             novo == StatusAgendamento.CANCELADO ||
-                             novo == StatusAgendamento.NAO_COMPARECEU;
-            case CONFIRMADO -> novo == StatusAgendamento.REALIZADO ||
-                               novo == StatusAgendamento.CANCELADO ||
-                               novo == StatusAgendamento.NAO_COMPARECEU;
-            default -> false;
-        };
+        boolean transicaoValida =
+                switch (atual) {
+                        // AGENDADO → REALIZADO direto: atalho útil para registros retroativos e
+                        // para casos em que a recepção esquece de confirmar antes da aula
+                    case AGENDADO -> novo == StatusAgendamento.CONFIRMADO
+                            || novo == StatusAgendamento.REALIZADO
+                            || novo == StatusAgendamento.CANCELADO
+                            || novo == StatusAgendamento.NAO_COMPARECEU;
+                    case CONFIRMADO -> novo == StatusAgendamento.REALIZADO
+                            || novo == StatusAgendamento.CANCELADO
+                            || novo == StatusAgendamento.NAO_COMPARECEU;
+                    default -> false;
+                };
 
         if (!transicaoValida) {
-            throw new BusinessException(
-                    "Transição de status inválida: " + atual + " → " + novo
-            );
+            throw new BusinessException("Transição de status inválida: " + atual + " → " + novo);
         }
     }
 
     private boolean isStatusFinal(StatusAgendamento status) {
-        return status == StatusAgendamento.REALIZADO ||
-               status == StatusAgendamento.CANCELADO ||
-               status == StatusAgendamento.NAO_COMPARECEU;
+        return status == StatusAgendamento.REALIZADO
+                || status == StatusAgendamento.CANCELADO
+                || status == StatusAgendamento.NAO_COMPARECEU;
     }
 
     /**
@@ -603,7 +637,8 @@ public class AgendamentoService {
         }
 
         // Verificar se o dia do agendamento é feriado
-        boolean isFeriado = feriadoRepository.isFeriado(agendamento.getDataHora().toLocalDate());
+        boolean isFeriado =
+                feriadoRepository.isFeriado(agendamento.getDataHora().toLocalDate());
         if (isFeriado) {
             agendamento.setDireitoReposicao(false);
             return;

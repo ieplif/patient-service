@@ -1,9 +1,10 @@
 package br.com.clinicahumaniza.patient_service.dto;
 
-import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import lombok.Data;
 
 // DTO para enviar dados como resposta da API.
 // Apenas os campos que o cliente pode ver. Note que não incluímos o CPF aqui por segurança.

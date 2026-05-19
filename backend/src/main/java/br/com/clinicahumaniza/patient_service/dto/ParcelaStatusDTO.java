@@ -1,12 +1,13 @@
 package br.com.clinicahumaniza.patient_service.dto;
 
-import br.com.clinicahumaniza.patient_service.model.StatusParcela;
+import java.time.LocalDateTime;
+
 import jakarta.validation.constraints.NotNull;
+
+import br.com.clinicahumaniza.patient_service.model.StatusParcela;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor

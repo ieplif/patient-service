@@ -1,5 +1,34 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import br.com.clinicahumaniza.patient_service.dto.ServicoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.ServicoResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.ServicoUpdateDTO;
@@ -11,34 +40,6 @@ import br.com.clinicahumaniza.patient_service.security.JwtAuthenticationFilter;
 import br.com.clinicahumaniza.patient_service.security.JwtService;
 import br.com.clinicahumaniza.patient_service.security.SecurityConfig;
 import br.com.clinicahumaniza.patient_service.service.ServicoService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ServicoController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class})
@@ -138,8 +139,7 @@ class ServicoControllerTest {
     @DisplayName("Deve listar serviços com autenticação - 200")
     @WithMockUser
     void getAllServicos_Authenticated_200() throws Exception {
-        when(servicoService.getAllServicos(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(servico)));
+        when(servicoService.getAllServicos(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(servico)));
         when(servicoMapper.toResponseDTO(servico)).thenReturn(responseDTO);
 
         mockMvc.perform(get("/api/v1/servicos"))
@@ -190,7 +190,8 @@ class ServicoControllerTest {
         ServicoUpdateDTO updateDTO = new ServicoUpdateDTO();
         updateDTO.setValor(new BigDecimal("400.00"));
 
-        when(servicoService.updateServico(any(UUID.class), any(ServicoUpdateDTO.class))).thenReturn(servico);
+        when(servicoService.updateServico(any(UUID.class), any(ServicoUpdateDTO.class)))
+                .thenReturn(servico);
         when(servicoMapper.toResponseDTO(servico)).thenReturn(responseDTO);
 
         mockMvc.perform(put("/api/v1/servicos/{id}", servicoId)
@@ -206,15 +207,12 @@ class ServicoControllerTest {
     void deleteServico_Authenticated_204() throws Exception {
         doNothing().when(servicoService).deleteServico(servicoId);
 
-        mockMvc.perform(delete("/api/v1/servicos/{id}", servicoId)
-                        .with(csrf()))
-                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/v1/servicos/{id}", servicoId).with(csrf())).andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("Deve retornar 401 sem autenticação")
     void getAllServicos_Unauthenticated_401() throws Exception {
-        mockMvc.perform(get("/api/v1/servicos"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/servicos")).andExpect(status().isUnauthorized());
     }
 }

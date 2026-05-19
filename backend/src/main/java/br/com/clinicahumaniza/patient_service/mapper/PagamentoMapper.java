@@ -1,5 +1,10 @@
 package br.com.clinicahumaniza.patient_service.mapper;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import br.com.clinicahumaniza.patient_service.dto.PagamentoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PagamentoResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.PagamentoUpdateDTO;
@@ -9,15 +14,12 @@ import br.com.clinicahumaniza.patient_service.model.Assinatura;
 import br.com.clinicahumaniza.patient_service.model.Pagamento;
 import br.com.clinicahumaniza.patient_service.model.Parcela;
 import br.com.clinicahumaniza.patient_service.model.Patient;
-import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class PagamentoMapper {
 
-    public Pagamento toEntity(PagamentoRequestDTO dto, Patient paciente, Assinatura assinatura, Agendamento agendamento) {
+    public Pagamento toEntity(
+            PagamentoRequestDTO dto, Patient paciente, Assinatura assinatura, Agendamento agendamento) {
         Pagamento pagamento = new Pagamento();
         pagamento.setPaciente(paciente);
         pagamento.setAssinatura(assinatura);
@@ -39,17 +41,15 @@ public class PagamentoMapper {
         if (entity.getAssinatura() != null) {
             dto.setAssinaturaId(entity.getAssinatura().getId());
             dto.setAssinaturaDescricao(
-                    entity.getAssinatura().getServico().getAtividade().getNome() + " - " +
-                    entity.getAssinatura().getServico().getPlano().getNome()
-            );
+                    entity.getAssinatura().getServico().getAtividade().getNome() + " - "
+                            + entity.getAssinatura().getServico().getPlano().getNome());
         }
 
         if (entity.getAgendamento() != null) {
             dto.setAgendamentoId(entity.getAgendamento().getId());
             dto.setAgendamentoDescricao(
-                    entity.getAgendamento().getServico().getAtividade().getNome() + " - " +
-                    entity.getAgendamento().getDataHora().toString()
-            );
+                    entity.getAgendamento().getServico().getAtividade().getNome() + " - "
+                            + entity.getAgendamento().getDataHora().toString());
         }
 
         dto.setValor(entity.getValor());

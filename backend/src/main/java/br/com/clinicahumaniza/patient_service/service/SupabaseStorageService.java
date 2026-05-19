@@ -1,5 +1,9 @@
 package br.com.clinicahumaniza.patient_service.service;
 
+import java.io.IOException;
+import java.text.Normalizer;
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,10 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.text.Normalizer;
-import java.util.UUID;
 
 @Service
 public class SupabaseStorageService {
@@ -40,8 +40,8 @@ public class SupabaseStorageService {
     static String sanitizeFilename(String original) {
         if (original == null || original.isBlank()) return "arquivo";
         // NFD decompõe acentos; depois removemos os marcadores de acento
-        String semAcentos = Normalizer.normalize(original, Normalizer.Form.NFD)
-                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        String semAcentos =
+                Normalizer.normalize(original, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
         // Substitui qualquer caractere que não seja [A-Za-z0-9._-] por "_"
         String safe = semAcentos.replaceAll("[^A-Za-z0-9._-]", "_");
         // Comprime sequências de "_" e remove "_" no início/fim (preservando extensão)
@@ -65,11 +65,14 @@ public class SupabaseStorageService {
             restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
         } catch (HttpClientErrorException e) {
             // Loga o status e body do Supabase para diagnóstico
-            log.error("Falha no upload Supabase Storage. status={}, body={}, path={}",
-                    e.getStatusCode(), e.getResponseBodyAsString(), fileName);
+            log.error(
+                    "Falha no upload Supabase Storage. status={}, body={}, path={}",
+                    e.getStatusCode(),
+                    e.getResponseBodyAsString(),
+                    fileName);
             throw new IOException(
-                    "Supabase Storage rejeitou o upload (HTTP " + e.getStatusCode().value() + "): "
-                            + e.getResponseBodyAsString(),
+                    "Supabase Storage rejeitou o upload (HTTP "
+                            + e.getStatusCode().value() + "): " + e.getResponseBodyAsString(),
                     e);
         } catch (Exception e) {
             log.error("Erro inesperado no upload Supabase Storage. path={}, msg={}", fileName, e.getMessage(), e);

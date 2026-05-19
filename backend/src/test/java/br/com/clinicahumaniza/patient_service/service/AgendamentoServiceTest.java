@@ -1,13 +1,18 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoStatusDTO;
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoUpdateDTO;
-import br.com.clinicahumaniza.patient_service.exception.BusinessException;
-import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
-import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
-import br.com.clinicahumaniza.patient_service.model.*;
-import br.com.clinicahumaniza.patient_service.repository.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,18 +25,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.math.BigDecimal;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import br.com.clinicahumaniza.patient_service.dto.AgendamentoRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.AgendamentoStatusDTO;
+import br.com.clinicahumaniza.patient_service.dto.AgendamentoUpdateDTO;
+import br.com.clinicahumaniza.patient_service.exception.BusinessException;
+import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
+import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
+import br.com.clinicahumaniza.patient_service.model.*;
+import br.com.clinicahumaniza.patient_service.repository.*;
 
 @ExtendWith(MockitoExtension.class)
 class AgendamentoServiceTest {
@@ -83,9 +84,16 @@ class AgendamentoServiceTest {
     @BeforeEach
     void setUp() {
         agendamentoService = new AgendamentoService(
-                agendamentoRepository, patientRepository, profissionalRepository,
-                servicoRepository, assinaturaRepository, horarioDisponivelRepository,
-                feriadoRepository, agendamentoMapper, assinaturaService, Optional.empty());
+                agendamentoRepository,
+                patientRepository,
+                profissionalRepository,
+                servicoRepository,
+                assinaturaRepository,
+                horarioDisponivelRepository,
+                feriadoRepository,
+                agendamentoMapper,
+                assinaturaService,
+                Optional.empty());
 
         agendamentoId = UUID.randomUUID();
         pacienteId = UUID.randomUUID();
@@ -171,7 +179,8 @@ class AgendamentoServiceTest {
         when(horarioDisponivelRepository.findByProfissionalIdAndDiaSemana(profissionalId, DayOfWeek.MONDAY))
                 .thenReturn(List.of(horarioDisponivel));
         when(agendamentoRepository.findByProfissionalIdAndStatusInAndDataHoraBetween(
-                eq(profissionalId), any(), any(), any())).thenReturn(List.of());
+                        eq(profissionalId), any(), any(), any()))
+                .thenReturn(List.of());
         when(agendamentoMapper.toEntity(any(), any(), any(), any(), any())).thenReturn(agendamento);
         when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
 
@@ -193,7 +202,8 @@ class AgendamentoServiceTest {
         when(horarioDisponivelRepository.findByProfissionalIdAndDiaSemana(profissionalId, DayOfWeek.MONDAY))
                 .thenReturn(List.of(horarioDisponivel));
         when(agendamentoRepository.findByProfissionalIdAndStatusInAndDataHoraBetween(
-                eq(profissionalId), any(), any(), any())).thenReturn(List.of());
+                        eq(profissionalId), any(), any(), any()))
+                .thenReturn(List.of());
         when(agendamentoMapper.toEntity(any(), any(), any(), any(), any())).thenReturn(agendamento);
         when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
 
@@ -214,8 +224,10 @@ class AgendamentoServiceTest {
         when(horarioDisponivelRepository.findByProfissionalIdAndDiaSemana(profissionalId, DayOfWeek.MONDAY))
                 .thenReturn(List.of(horarioDisponivel));
         when(agendamentoRepository.findByProfissionalIdAndStatusInAndDataHoraBetween(
-                eq(profissionalId), any(), any(), any())).thenReturn(List.of());
-        when(agendamentoMapper.toEntity(any(), any(), any(), any(), eq(assinatura))).thenReturn(agendamento);
+                        eq(profissionalId), any(), any(), any()))
+                .thenReturn(List.of());
+        when(agendamentoMapper.toEntity(any(), any(), any(), any(), eq(assinatura)))
+                .thenReturn(agendamento);
         when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
 
         Agendamento result = agendamentoService.createAgendamento(requestDTO);
@@ -345,7 +357,8 @@ class AgendamentoServiceTest {
         when(horarioDisponivelRepository.findByProfissionalIdAndDiaSemana(profissionalId, DayOfWeek.MONDAY))
                 .thenReturn(List.of(horarioDisponivel));
         when(agendamentoRepository.findByProfissionalIdAndStatusInAndDataHoraBetween(
-                eq(profissionalId), any(), any(), any())).thenReturn(List.of(existente));
+                        eq(profissionalId), any(), any(), any()))
+                .thenReturn(List.of(existente));
 
         assertThatThrownBy(() -> agendamentoService.createAgendamento(requestDTO))
                 .isInstanceOf(BusinessException.class)
@@ -368,7 +381,8 @@ class AgendamentoServiceTest {
         when(horarioDisponivelRepository.findByProfissionalIdAndDiaSemana(profissionalId, DayOfWeek.MONDAY))
                 .thenReturn(List.of(horarioDisponivel));
         when(agendamentoRepository.findByProfissionalIdAndStatusInAndDataHoraBetween(
-                eq(profissionalId), any(), any(), any())).thenReturn(List.of(existente));
+                        eq(profissionalId), any(), any(), any()))
+                .thenReturn(List.of(existente));
 
         assertThatThrownBy(() -> agendamentoService.createAgendamento(requestDTO))
                 .isInstanceOf(BusinessException.class)
@@ -391,7 +405,8 @@ class AgendamentoServiceTest {
         when(horarioDisponivelRepository.findByProfissionalIdAndDiaSemana(profissionalId, DayOfWeek.MONDAY))
                 .thenReturn(List.of(horarioDisponivel));
         when(agendamentoRepository.findByProfissionalIdAndStatusInAndDataHoraBetween(
-                eq(profissionalId), any(), any(), any())).thenReturn(List.of(existente));
+                        eq(profissionalId), any(), any(), any()))
+                .thenReturn(List.of(existente));
         when(agendamentoMapper.toEntity(any(), any(), any(), any(), any())).thenReturn(agendamento);
         when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
 
@@ -421,7 +436,8 @@ class AgendamentoServiceTest {
         when(horarioDisponivelRepository.findByProfissionalIdAndDiaSemana(profissionalId, DayOfWeek.MONDAY))
                 .thenReturn(List.of(horarioDisponivel));
         when(agendamentoRepository.findByProfissionalIdAndStatusInAndDataHoraBetween(
-                eq(profissionalId), any(), any(), any())).thenReturn(existentes);
+                        eq(profissionalId), any(), any(), any()))
+                .thenReturn(existentes);
 
         assertThatThrownBy(() -> agendamentoService.createAgendamento(requestDTO))
                 .isInstanceOf(BusinessException.class)
@@ -469,7 +485,8 @@ class AgendamentoServiceTest {
     @DisplayName("Deve listar todos os agendamentos")
     void getAllAgendamentos_Success() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(agendamentoRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Agendamento>>any(), any(Pageable.class)))
+        when(agendamentoRepository.findAll(
+                        org.mockito.ArgumentMatchers.<Specification<Agendamento>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(agendamento)));
 
         Page<Agendamento> result = agendamentoService.getAllAgendamentos(null, null, null, null, null, null, pageable);
@@ -682,7 +699,8 @@ class AgendamentoServiceTest {
         when(horarioDisponivelRepository.findByProfissionalIdAndDiaSemana(profissionalId, DayOfWeek.MONDAY))
                 .thenReturn(List.of(h));
         when(agendamentoRepository.findByProfissionalIdAndStatusInAndDataHoraBetween(
-                eq(profissionalId), any(), any(), any())).thenReturn(List.of());
+                        eq(profissionalId), any(), any(), any()))
+                .thenReturn(List.of());
 
         List<LocalDateTime> slots = agendamentoService.getAvailableSlots(profissionalId, data, 50, 1);
 
@@ -707,7 +725,8 @@ class AgendamentoServiceTest {
         when(horarioDisponivelRepository.findByProfissionalIdAndDiaSemana(profissionalId, DayOfWeek.MONDAY))
                 .thenReturn(List.of(h));
         when(agendamentoRepository.findByProfissionalIdAndStatusInAndDataHoraBetween(
-                eq(profissionalId), any(), any(), any())).thenReturn(List.of(existente));
+                        eq(profissionalId), any(), any(), any()))
+                .thenReturn(List.of(existente));
 
         List<LocalDateTime> slots = agendamentoService.getAvailableSlots(profissionalId, data, 50, 1);
 

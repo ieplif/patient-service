@@ -1,14 +1,14 @@
 package br.com.clinicahumaniza.patient_service.dto;
 
-import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor

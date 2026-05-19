@@ -1,13 +1,14 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.model.*;
-import br.com.clinicahumaniza.patient_service.repository.AgendamentoRepository;
-import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.Calendar.Events;
-import com.google.api.services.calendar.Calendar.Events.Insert;
-import com.google.api.services.calendar.Calendar.Events.Update;
-import com.google.api.services.calendar.Calendar.Events.Delete;
-import com.google.api.services.calendar.model.Event;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,14 +18,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.Calendar.Events;
+import com.google.api.services.calendar.Calendar.Events.Delete;
+import com.google.api.services.calendar.Calendar.Events.Insert;
+import com.google.api.services.calendar.Calendar.Events.Update;
+import com.google.api.services.calendar.model.Event;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import br.com.clinicahumaniza.patient_service.model.*;
+import br.com.clinicahumaniza.patient_service.repository.AgendamentoRepository;
 
 @ExtendWith(MockitoExtension.class)
 class GoogleCalendarServiceTest {
@@ -146,7 +148,8 @@ class GoogleCalendarServiceTest {
         updatedEvent.setId("event123");
 
         when(calendar.events()).thenReturn(events);
-        when(events.update(eq(CLINIC_CALENDAR_ID), eq("event123"), any(Event.class))).thenReturn(update);
+        when(events.update(eq(CLINIC_CALENDAR_ID), eq("event123"), any(Event.class)))
+                .thenReturn(update);
         when(update.execute()).thenReturn(updatedEvent);
 
         googleCalendarService.updateEvent(agendamento);

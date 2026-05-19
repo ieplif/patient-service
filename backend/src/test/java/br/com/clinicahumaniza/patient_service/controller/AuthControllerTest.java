@@ -1,14 +1,12 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
-import br.com.clinicahumaniza.patient_service.dto.AuthResponseDTO;
-import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.RegisterRequestDTO;
-import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
-import br.com.clinicahumaniza.patient_service.security.JwtAuthenticationFilter;
-import br.com.clinicahumaniza.patient_service.security.JwtService;
-import br.com.clinicahumaniza.patient_service.security.SecurityConfig;
-import br.com.clinicahumaniza.patient_service.service.AuthService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,17 +15,20 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import org.springframework.security.test.context.support.WithMockUser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import br.com.clinicahumaniza.patient_service.dto.AuthResponseDTO;
+import br.com.clinicahumaniza.patient_service.dto.LoginRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.RegisterRequestDTO;
+import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
+import br.com.clinicahumaniza.patient_service.security.JwtAuthenticationFilter;
+import br.com.clinicahumaniza.patient_service.security.JwtService;
+import br.com.clinicahumaniza.patient_service.security.SecurityConfig;
+import br.com.clinicahumaniza.patient_service.service.AuthService;
 
 @WebMvcTest(AuthController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class})
@@ -79,9 +80,7 @@ class AuthControllerTest {
         when(authService.login(any(LoginRequestDTO.class))).thenReturn(response);
 
         String body = objectMapper.writeValueAsString(request);
-        mockMvc.perform(post("/api/auth/login")
-                        .contentType("application/json")
-                        .content(body))
+        mockMvc.perform(post("/api/auth/login").contentType("application/json").content(body))
                 .andExpect(status().isOk())
                 .andExpect(cookie().exists("humaniza_token"));
     }
@@ -120,13 +119,10 @@ class AuthControllerTest {
     void login_BadCredentials_401() throws Exception {
         LoginRequestDTO request = new LoginRequestDTO("maria@email.com", "senhaerrada");
 
-        when(authService.login(any(LoginRequestDTO.class)))
-                .thenThrow(new BadCredentialsException("Bad credentials"));
+        when(authService.login(any(LoginRequestDTO.class))).thenThrow(new BadCredentialsException("Bad credentials"));
 
         String body = objectMapper.writeValueAsString(request);
-        mockMvc.perform(post("/api/auth/login")
-                        .contentType("application/json")
-                        .content(body))
+        mockMvc.perform(post("/api/auth/login").contentType("application/json").content(body))
                 .andExpect(status().isUnauthorized());
     }
 }

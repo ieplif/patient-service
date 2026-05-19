@@ -1,10 +1,10 @@
 package br.com.clinicahumaniza.patient_service.dto;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 /**
  * Resultado da regeneração de horários: quantos agendamentos foram cancelados

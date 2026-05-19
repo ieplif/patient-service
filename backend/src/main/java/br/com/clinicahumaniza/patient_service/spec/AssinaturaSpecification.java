@@ -1,10 +1,11 @@
 package br.com.clinicahumaniza.patient_service.spec;
 
-import br.com.clinicahumaniza.patient_service.model.Assinatura;
-import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
+import java.util.UUID;
+
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.UUID;
+import br.com.clinicahumaniza.patient_service.model.Assinatura;
+import br.com.clinicahumaniza.patient_service.model.StatusAssinatura;
 
 public class AssinaturaSpecification {
 

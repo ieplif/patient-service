@@ -1,12 +1,13 @@
 package br.com.clinicahumaniza.patient_service.mapper;
 
+import org.springframework.stereotype.Component;
+
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaUpdateDTO;
 import br.com.clinicahumaniza.patient_service.model.Assinatura;
 import br.com.clinicahumaniza.patient_service.model.Patient;
 import br.com.clinicahumaniza.patient_service.model.Servico;
-import org.springframework.stereotype.Component;
 
 @Component
 public class AssinaturaMapper {
@@ -30,9 +31,8 @@ public class AssinaturaMapper {
         dto.setPacienteId(entity.getPaciente().getId());
         dto.setPacienteNome(entity.getPaciente().getNomeCompleto());
         dto.setServicoId(entity.getServico().getId());
-        dto.setServicoDescricao(
-                entity.getServico().getAtividade().getNome() + " - " + entity.getServico().getPlano().getNome()
-        );
+        dto.setServicoDescricao(entity.getServico().getAtividade().getNome() + " - "
+                + entity.getServico().getPlano().getNome());
         dto.setDataInicio(entity.getDataInicio());
         dto.setDataVencimento(entity.getDataVencimento());
         dto.setSessoesContratadas(entity.getSessoesContratadas());

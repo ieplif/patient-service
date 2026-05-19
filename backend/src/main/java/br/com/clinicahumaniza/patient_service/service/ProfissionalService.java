@@ -1,5 +1,17 @@
 package br.com.clinicahumaniza.patient_service.service;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import br.com.clinicahumaniza.patient_service.dto.ProfissionalRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.ProfissionalUpdateDTO;
 import br.com.clinicahumaniza.patient_service.exception.DuplicateResourceException;
@@ -12,17 +24,6 @@ import br.com.clinicahumaniza.patient_service.model.User;
 import br.com.clinicahumaniza.patient_service.repository.AtividadeRepository;
 import br.com.clinicahumaniza.patient_service.repository.ProfissionalRepository;
 import br.com.clinicahumaniza.patient_service.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 @Service
 public class ProfissionalService {
@@ -34,11 +35,12 @@ public class ProfissionalService {
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public ProfissionalService(ProfissionalRepository profissionalRepository,
-                               UserRepository userRepository,
-                               AtividadeRepository atividadeRepository,
-                               ProfissionalMapper profissionalMapper,
-                               PasswordEncoder passwordEncoder) {
+    public ProfissionalService(
+            ProfissionalRepository profissionalRepository,
+            UserRepository userRepository,
+            AtividadeRepository atividadeRepository,
+            ProfissionalMapper profissionalMapper,
+            PasswordEncoder passwordEncoder) {
         this.profissionalRepository = profissionalRepository;
         this.userRepository = userRepository;
         this.atividadeRepository = atividadeRepository;
@@ -65,8 +67,7 @@ public class ProfissionalService {
     }
 
     public Profissional getProfissionalById(UUID id) {
-        return profissionalRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Profissional", id));
+        return profissionalRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Profissional", id));
     }
 
     public Page<Profissional> getAllProfissionais(Pageable pageable) {
@@ -79,7 +80,8 @@ public class ProfissionalService {
 
     @Transactional
     public Profissional updateProfissional(UUID id, ProfissionalUpdateDTO dto) {
-        Profissional profissional = profissionalRepository.findById(id)
+        Profissional profissional = profissionalRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Profissional", id));
 
         Set<Atividade> atividades = null;
@@ -93,7 +95,8 @@ public class ProfissionalService {
 
     @Transactional
     public void deleteProfissional(UUID id) {
-        Profissional profissional = profissionalRepository.findById(id)
+        Profissional profissional = profissionalRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Profissional", id));
         profissional.setAtivo(false);
         profissionalRepository.save(profissional);
@@ -102,7 +105,8 @@ public class ProfissionalService {
     private Set<Atividade> findAtividades(Set<UUID> atividadeIds) {
         Set<Atividade> atividades = new HashSet<>();
         for (UUID atividadeId : atividadeIds) {
-            Atividade atividade = atividadeRepository.findById(atividadeId)
+            Atividade atividade = atividadeRepository
+                    .findById(atividadeId)
                     .orElseThrow(() -> new ResourceNotFoundException("Atividade", atividadeId));
             atividades.add(atividade);
         }

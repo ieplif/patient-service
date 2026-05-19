@@ -1,12 +1,13 @@
 package br.com.clinicahumaniza.patient_service.dto;
 
+import java.util.Set;
+import java.util.UUID;
+
 import jakarta.validation.constraints.Size;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Set;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor

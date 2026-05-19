@@ -1,9 +1,10 @@
 package br.com.clinicahumaniza.patient_service.mapper;
 
+import org.springframework.stereotype.Component;
+
 import br.com.clinicahumaniza.patient_service.dto.FeriadoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.FeriadoResponseDTO;
 import br.com.clinicahumaniza.patient_service.model.Feriado;
-import org.springframework.stereotype.Component;
 
 @Component
 public class FeriadoMapper {

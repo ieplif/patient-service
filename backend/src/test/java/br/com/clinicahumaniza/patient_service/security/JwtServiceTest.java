@@ -1,16 +1,16 @@
 package br.com.clinicahumaniza.patient_service.security;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.Collections;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.Collections;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JwtServiceTest {
 
@@ -20,7 +20,8 @@ class JwtServiceTest {
     @BeforeEach
     void setUp() {
         jwtService = new JwtService();
-        ReflectionTestUtils.setField(jwtService, "secret", "dGVzdHNlY3JldGtleWZvcmp3dHRva2VudmFsaWRhdGlvbjEyMzQ1Njc4OQ==");
+        ReflectionTestUtils.setField(
+                jwtService, "secret", "dGVzdHNlY3JldGtleWZvcmp3dHRva2VudmFsaWRhdGlvbjEyMzQ1Njc4OQ==");
         ReflectionTestUtils.setField(jwtService, "expiration", 86400000L);
 
         userDetails = new User("maria@email.com", "password", Collections.emptyList());

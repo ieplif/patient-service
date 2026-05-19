@@ -1,5 +1,20 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import br.com.clinicahumaniza.patient_service.dto.ProfissionalRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.ProfissionalResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.ProfissionalUpdateDTO;
@@ -10,19 +25,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/profissionais")
@@ -41,9 +43,9 @@ public class ProfissionalController {
     @PostMapping
     @Operation(summary = "Criar profissional", description = "Cria um novo profissional com login no sistema")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Profissional criado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
-            @ApiResponse(responseCode = "409", description = "E-mail já cadastrado")
+        @ApiResponse(responseCode = "201", description = "Profissional criado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "409", description = "E-mail já cadastrado")
     })
     public ResponseEntity<ProfissionalResponseDTO> createProfissional(@Valid @RequestBody ProfissionalRequestDTO dto) {
         Profissional profissional = profissionalService.createProfissional(dto);
@@ -55,14 +57,15 @@ public class ProfissionalController {
     @ApiResponse(responseCode = "200", description = "Lista paginada de profissionais retornada com sucesso")
     public ResponseEntity<Page<ProfissionalResponseDTO>> getAllProfissionais(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(profissionalService.getAllProfissionais(pageable).map(profissionalMapper::toResponseDTO));
+        return ResponseEntity.ok(
+                profissionalService.getAllProfissionais(pageable).map(profissionalMapper::toResponseDTO));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Buscar profissional por ID", description = "Retorna um profissional pelo seu ID")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Profissional encontrado"),
-            @ApiResponse(responseCode = "404", description = "Profissional não encontrado")
+        @ApiResponse(responseCode = "200", description = "Profissional encontrado"),
+        @ApiResponse(responseCode = "404", description = "Profissional não encontrado")
     })
     public ResponseEntity<ProfissionalResponseDTO> getProfissionalById(@PathVariable UUID id) {
         Profissional profissional = profissionalService.getProfissionalById(id);
@@ -70,25 +73,27 @@ public class ProfissionalController {
     }
 
     @GetMapping("/atividade/{atividadeId}")
-    @Operation(summary = "Listar profissionais por atividade", description = "Retorna profissionais que atendem uma atividade específica")
+    @Operation(
+            summary = "Listar profissionais por atividade",
+            description = "Retorna profissionais que atendem uma atividade específica")
     @ApiResponse(responseCode = "200", description = "Lista de profissionais retornada com sucesso")
     public ResponseEntity<List<ProfissionalResponseDTO>> getProfissionaisByAtividade(@PathVariable UUID atividadeId) {
-        List<ProfissionalResponseDTO> responseDTOs = profissionalService.getProfissionaisByAtividade(atividadeId).stream()
-                .map(profissionalMapper::toResponseDTO)
-                .collect(Collectors.toList());
+        List<ProfissionalResponseDTO> responseDTOs =
+                profissionalService.getProfissionaisByAtividade(atividadeId).stream()
+                        .map(profissionalMapper::toResponseDTO)
+                        .collect(Collectors.toList());
         return ResponseEntity.ok(responseDTOs);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar profissional", description = "Atualiza os dados de um profissional existente")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Profissional atualizado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
-            @ApiResponse(responseCode = "404", description = "Profissional não encontrado")
+        @ApiResponse(responseCode = "200", description = "Profissional atualizado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "404", description = "Profissional não encontrado")
     })
     public ResponseEntity<ProfissionalResponseDTO> updateProfissional(
-            @PathVariable UUID id,
-            @Valid @RequestBody ProfissionalUpdateDTO dto) {
+            @PathVariable UUID id, @Valid @RequestBody ProfissionalUpdateDTO dto) {
         Profissional profissional = profissionalService.updateProfissional(id, dto);
         return ResponseEntity.ok(profissionalMapper.toResponseDTO(profissional));
     }
@@ -96,8 +101,8 @@ public class ProfissionalController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Desativar profissional", description = "Desativa um profissional (soft delete)")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Profissional desativado com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Profissional não encontrado")
+        @ApiResponse(responseCode = "204", description = "Profissional desativado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Profissional não encontrado")
     })
     public ResponseEntity<Void> deleteProfissional(@PathVariable UUID id) {
         profissionalService.deleteProfissional(id);

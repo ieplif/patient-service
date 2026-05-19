@@ -1,5 +1,35 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.AssinaturaStatusDTO;
@@ -12,35 +42,6 @@ import br.com.clinicahumaniza.patient_service.security.SecurityConfig;
 import br.com.clinicahumaniza.patient_service.service.AgendamentoRecorrenteService;
 import br.com.clinicahumaniza.patient_service.service.AssinaturaRenovacaoService;
 import br.com.clinicahumaniza.patient_service.service.AssinaturaService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AssinaturaController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class})
@@ -141,7 +142,8 @@ class AssinaturaControllerTest {
         requestDTO.setSessoesContratadas(4);
         requestDTO.setValor(new BigDecimal("350.00"));
 
-        when(assinaturaService.createAssinatura(any(AssinaturaRequestDTO.class))).thenReturn(assinatura);
+        when(assinaturaService.createAssinatura(any(AssinaturaRequestDTO.class)))
+                .thenReturn(assinatura);
         when(assinaturaMapper.toResponseDTO(assinatura)).thenReturn(responseDTO);
 
         mockMvc.perform(post("/api/v1/assinaturas")
@@ -209,7 +211,8 @@ class AssinaturaControllerTest {
         AssinaturaUpdateDTO updateDTO = new AssinaturaUpdateDTO();
         updateDTO.setValor(new BigDecimal("400.00"));
 
-        when(assinaturaService.updateAssinatura(any(UUID.class), any(AssinaturaUpdateDTO.class))).thenReturn(assinatura);
+        when(assinaturaService.updateAssinatura(any(UUID.class), any(AssinaturaUpdateDTO.class)))
+                .thenReturn(assinatura);
         when(assinaturaMapper.toResponseDTO(assinatura)).thenReturn(responseDTO);
 
         mockMvc.perform(put("/api/v1/assinaturas/{id}", assinaturaId)
@@ -225,7 +228,8 @@ class AssinaturaControllerTest {
     void updateStatus_Authenticated_200() throws Exception {
         AssinaturaStatusDTO statusDTO = new AssinaturaStatusDTO(StatusAssinatura.CANCELADO);
 
-        when(assinaturaService.updateStatus(any(UUID.class), any(AssinaturaStatusDTO.class))).thenReturn(assinatura);
+        when(assinaturaService.updateStatus(any(UUID.class), any(AssinaturaStatusDTO.class)))
+                .thenReturn(assinatura);
         when(assinaturaMapper.toResponseDTO(assinatura)).thenReturn(responseDTO);
 
         mockMvc.perform(patch("/api/v1/assinaturas/{id}/status", assinaturaId)
@@ -253,15 +257,13 @@ class AssinaturaControllerTest {
     void deleteAssinatura_Authenticated_204() throws Exception {
         doNothing().when(assinaturaService).deleteAssinatura(assinaturaId);
 
-        mockMvc.perform(delete("/api/v1/assinaturas/{id}", assinaturaId)
-                        .with(csrf()))
+        mockMvc.perform(delete("/api/v1/assinaturas/{id}", assinaturaId).with(csrf()))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("Deve retornar 401 sem autenticação")
     void getAllAssinaturas_Unauthenticated_401() throws Exception {
-        mockMvc.perform(get("/api/v1/assinaturas"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/assinaturas")).andExpect(status().isUnauthorized());
     }
 }

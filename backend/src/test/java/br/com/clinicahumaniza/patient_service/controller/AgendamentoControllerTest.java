@@ -1,35 +1,5 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
-import br.com.clinicahumaniza.patient_service.dto.*;
-import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
-import br.com.clinicahumaniza.patient_service.model.*;
-import br.com.clinicahumaniza.patient_service.security.JwtAuthenticationFilter;
-import br.com.clinicahumaniza.patient_service.security.JwtService;
-import br.com.clinicahumaniza.patient_service.security.SecurityConfig;
-import br.com.clinicahumaniza.patient_service.service.AgendamentoRecorrenteService;
-import br.com.clinicahumaniza.patient_service.service.AgendamentoService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -38,6 +8,36 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import br.com.clinicahumaniza.patient_service.dto.*;
+import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
+import br.com.clinicahumaniza.patient_service.model.*;
+import br.com.clinicahumaniza.patient_service.security.JwtAuthenticationFilter;
+import br.com.clinicahumaniza.patient_service.security.JwtService;
+import br.com.clinicahumaniza.patient_service.security.SecurityConfig;
+import br.com.clinicahumaniza.patient_service.service.AgendamentoRecorrenteService;
+import br.com.clinicahumaniza.patient_service.service.AgendamentoService;
 
 @WebMvcTest(AgendamentoController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class})
@@ -136,7 +136,8 @@ class AgendamentoControllerTest {
         requestDTO.setDataHora(LocalDateTime.of(2025, 6, 2, 10, 0));
         requestDTO.setDuracaoMinutos(50);
 
-        when(agendamentoService.createAgendamento(any(AgendamentoRequestDTO.class))).thenReturn(agendamento);
+        when(agendamentoService.createAgendamento(any(AgendamentoRequestDTO.class)))
+                .thenReturn(agendamento);
         when(agendamentoMapper.toResponseDTO(agendamento)).thenReturn(responseDTO);
 
         mockMvc.perform(post("/api/v1/agendamentos")
@@ -215,8 +216,7 @@ class AgendamentoControllerTest {
     void deleteAgendamento_Authenticated_204() throws Exception {
         doNothing().when(agendamentoService).deleteAgendamento(agendamentoId);
 
-        mockMvc.perform(delete("/api/v1/agendamentos/{id}", agendamentoId)
-                        .with(csrf()))
+        mockMvc.perform(delete("/api/v1/agendamentos/{id}", agendamentoId).with(csrf()))
                 .andExpect(status().isNoContent());
     }
 
@@ -249,10 +249,7 @@ class AgendamentoControllerTest {
     @WithMockUser
     void getAvailableSlots_200() throws Exception {
         LocalDate data = LocalDate.of(2025, 6, 2);
-        List<LocalDateTime> slots = List.of(
-                data.atTime(8, 0),
-                data.atTime(8, 50)
-        );
+        List<LocalDateTime> slots = List.of(data.atTime(8, 0), data.atTime(8, 50));
 
         when(agendamentoService.getAvailableSlots(profissionalId, data, 50, 1)).thenReturn(slots);
 
@@ -282,8 +279,7 @@ class AgendamentoControllerTest {
     @Test
     @DisplayName("Deve retornar 401 sem autenticação")
     void getAllAgendamentos_Unauthenticated_401() throws Exception {
-        mockMvc.perform(get("/api/v1/agendamentos"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/agendamentos")).andExpect(status().isUnauthorized());
     }
 
     // --- Testes de recorrência ---
@@ -338,8 +334,8 @@ class AgendamentoControllerTest {
         AgendamentoRecorrenteResponseDTO recorrenteResponse = new AgendamentoRecorrenteResponseDTO();
         recorrenteResponse.setId(UUID.randomUUID());
         recorrenteResponse.setAgendamentosCriados(List.of(responseDTO));
-        recorrenteResponse.setDatasIgnoradas(List.of(
-                new DataIgnoradaDTO(LocalDate.of(2025, 6, 9), "Conflito de horário")));
+        recorrenteResponse.setDatasIgnoradas(
+                List.of(new DataIgnoradaDTO(LocalDate.of(2025, 6, 9), "Conflito de horário")));
 
         when(recorrenteService.createRecorrente(any(AgendamentoRecorrenteRequestDTO.class)))
                 .thenReturn(recorrenteResponse);
@@ -370,8 +366,7 @@ class AgendamentoControllerTest {
     @DisplayName("Deve cancelar recorrência com cancelarFuturos=true - 200")
     @WithMockUser
     void cancelarRecorrencia_CancelarFuturos_200() throws Exception {
-        when(recorrenteService.cancelarRecorrencia(eq(agendamentoId), eq(true)))
-                .thenReturn(List.of(responseDTO));
+        when(recorrenteService.cancelarRecorrencia(eq(agendamentoId), eq(true))).thenReturn(List.of(responseDTO));
 
         mockMvc.perform(delete("/api/v1/agendamentos/{id}/recorrencia", agendamentoId)
                         .with(csrf())

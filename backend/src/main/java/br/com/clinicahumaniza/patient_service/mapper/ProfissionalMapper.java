@@ -1,15 +1,16 @@
 package br.com.clinicahumaniza.patient_service.mapper;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import br.com.clinicahumaniza.patient_service.dto.ProfissionalRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.ProfissionalResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.ProfissionalUpdateDTO;
 import br.com.clinicahumaniza.patient_service.model.Atividade;
 import br.com.clinicahumaniza.patient_service.model.Profissional;
 import br.com.clinicahumaniza.patient_service.model.User;
-import org.springframework.stereotype.Component;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class ProfissionalMapper {
@@ -30,11 +31,9 @@ public class ProfissionalMapper {
         dto.setNome(entity.getNome());
         dto.setTelefone(entity.getTelefone());
         dto.setEmail(entity.getUser().getEmail());
-        dto.setAtividades(
-                entity.getAtividades().stream()
-                        .map(a -> new ProfissionalResponseDTO.AtividadeSimpleDTO(a.getId(), a.getNome()))
-                        .collect(Collectors.toList())
-        );
+        dto.setAtividades(entity.getAtividades().stream()
+                .map(a -> new ProfissionalResponseDTO.AtividadeSimpleDTO(a.getId(), a.getNome()))
+                .collect(Collectors.toList()));
         dto.setGoogleCalendarId(entity.getGoogleCalendarId());
         dto.setAtivo(entity.isAtivo());
         dto.setCreatedAt(entity.getCreatedAt());

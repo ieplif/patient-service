@@ -1,5 +1,20 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import br.com.clinicahumaniza.patient_service.dto.ServicoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.ServicoResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.ServicoUpdateDTO;
@@ -10,19 +25,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/servicos")
@@ -41,9 +43,9 @@ public class ServicoController {
     @PostMapping
     @Operation(summary = "Criar serviço", description = "Cria um novo serviço no sistema")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Serviço criado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
-            @ApiResponse(responseCode = "404", description = "Atividade ou Plano não encontrado")
+        @ApiResponse(responseCode = "201", description = "Serviço criado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "404", description = "Atividade ou Plano não encontrado")
     })
     public ResponseEntity<ServicoResponseDTO> createServico(@Valid @RequestBody ServicoRequestDTO dto) {
         Servico servico = servicoService.createServico(dto);
@@ -61,8 +63,8 @@ public class ServicoController {
     @GetMapping("/{id}")
     @Operation(summary = "Buscar serviço por ID", description = "Retorna um serviço pelo seu ID")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Serviço encontrado"),
-            @ApiResponse(responseCode = "404", description = "Serviço não encontrado")
+        @ApiResponse(responseCode = "200", description = "Serviço encontrado"),
+        @ApiResponse(responseCode = "404", description = "Serviço não encontrado")
     })
     public ResponseEntity<ServicoResponseDTO> getServicoById(@PathVariable UUID id) {
         Servico servico = servicoService.getServicoById(id);
@@ -92,13 +94,12 @@ public class ServicoController {
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar serviço", description = "Atualiza os dados de um serviço existente")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Serviço atualizado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
-            @ApiResponse(responseCode = "404", description = "Serviço, Atividade ou Plano não encontrado")
+        @ApiResponse(responseCode = "200", description = "Serviço atualizado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "404", description = "Serviço, Atividade ou Plano não encontrado")
     })
     public ResponseEntity<ServicoResponseDTO> updateServico(
-            @PathVariable UUID id,
-            @Valid @RequestBody ServicoUpdateDTO dto) {
+            @PathVariable UUID id, @Valid @RequestBody ServicoUpdateDTO dto) {
         Servico servico = servicoService.updateServico(id, dto);
         return ResponseEntity.ok(servicoMapper.toResponseDTO(servico));
     }
@@ -106,8 +107,8 @@ public class ServicoController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Desativar serviço", description = "Desativa um serviço (soft delete)")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Serviço desativado com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Serviço não encontrado")
+        @ApiResponse(responseCode = "204", description = "Serviço desativado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Serviço não encontrado")
     })
     public ResponseEntity<Void> deleteServico(@PathVariable UUID id) {
         servicoService.deleteServico(id);

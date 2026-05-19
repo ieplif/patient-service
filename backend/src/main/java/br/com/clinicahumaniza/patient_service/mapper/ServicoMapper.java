@@ -1,12 +1,13 @@
 package br.com.clinicahumaniza.patient_service.mapper;
 
+import org.springframework.stereotype.Component;
+
 import br.com.clinicahumaniza.patient_service.dto.ServicoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.ServicoResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.ServicoUpdateDTO;
 import br.com.clinicahumaniza.patient_service.model.Atividade;
 import br.com.clinicahumaniza.patient_service.model.Plano;
 import br.com.clinicahumaniza.patient_service.model.Servico;
-import org.springframework.stereotype.Component;
 
 @Component
 public class ServicoMapper {
@@ -31,7 +32,8 @@ public class ServicoMapper {
         // - Pilates (frequência/semana): "Pilates Clássico - Mensalidade 2x/semana — Coletivo, Clínica"
         // - Pacotes de sessão: "Drenagem - Pacote 10 sessões — Individual, Clínica"
         // - Avulsos: "Pilates Clássico - Aula Avulsa — Coletivo, Clínica"
-        String desc = entity.getAtividade().getNome() + " - " + entity.getPlano().getNome();
+        String desc =
+                entity.getAtividade().getNome() + " - " + entity.getPlano().getNome();
         if (entity.getQuantidade() != null && entity.getQuantidade() > 1) {
             String unidade = entity.getUnidadeServico();
             if (unidade != null && unidade.toLowerCase().contains("frequência")) {

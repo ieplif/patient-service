@@ -1,12 +1,18 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.dto.ProntuarioResponseDTO;
-import br.com.clinicahumaniza.patient_service.model.Patient;
-import br.com.clinicahumaniza.patient_service.model.Prontuario;
-import br.com.clinicahumaniza.patient_service.model.TipoDocumento;
-import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
-import br.com.clinicahumaniza.patient_service.repository.ProntuarioRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+
 import jakarta.persistence.EntityNotFoundException;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,16 +26,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import br.com.clinicahumaniza.patient_service.dto.ProntuarioResponseDTO;
+import br.com.clinicahumaniza.patient_service.model.Patient;
+import br.com.clinicahumaniza.patient_service.model.Prontuario;
+import br.com.clinicahumaniza.patient_service.model.TipoDocumento;
+import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
+import br.com.clinicahumaniza.patient_service.repository.ProntuarioRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProntuarioService")
@@ -58,12 +60,11 @@ class ProntuarioServiceTest {
         paciente.setId(pacienteId);
         paciente.setNomeCompleto("Maria Santos");
 
-        pdfValido = new MockMultipartFile(
-                "file", "recibo.pdf", "application/pdf", "conteudo-pdf".getBytes());
+        pdfValido = new MockMultipartFile("file", "recibo.pdf", "application/pdf", "conteudo-pdf".getBytes());
 
         // Usuario autenticado para o campo uploadedBy
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("caissa@humaniza.com", null));
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken("caissa@humaniza.com", null));
     }
 
     @AfterEach
@@ -76,8 +77,7 @@ class ProntuarioServiceTest {
     @Test
     @DisplayName("Deve rejeitar arquivo vazio")
     void upload_ArquivoVazio() {
-        MockMultipartFile vazio = new MockMultipartFile(
-                "file", "vazio.pdf", "application/pdf", new byte[0]);
+        MockMultipartFile vazio = new MockMultipartFile("file", "vazio.pdf", "application/pdf", new byte[0]);
 
         assertThatThrownBy(() -> prontuarioService.upload(pacienteId, TipoDocumento.PRONTUARIO, "T", null, vazio))
                 .isInstanceOf(ResponseStatusException.class)
@@ -88,8 +88,7 @@ class ProntuarioServiceTest {
     @DisplayName("Deve rejeitar arquivo acima de 10MB")
     void upload_ArquivoMuitoGrande() {
         byte[] grande = new byte[10_485_761]; // 10MB + 1 byte
-        MockMultipartFile big = new MockMultipartFile(
-                "file", "grande.pdf", "application/pdf", grande);
+        MockMultipartFile big = new MockMultipartFile("file", "grande.pdf", "application/pdf", grande);
 
         assertThatThrownBy(() -> prontuarioService.upload(pacienteId, TipoDocumento.PRONTUARIO, "T", null, big))
                 .isInstanceOf(ResponseStatusException.class)
@@ -99,8 +98,7 @@ class ProntuarioServiceTest {
     @Test
     @DisplayName("Deve rejeitar tipo de arquivo nao permitido")
     void upload_TipoInvalido() {
-        MockMultipartFile exe = new MockMultipartFile(
-                "file", "virus.exe", "application/x-msdownload", "x".getBytes());
+        MockMultipartFile exe = new MockMultipartFile("file", "virus.exe", "application/x-msdownload", "x".getBytes());
 
         assertThatThrownBy(() -> prontuarioService.upload(pacienteId, TipoDocumento.PRONTUARIO, "T", null, exe))
                 .isInstanceOf(ResponseStatusException.class)
@@ -110,8 +108,8 @@ class ProntuarioServiceTest {
     @Test
     @DisplayName("Deve rejeitar nome de arquivo com path traversal")
     void upload_NomeArquivoInvalido() {
-        MockMultipartFile malicioso = new MockMultipartFile(
-                "file", "../../etc/passwd.pdf", "application/pdf", "x".getBytes());
+        MockMultipartFile malicioso =
+                new MockMultipartFile("file", "../../etc/passwd.pdf", "application/pdf", "x".getBytes());
 
         assertThatThrownBy(() -> prontuarioService.upload(pacienteId, TipoDocumento.PRONTUARIO, "T", null, malicioso))
                 .isInstanceOf(ResponseStatusException.class)
@@ -132,8 +130,8 @@ class ProntuarioServiceTest {
             return p;
         });
 
-        ProntuarioResponseDTO dto = prontuarioService.upload(
-                pacienteId, TipoDocumento.NOTA_FISCAL, "NF Maio", "obs", pdfValido);
+        ProntuarioResponseDTO dto =
+                prontuarioService.upload(pacienteId, TipoDocumento.NOTA_FISCAL, "NF Maio", "obs", pdfValido);
 
         assertThat(dto).isNotNull();
         assertThat(dto.getTipo()).isEqualTo(TipoDocumento.NOTA_FISCAL);
@@ -147,8 +145,7 @@ class ProntuarioServiceTest {
     void upload_PacienteNaoEncontrado() {
         when(patientRepository.findById(pacienteId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> prontuarioService.upload(
-                pacienteId, TipoDocumento.PRONTUARIO, "T", null, pdfValido))
+        assertThatThrownBy(() -> prontuarioService.upload(pacienteId, TipoDocumento.PRONTUARIO, "T", null, pdfValido))
                 .isInstanceOf(EntityNotFoundException.class);
     }
 
@@ -161,8 +158,7 @@ class ProntuarioServiceTest {
         when(prontuarioRepository.save(any(Prontuario.class)))
                 .thenThrow(new RuntimeException("value too long for type"));
 
-        assertThatThrownBy(() -> prontuarioService.upload(
-                pacienteId, TipoDocumento.PRONTUARIO, "T", null, pdfValido))
+        assertThatThrownBy(() -> prontuarioService.upload(pacienteId, TipoDocumento.PRONTUARIO, "T", null, pdfValido))
                 .isInstanceOf(RuntimeException.class);
 
         // O arquivo orfao deve ter sido removido do Storage
@@ -176,7 +172,10 @@ class ProntuarioServiceTest {
     void delete_Sucesso() {
         UUID id = UUID.randomUUID();
         Prontuario p = Prontuario.builder()
-                .id(id).paciente(paciente).storagePath("caminho/arquivo.pdf").build();
+                .id(id)
+                .paciente(paciente)
+                .storagePath("caminho/arquivo.pdf")
+                .build();
         when(prontuarioRepository.findById(id)).thenReturn(Optional.of(p));
 
         prontuarioService.delete(id);
@@ -191,8 +190,7 @@ class ProntuarioServiceTest {
         UUID id = UUID.randomUUID();
         when(prontuarioRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> prontuarioService.delete(id))
-                .isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> prontuarioService.delete(id)).isInstanceOf(EntityNotFoundException.class);
         verify(storageService, never()).delete(any());
     }
 
@@ -204,7 +202,6 @@ class ProntuarioServiceTest {
         UUID id = UUID.randomUUID();
         when(prontuarioRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> prontuarioService.getById(id))
-                .isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> prontuarioService.getById(id)).isInstanceOf(EntityNotFoundException.class);
     }
 }

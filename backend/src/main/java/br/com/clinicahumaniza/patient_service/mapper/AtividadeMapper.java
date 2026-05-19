@@ -1,10 +1,11 @@
 package br.com.clinicahumaniza.patient_service.mapper;
 
+import org.springframework.stereotype.Component;
+
 import br.com.clinicahumaniza.patient_service.dto.AtividadeRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AtividadeResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.AtividadeUpdateDTO;
 import br.com.clinicahumaniza.patient_service.model.Atividade;
-import org.springframework.stereotype.Component;
 
 @Component
 public class AtividadeMapper {

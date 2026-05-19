@@ -1,36 +1,5 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
-import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
-import br.com.clinicahumaniza.patient_service.dto.PatientResponseDTO;
-import br.com.clinicahumaniza.patient_service.dto.PatientUpdateDTO;
-import br.com.clinicahumaniza.patient_service.exception.PatientNotFoundException;
-import br.com.clinicahumaniza.patient_service.mapper.PatientMapper;
-import br.com.clinicahumaniza.patient_service.model.Patient;
-import br.com.clinicahumaniza.patient_service.security.JwtAuthenticationFilter;
-import br.com.clinicahumaniza.patient_service.security.JwtService;
-import br.com.clinicahumaniza.patient_service.security.SecurityConfig;
-import br.com.clinicahumaniza.patient_service.service.PatientService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -41,6 +10,38 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
+import br.com.clinicahumaniza.patient_service.dto.PatientResponseDTO;
+import br.com.clinicahumaniza.patient_service.dto.PatientUpdateDTO;
+import br.com.clinicahumaniza.patient_service.exception.PatientNotFoundException;
+import br.com.clinicahumaniza.patient_service.mapper.PatientMapper;
+import br.com.clinicahumaniza.patient_service.model.Patient;
+import br.com.clinicahumaniza.patient_service.security.JwtAuthenticationFilter;
+import br.com.clinicahumaniza.patient_service.security.JwtService;
+import br.com.clinicahumaniza.patient_service.security.SecurityConfig;
+import br.com.clinicahumaniza.patient_service.service.PatientService;
 
 @WebMvcTest(PatientController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class})
@@ -147,7 +148,8 @@ class PatientControllerTest {
         PatientUpdateDTO updateDTO = new PatientUpdateDTO();
         updateDTO.setNomeCompleto("João Atualizado");
 
-        when(patientService.updatePatient(any(UUID.class), any(PatientUpdateDTO.class))).thenReturn(patient);
+        when(patientService.updatePatient(any(UUID.class), any(PatientUpdateDTO.class)))
+                .thenReturn(patient);
         when(patientMapper.toResponseDTO(patient)).thenReturn(responseDTO);
 
         String body = objectMapper.writeValueAsString(updateDTO);
@@ -164,27 +166,22 @@ class PatientControllerTest {
     void deletePatient_Authenticated_204() throws Exception {
         doNothing().when(patientService).deletePatient(patientId);
 
-        mockMvc.perform(delete("/api/v1/patients/{id}", patientId)
-                        .with(csrf()))
-                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/v1/patients/{id}", patientId).with(csrf())).andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("Deve retornar 401 sem autenticação")
     void getAllPatients_Unauthenticated_401() throws Exception {
-        mockMvc.perform(get("/api/v1/patients"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/patients")).andExpect(status().isUnauthorized());
     }
 
     @Test
     @DisplayName("Deve retornar 404 quando paciente não encontrado")
     @WithMockUser
     void getPatientById_NotFound_404() throws Exception {
-        when(patientService.getPatientById(any(UUID.class)))
-                .thenThrow(new PatientNotFoundException(patientId));
+        when(patientService.getPatientById(any(UUID.class))).thenThrow(new PatientNotFoundException(patientId));
 
-        mockMvc.perform(get("/api/v1/patients/{id}", patientId))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/patients/{id}", patientId)).andExpect(status().isNotFound());
     }
 
     @Test

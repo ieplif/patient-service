@@ -1,15 +1,17 @@
 package br.com.clinicahumaniza.patient_service.model;
 
-import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
-
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import org.hibernate.annotations.SQLRestriction;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "profissionais")
@@ -37,8 +39,7 @@ public class Profissional {
     @JoinTable(
             name = "profissional_atividades",
             joinColumns = @JoinColumn(name = "profissional_id"),
-            inverseJoinColumns = @JoinColumn(name = "atividade_id")
-    )
+            inverseJoinColumns = @JoinColumn(name = "atividade_id"))
     private Set<Atividade> atividades = new HashSet<>();
 
     @Column(name = "google_calendar_id")

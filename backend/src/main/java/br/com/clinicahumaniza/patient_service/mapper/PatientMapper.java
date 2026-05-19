@@ -1,16 +1,17 @@
 package br.com.clinicahumaniza.patient_service.mapper;
 
+import org.springframework.stereotype.Component;
+
 import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientUpdateDTO;
 import br.com.clinicahumaniza.patient_service.model.Patient;
-import org.springframework.stereotype.Component;
 
 @Component // Torna esta classe um Bean do Spring para que possamos injetá-la.
 public class PatientMapper {
     public void updateEntityFromDto(PatientUpdateDTO dto, Patient entity) {
-    // Para cada campo, verificamos se um novo valor foi fornecido no DTO.
-    // Se não for nulo, atualizamos a entidade.
+        // Para cada campo, verificamos se um novo valor foi fornecido no DTO.
+        // Se não for nulo, atualizamos a entidade.
         if (dto.getNomeCompleto() != null) {
             entity.setNomeCompleto(dto.getNomeCompleto());
         }
@@ -44,8 +45,8 @@ public class PatientMapper {
         if (dto.getConsentimentoLgpd() != null) {
             entity.setConsentimentoLgpd(dto.getConsentimentoLgpd());
         }
-    // O campo `updatedAt` será atualizado automaticamente pela anotação @PreUpdate na entidade.
-}
+        // O campo `updatedAt` será atualizado automaticamente pela anotação @PreUpdate na entidade.
+    }
 
     public Patient toEntity(PatientRequestDTO dto) {
         Patient patient = new Patient();

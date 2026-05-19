@@ -1,15 +1,5 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.dto.*;
-import br.com.clinicahumaniza.patient_service.exception.BusinessException;
-import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
-import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
-import br.com.clinicahumaniza.patient_service.model.*;
-import br.com.clinicahumaniza.patient_service.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,6 +9,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.clinicahumaniza.patient_service.dto.*;
+import br.com.clinicahumaniza.patient_service.exception.BusinessException;
+import br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException;
+import br.com.clinicahumaniza.patient_service.mapper.AgendamentoMapper;
+import br.com.clinicahumaniza.patient_service.model.*;
+import br.com.clinicahumaniza.patient_service.repository.*;
 
 @Service
 public class AgendamentoRecorrenteService {
@@ -35,14 +36,15 @@ public class AgendamentoRecorrenteService {
     private final AgendamentoMapper agendamentoMapper;
 
     @Autowired
-    public AgendamentoRecorrenteService(AgendamentoService agendamentoService,
-                                         AgendamentoRepository agendamentoRepository,
-                                         AgendamentoRecorrenteRepository recorrenteRepository,
-                                         PatientRepository patientRepository,
-                                         ProfissionalRepository profissionalRepository,
-                                         ServicoRepository servicoRepository,
-                                         AssinaturaRepository assinaturaRepository,
-                                         AgendamentoMapper agendamentoMapper) {
+    public AgendamentoRecorrenteService(
+            AgendamentoService agendamentoService,
+            AgendamentoRepository agendamentoRepository,
+            AgendamentoRecorrenteRepository recorrenteRepository,
+            PatientRepository patientRepository,
+            ProfissionalRepository profissionalRepository,
+            ServicoRepository servicoRepository,
+            AssinaturaRepository assinaturaRepository,
+            AgendamentoMapper agendamentoMapper) {
         this.agendamentoService = agendamentoService;
         this.agendamentoRepository = agendamentoRepository;
         this.recorrenteRepository = recorrenteRepository;
@@ -62,32 +64,34 @@ public class AgendamentoRecorrenteService {
             throw new BusinessException("Total de sessões não pode exceder " + MAX_DATAS);
         }
 
-        Patient paciente = patientRepository.findById(dto.getPacienteId())
+        Patient paciente = patientRepository
+                .findById(dto.getPacienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Paciente", dto.getPacienteId()));
 
         // Carrega serviço primeiro (sempre obrigatório); profissional só se for informado
-        Servico servico = servicoRepository.findById(dto.getServicoId())
+        Servico servico = servicoRepository
+                .findById(dto.getServicoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Serviço", dto.getServicoId()));
 
         Profissional profissional = null;
         if (dto.getProfissionalId() != null) {
-            profissional = profissionalRepository.findById(dto.getProfissionalId())
+            profissional = profissionalRepository
+                    .findById(dto.getProfissionalId())
                     .orElseThrow(() -> new ResourceNotFoundException("Profissional", dto.getProfissionalId()));
 
             // Validar que o profissional atende a atividade do serviço
             boolean atende = profissional.getAtividades().stream()
                     .anyMatch(a -> a.getId().equals(servico.getAtividade().getId()));
             if (!atende) {
-                throw new BusinessException(
-                        "O profissional " + profissional.getNome() +
-                        " não atende a atividade " + servico.getAtividade().getNome()
-                );
+                throw new BusinessException("O profissional " + profissional.getNome() + " não atende a atividade "
+                        + servico.getAtividade().getNome());
             }
         }
 
         Assinatura assinatura = null;
         if (dto.getAssinaturaId() != null) {
-            assinatura = assinaturaRepository.findById(dto.getAssinaturaId())
+            assinatura = assinaturaRepository
+                    .findById(dto.getAssinaturaId())
                     .orElseThrow(() -> new ResourceNotFoundException("Assinatura", dto.getAssinaturaId()));
             if (assinatura.getStatus() != StatusAssinatura.ATIVO) {
                 throw new BusinessException("Assinatura não está ativa (status: " + assinatura.getStatus() + ")");
@@ -111,8 +115,12 @@ public class AgendamentoRecorrenteService {
 
         // Gerar datas candidatas
         List<LocalDateTime> datasCandidatas = gerarDatas(
-                dto.getFrequencia(), dto.getDiasSemana(), dto.getHoraInicio(),
-                dto.getTotalSessoes(), dto.getDataFim(), dataInicioRef);
+                dto.getFrequencia(),
+                dto.getDiasSemana(),
+                dto.getHoraInicio(),
+                dto.getTotalSessoes(),
+                dto.getDataFim(),
+                dataInicioRef);
 
         // Salvar entidade AgendamentoRecorrente
         AgendamentoRecorrente recorrente = new AgendamentoRecorrente();
@@ -121,9 +129,8 @@ public class AgendamentoRecorrenteService {
         recorrente.setServico(servico);
         recorrente.setAssinatura(assinatura);
         recorrente.setFrequencia(dto.getFrequencia());
-        recorrente.setDiasSemana(dto.getDiasSemana().stream()
-                .map(DayOfWeek::name)
-                .collect(Collectors.joining(",")));
+        recorrente.setDiasSemana(
+                dto.getDiasSemana().stream().map(DayOfWeek::name).collect(Collectors.joining(",")));
         recorrente.setHoraInicio(dto.getHoraInicio());
         recorrente.setDuracaoMinutos(duracaoMinutos);
         recorrente.setTotalSessoes(dto.getTotalSessoes());
@@ -159,13 +166,18 @@ public class AgendamentoRecorrenteService {
         return toResponseDTO(recorrente, criados, ignoradas);
     }
 
-    List<LocalDateTime> gerarDatas(FrequenciaRecorrencia frequencia, List<DayOfWeek> diasSemana,
-                                    LocalTime horaInicio, Integer totalSessoes, LocalDate dataFim,
-                                    LocalDate dataInicioRef) {
+    List<LocalDateTime> gerarDatas(
+            FrequenciaRecorrencia frequencia,
+            List<DayOfWeek> diasSemana,
+            LocalTime horaInicio,
+            Integer totalSessoes,
+            LocalDate dataFim,
+            LocalDate dataInicioRef) {
         List<LocalDateTime> datas = new ArrayList<>();
         // Default: amanhã. Se o caller informa uma data (mesmo retroativa), respeita —
         // útil para registrar histórico ao popular o sistema com casos do dia a dia.
-        LocalDate atual = dataInicioRef != null ? dataInicioRef : LocalDate.now().plusDays(1);
+        LocalDate atual =
+                dataInicioRef != null ? dataInicioRef : LocalDate.now().plusDays(1);
 
         while (datas.size() < MAX_DATAS) {
             // Verifica limite por data
@@ -194,15 +206,16 @@ public class AgendamentoRecorrenteService {
                     if (totalSessoes != null && datas.size() >= totalSessoes) break;
 
                     // Se é o último dia da semana no ciclo, avança o ciclo
-                    DayOfWeek ultimoDiaCiclo = diasSemana.stream()
-                            .max(DayOfWeek::compareTo).orElse(atual.getDayOfWeek());
+                    DayOfWeek ultimoDiaCiclo =
+                            diasSemana.stream().max(DayOfWeek::compareTo).orElse(atual.getDayOfWeek());
 
                     if (atual.getDayOfWeek() == ultimoDiaCiclo) {
                         int semanas = frequencia == FrequenciaRecorrencia.QUINZENAL ? 2 : 1;
                         // Avança para o início da próxima semana do ciclo
-                        DayOfWeek primeiroDiaCiclo = diasSemana.stream()
-                                .min(DayOfWeek::compareTo).orElse(atual.getDayOfWeek());
-                        int diasAteProximoCiclo = (semanas * 7) - (atual.getDayOfWeek().getValue() - primeiroDiaCiclo.getValue());
+                        DayOfWeek primeiroDiaCiclo =
+                                diasSemana.stream().min(DayOfWeek::compareTo).orElse(atual.getDayOfWeek());
+                        int diasAteProximoCiclo =
+                                (semanas * 7) - (atual.getDayOfWeek().getValue() - primeiroDiaCiclo.getValue());
                         atual = atual.plusDays(diasAteProximoCiclo);
                     } else {
                         atual = atual.plusDays(1);
@@ -218,11 +231,13 @@ public class AgendamentoRecorrenteService {
 
     @Transactional
     public List<AgendamentoResponseDTO> cancelarRecorrencia(UUID agendamentoId, boolean cancelarFuturos) {
-        Agendamento agendamento = agendamentoRepository.findById(agendamentoId)
+        Agendamento agendamento = agendamentoRepository
+                .findById(agendamentoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento", agendamentoId));
 
         if (!cancelarFuturos) {
-            agendamentoService.updateStatus(agendamentoId, new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null, null));
+            agendamentoService.updateStatus(
+                    agendamentoId, new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null, null));
             return List.of(agendamentoMapper.toResponseDTO(agendamento));
         }
 
@@ -232,16 +247,16 @@ public class AgendamentoRecorrenteService {
             throw new BusinessException("Este agendamento não faz parte de uma recorrência");
         }
 
-        List<StatusAgendamento> statusesNaoFinais = List.of(
-                StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO);
+        List<StatusAgendamento> statusesNaoFinais = List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO);
 
-        List<Agendamento> futuros = agendamentoRepository
-                .findByAgendamentoRecorrenteIdAndDataHoraGreaterThanEqualAndStatusIn(
+        List<Agendamento> futuros =
+                agendamentoRepository.findByAgendamentoRecorrenteIdAndDataHoraGreaterThanEqualAndStatusIn(
                         recorrente.getId(), agendamento.getDataHora(), statusesNaoFinais);
 
         List<AgendamentoResponseDTO> cancelados = new ArrayList<>();
         for (Agendamento futuro : futuros) {
-            agendamentoService.updateStatus(futuro.getId(), new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null, null));
+            agendamentoService.updateStatus(
+                    futuro.getId(), new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null, null));
             cancelados.add(agendamentoMapper.toResponseDTO(futuro));
         }
 
@@ -256,7 +271,8 @@ public class AgendamentoRecorrenteService {
      */
     @Transactional
     public RegenerarHorariosResponseDTO regenerarHorarios(UUID assinaturaId, RegenerarHorariosRequestDTO dto) {
-        Assinatura assinatura = assinaturaRepository.findById(assinaturaId)
+        Assinatura assinatura = assinaturaRepository
+                .findById(assinaturaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Assinatura", assinaturaId));
 
         if (assinatura.getStatus() != StatusAssinatura.ATIVO) {
@@ -271,23 +287,22 @@ public class AgendamentoRecorrenteService {
                 : LocalDate.now().plusDays(1);
 
         // 1. Cancelar agendamentos futuros que ainda estão pendentes
-        List<StatusAgendamento> statusesPendentes = List.of(
-                StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO);
-        List<Agendamento> futurosPendentes = agendamentoRepository
-                .findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
+        List<StatusAgendamento> statusesPendentes = List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO);
+        List<Agendamento> futurosPendentes =
+                agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
                         assinaturaId, dataInicio.atStartOfDay(), statusesPendentes);
 
         int cancelados = 0;
         for (Agendamento ag : futurosPendentes) {
-            agendamentoService.updateStatus(ag.getId(),
-                    new AgendamentoStatusDTO(StatusAgendamento.CANCELADO,
-                            "Cancelado por regeneração de horários da assinatura", null));
+            agendamentoService.updateStatus(
+                    ag.getId(),
+                    new AgendamentoStatusDTO(
+                            StatusAgendamento.CANCELADO, "Cancelado por regeneração de horários da assinatura", null));
             cancelados++;
         }
 
         // 2. Desativar templates antigos
-        List<AgendamentoRecorrente> antigos = recorrenteRepository
-                .findByAssinaturaIdAndAtivoTrue(assinaturaId);
+        List<AgendamentoRecorrente> antigos = recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId);
         for (AgendamentoRecorrente template : antigos) {
             template.setAtivo(false);
             recorrenteRepository.save(template);
@@ -296,18 +311,17 @@ public class AgendamentoRecorrenteService {
         // 3. Criar novos templates + agendamentos para cada slot
         // Distribui as aulas restantes entre os slots informados.
         int slots = dto.getHorariosFixos().size();
-        int aulasRestantes = Math.max(
-                0, assinatura.getSessoesContratadas() - assinatura.getSessoesRealizadas() + cancelados);
+        int aulasRestantes =
+                Math.max(0, assinatura.getSessoesContratadas() - assinatura.getSessoesRealizadas() + cancelados);
 
         List<Agendamento> novosAgendamentos = new ArrayList<>();
         List<DataIgnoradaDTO> datasIgnoradas = new ArrayList<>();
 
         for (int idx = 0; idx < slots; idx++) {
-            RegenerarHorariosRequestDTO.HorarioFixoDTO slot = dto.getHorariosFixos().get(idx);
+            RegenerarHorariosRequestDTO.HorarioFixoDTO slot =
+                    dto.getHorariosFixos().get(idx);
             int slotsRestantes = slots - idx;
-            int sessoesEsteSlot = aulasRestantes > 0
-                    ? (int) Math.ceil((double) aulasRestantes / slotsRestantes)
-                    : 0;
+            int sessoesEsteSlot = aulasRestantes > 0 ? (int) Math.ceil((double) aulasRestantes / slotsRestantes) : 0;
             if (sessoesEsteSlot == 0) continue;
 
             AgendamentoRecorrenteRequestDTO recorrenteReq = new AgendamentoRecorrenteRequestDTO();
@@ -337,9 +351,8 @@ public class AgendamentoRecorrenteService {
 
         // Buscar todos os novos agendamentos da assinatura criados a partir de dataInicio
         // (mais confiável do que coletar do retorno de createRecorrente, que sai sem o ID persistido)
-        List<Agendamento> novos = agendamentoRepository
-                .findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
-                        assinaturaId, dataInicio.atStartOfDay(), List.of(StatusAgendamento.AGENDADO));
+        List<Agendamento> novos = agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
+                assinaturaId, dataInicio.atStartOfDay(), List.of(StatusAgendamento.AGENDADO));
         novosAgendamentos.addAll(novos);
 
         return new RegenerarHorariosResponseDTO(
@@ -350,7 +363,8 @@ public class AgendamentoRecorrenteService {
     }
 
     public AgendamentoRecorrenteResponseDTO getRecorrenciaByAgendamento(UUID agendamentoId) {
-        Agendamento agendamento = agendamentoRepository.findById(agendamentoId)
+        Agendamento agendamento = agendamentoRepository
+                .findById(agendamentoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento", agendamentoId));
 
         AgendamentoRecorrente recorrente = agendamento.getAgendamentoRecorrente();
@@ -361,9 +375,8 @@ public class AgendamentoRecorrenteService {
         return toResponseDTO(recorrente, List.of(), List.of());
     }
 
-    private AgendamentoRecorrenteResponseDTO toResponseDTO(AgendamentoRecorrente recorrente,
-                                                             List<Agendamento> criados,
-                                                             List<DataIgnoradaDTO> ignoradas) {
+    private AgendamentoRecorrenteResponseDTO toResponseDTO(
+            AgendamentoRecorrente recorrente, List<Agendamento> criados, List<DataIgnoradaDTO> ignoradas) {
         AgendamentoRecorrenteResponseDTO response = new AgendamentoRecorrenteResponseDTO();
         response.setId(recorrente.getId());
         response.setPacienteId(recorrente.getPaciente().getId());
@@ -373,9 +386,8 @@ public class AgendamentoRecorrenteService {
             response.setProfissionalNome(recorrente.getProfissional().getNome());
         }
         response.setServicoId(recorrente.getServico().getId());
-        response.setServicoDescricao(
-                recorrente.getServico().getAtividade().getNome() + " - " +
-                recorrente.getServico().getPlano().getNome());
+        response.setServicoDescricao(recorrente.getServico().getAtividade().getNome() + " - "
+                + recorrente.getServico().getPlano().getNome());
         if (recorrente.getAssinatura() != null) {
             response.setAssinaturaId(recorrente.getAssinatura().getId());
         }
@@ -388,9 +400,8 @@ public class AgendamentoRecorrenteService {
         response.setTotalSessoes(recorrente.getTotalSessoes());
         response.setDataFim(recorrente.getDataFim());
         response.setObservacoes(recorrente.getObservacoes());
-        response.setAgendamentosCriados(criados.stream()
-                .map(agendamentoMapper::toResponseDTO)
-                .collect(Collectors.toList()));
+        response.setAgendamentosCriados(
+                criados.stream().map(agendamentoMapper::toResponseDTO).collect(Collectors.toList()));
         response.setDatasIgnoradas(ignoradas);
         response.setCreatedAt(recorrente.getCreatedAt());
         return response;

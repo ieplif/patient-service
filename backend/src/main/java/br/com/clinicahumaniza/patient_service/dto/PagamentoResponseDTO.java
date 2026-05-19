@@ -1,16 +1,16 @@
 package br.com.clinicahumaniza.patient_service.dto;
 
-import br.com.clinicahumaniza.patient_service.model.FormaPagamento;
-import br.com.clinicahumaniza.patient_service.model.StatusPagamento;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import br.com.clinicahumaniza.patient_service.model.FormaPagamento;
+import br.com.clinicahumaniza.patient_service.model.StatusPagamento;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor

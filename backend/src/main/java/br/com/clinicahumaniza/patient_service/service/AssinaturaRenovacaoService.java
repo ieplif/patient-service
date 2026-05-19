@@ -1,20 +1,21 @@
 package br.com.clinicahumaniza.patient_service.service;
 
-import br.com.clinicahumaniza.patient_service.dto.AgendamentoRecorrenteRequestDTO;
-import br.com.clinicahumaniza.patient_service.model.*;
-import br.com.clinicahumaniza.patient_service.repository.AgendamentoRecorrenteRepository;
-import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.clinicahumaniza.patient_service.dto.AgendamentoRecorrenteRequestDTO;
+import br.com.clinicahumaniza.patient_service.model.*;
+import br.com.clinicahumaniza.patient_service.repository.AgendamentoRecorrenteRepository;
+import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
 
 @Service
 public class AssinaturaRenovacaoService {
@@ -26,9 +27,10 @@ public class AssinaturaRenovacaoService {
     private final AgendamentoRecorrenteRepository recorrenteRepository;
     private final AgendamentoRecorrenteService agendamentoRecorrenteService;
 
-    public AssinaturaRenovacaoService(AssinaturaRepository assinaturaRepository,
-                                       AgendamentoRecorrenteRepository recorrenteRepository,
-                                       AgendamentoRecorrenteService agendamentoRecorrenteService) {
+    public AssinaturaRenovacaoService(
+            AssinaturaRepository assinaturaRepository,
+            AgendamentoRecorrenteRepository recorrenteRepository,
+            AgendamentoRecorrenteService agendamentoRecorrenteService) {
         this.assinaturaRepository = assinaturaRepository;
         this.recorrenteRepository = recorrenteRepository;
         this.agendamentoRecorrenteService = agendamentoRecorrenteService;
@@ -38,8 +40,8 @@ public class AssinaturaRenovacaoService {
     public int renovarAssinaturasProximasDoVencimento() {
         LocalDate limitDate = LocalDate.now().plusDays(DIAS_ANTECEDENCIA_RENOVACAO);
 
-        List<Assinatura> assinaturas = assinaturaRepository
-                .findByRenovacaoAutomaticaTrueAndStatusAndDataVencimentoLessThanEqual(
+        List<Assinatura> assinaturas =
+                assinaturaRepository.findByRenovacaoAutomaticaTrueAndStatusAndDataVencimentoLessThanEqual(
                         StatusAssinatura.ATIVO, limitDate);
 
         log.info("Encontradas {} assinaturas para renovacao automatica", assinaturas.size());
@@ -50,11 +52,13 @@ public class AssinaturaRenovacaoService {
                 renovarAssinatura(assinatura);
                 renovadas++;
             } catch (Exception e) {
-                log.error("Erro ao renovar assinatura {} do paciente {}: {}",
+                log.error(
+                        "Erro ao renovar assinatura {} do paciente {}: {}",
                         assinatura.getId(),
                         assinatura.getPaciente().getNomeCompleto(),
                         e.getMessage());
-                appendObservacao(assinatura,
+                appendObservacao(
+                        assinatura,
                         "Falha na renovacao automatica em " + formatDate(LocalDate.now()) + ": " + e.getMessage());
                 assinaturaRepository.save(assinatura);
             }
@@ -68,7 +72,8 @@ public class AssinaturaRenovacaoService {
         List<AgendamentoRecorrente> templates = recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinatura.getId());
 
         if (templates.isEmpty()) {
-            log.warn("Assinatura {} nao possui agendamentos recorrentes vinculados, pulando renovacao",
+            log.warn(
+                    "Assinatura {} nao possui agendamentos recorrentes vinculados, pulando renovacao",
                     assinatura.getId());
             return;
         }
@@ -107,28 +112,42 @@ public class AssinaturaRenovacaoService {
 
             try {
                 var result = agendamentoRecorrenteService.createRecorrente(dto);
-                int criados = result.getAgendamentosCriados() != null ? result.getAgendamentosCriados().size() : 0;
+                int criados = result.getAgendamentosCriados() != null
+                        ? result.getAgendamentosCriados().size()
+                        : 0;
                 totalAgendamentosCriados += criados;
                 totalNovasSessoes += sessoesParaEsteSlot;
 
-                log.info("Renovacao assinatura {}: slot {} {} - {} agendamentos criados",
-                        assinatura.getId(), template.getHoraInicio(), template.getDiasSemana(), criados);
+                log.info(
+                        "Renovacao assinatura {}: slot {} {} - {} agendamentos criados",
+                        assinatura.getId(),
+                        template.getHoraInicio(),
+                        template.getDiasSemana(),
+                        criados);
             } catch (Exception e) {
-                log.warn("Erro ao criar agendamentos para slot {} da assinatura {}: {}",
-                        template.getHoraInicio(), assinatura.getId(), e.getMessage());
+                log.warn(
+                        "Erro ao criar agendamentos para slot {} da assinatura {}: {}",
+                        template.getHoraInicio(),
+                        assinatura.getId(),
+                        e.getMessage());
             }
         }
 
         if (totalAgendamentosCriados > 0) {
             assinatura.setDataVencimento(novaDataVencimento);
             assinatura.setSessoesContratadas(assinatura.getSessoesContratadas() + totalNovasSessoes);
-            appendObservacao(assinatura,
-                    "Renovado automaticamente em " + formatDate(LocalDate.now()) +
-                    " (" + totalAgendamentosCriados + " agendamentos criados)");
+            appendObservacao(
+                    assinatura,
+                    "Renovado automaticamente em " + formatDate(LocalDate.now()) + " (" + totalAgendamentosCriados
+                            + " agendamentos criados)");
             assinaturaRepository.save(assinatura);
 
-            log.info("Assinatura {} renovada: nova data vencimento={}, +{} sessoes, {} agendamentos",
-                    assinatura.getId(), novaDataVencimento, totalNovasSessoes, totalAgendamentosCriados);
+            log.info(
+                    "Assinatura {} renovada: nova data vencimento={}, +{} sessoes, {} agendamentos",
+                    assinatura.getId(),
+                    novaDataVencimento,
+                    totalNovasSessoes,
+                    totalAgendamentosCriados);
         } else {
             log.warn("Nenhum agendamento criado na renovacao da assinatura {}", assinatura.getId());
         }
