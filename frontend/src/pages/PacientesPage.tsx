@@ -119,7 +119,7 @@ export function PacientesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/50 hover:bg-transparent">
-                      {["Nome", "E-mail", "Telefone", "Nascimento", "Status", "Ações"].map((h) => (
+                      {["Nome", "Telefone", "Nascimento", "Status", "Ações"].map((h) => (
                       <TableHead
                         key={h}
                         className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide"
@@ -149,9 +149,6 @@ export function PacientesPage() {
                           >
                             {p.nomeCompleto}
                           </Link>
-                        </TableCell>
-                        <TableCell className="text-sm font-secondary text-muted-foreground">
-                          {p.email || "—"}
                         </TableCell>
                         <TableCell className="text-sm font-secondary text-muted-foreground whitespace-nowrap">
                           {p.telefone.replace(/\D/g, "").replace(/^(\d{2})(\d{4,5})(\d{4})$/, "($1) $2-$3")}
