@@ -20,8 +20,8 @@ public class PagamentoResponseDTO {
     private UUID id;
     private UUID pacienteId;
     private String pacienteNome;
-    private UUID assinaturaId;
-    private String assinaturaDescricao;
+    private List<UUID> assinaturaIds;
+    private List<String> assinaturaDescricoes;
     private UUID agendamentoId;
     private String agendamentoDescricao;
     private BigDecimal valor;

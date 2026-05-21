@@ -2,6 +2,7 @@ package br.com.clinicahumaniza.patient_service.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.constraints.DecimalMin;
@@ -21,7 +22,7 @@ public class PagamentoRequestDTO {
     @NotNull(message = "ID do paciente é obrigatório")
     private UUID pacienteId;
 
-    private UUID assinaturaId;
+    private List<UUID> assinaturaIds;
 
     private UUID agendamentoId;
 

@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -58,11 +59,14 @@ public class PagamentoService {
                 .findById(dto.getPacienteId())
                 .orElseThrow(() -> new ResourceNotFoundException("Paciente", dto.getPacienteId()));
 
-        Assinatura assinatura = null;
-        if (dto.getAssinaturaId() != null) {
-            assinatura = assinaturaRepository
-                    .findById(dto.getAssinaturaId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Assinatura", dto.getAssinaturaId()));
+        List<Assinatura> assinaturas = new ArrayList<>();
+        if (dto.getAssinaturaIds() != null) {
+            for (UUID assinaturaId : dto.getAssinaturaIds()) {
+                Assinatura assinatura = assinaturaRepository
+                        .findById(assinaturaId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Assinatura", assinaturaId));
+                assinaturas.add(assinatura);
+            }
         }
 
         Agendamento agendamento = null;
@@ -72,7 +76,7 @@ public class PagamentoService {
                     .orElseThrow(() -> new ResourceNotFoundException("Agendamento", dto.getAgendamentoId()));
         }
 
-        Pagamento pagamento = pagamentoMapper.toEntity(dto, paciente, assinatura, agendamento);
+        Pagamento pagamento = pagamentoMapper.toEntity(dto, paciente, assinaturas, agendamento);
         pagamento.setStatus(StatusPagamento.PENDENTE);
 
         gerarParcelas(pagamento);
@@ -138,7 +142,7 @@ public class PagamentoService {
     }
 
     public List<Pagamento> getPagamentosByAssinatura(UUID assinaturaId) {
-        return pagamentoRepository.findByAssinaturaId(assinaturaId);
+        return pagamentoRepository.findByAssinaturasId(assinaturaId);
     }
 
     public List<Pagamento> getPagamentosByAgendamento(UUID agendamentoId) {

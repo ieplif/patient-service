@@ -24,7 +24,7 @@ interface PagamentoFormSheetProps {
   onOpenChange: (open: boolean) => void
   onSubmit: (data: {
     pacienteId: string
-    assinaturaId?: string
+    assinaturaIds?: string[]
     agendamentoId?: string
     valor: number
     formaPagamento: FormaPagamento
@@ -37,7 +37,7 @@ interface PagamentoFormSheetProps {
 
 export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: PagamentoFormSheetProps) {
   const [pacienteId, setPacienteId] = useState("")
-  const [assinaturaId, setAssinaturaId] = useState("")
+  const [assinaturaIds, setAssinaturaIds] = useState<string[]>([])
   const [agendamentoId, setAgendamentoId] = useState("")
   const [valor, setValor] = useState("")
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">("")
@@ -66,7 +66,7 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
   useEffect(() => {
     if (open) {
       setPacienteId("")
-      setAssinaturaId("")
+      setAssinaturaIds([])
       setAgendamentoId("")
       setValor("")
       setFormaPagamento("")
@@ -78,23 +78,28 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
 
   function handlePacienteChange(id: string) {
     setPacienteId(id)
-    setAssinaturaId("")
+    setAssinaturaIds([])
     setAgendamentoId("")
   }
 
-  function handleAssinaturaChange(id: string) {
-    setAssinaturaId(id === "_none" ? "" : id)
-    if (id !== "_none") {
-      setAgendamentoId("")
-      const assinatura = assinaturasData?.content.find(a => a.id === id)
-      if (assinatura) setValor(String(assinatura.valor))
-    }
+  function toggleAssinatura(id: string, assinaturaValor: number) {
+    setAgendamentoId("")
+    setAssinaturaIds((prev) => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+      // recalcula valor como soma das assinaturas selecionadas
+      const allAssinaturas = assinaturasData?.content ?? []
+      const soma = allAssinaturas
+        .filter(a => next.includes(a.id))
+        .reduce((acc, a) => acc + a.valor, 0)
+      setValor(soma > 0 ? String(soma) : "")
+      return next
+    })
   }
 
   function handleAgendamentoChange(id: string) {
     setAgendamentoId(id === "_none" ? "" : id)
     if (id !== "_none") {
-      setAssinaturaId("")
+      setAssinaturaIds([])
     }
   }
 
@@ -114,7 +119,7 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
     }
     onSubmit({
       pacienteId,
-      assinaturaId: assinaturaId || undefined,
+      assinaturaIds: assinaturaIds.length > 0 ? assinaturaIds : undefined,
       agendamentoId: agendamentoId || undefined,
       valor: Number(valor),
       formaPagamento,
@@ -127,6 +132,7 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
   const maxParcelas = formaPagamento === "CARTAO_CREDITO" ? 12 : 2
   const assinaturas = assinaturasData?.content ?? []
   const agendamentos = agendamentosData?.content ?? []
+  const temAssinaturaSelecionada = assinaturaIds.length > 0
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -155,30 +161,48 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
             </Select>
           </div>
 
-          {/* Assinatura (opcional) */}
-          {pacienteId && (
+          {/* Assinaturas (seleção múltipla) */}
+          {pacienteId && assinaturas.length > 0 && (
             <div className="space-y-2">
-              <Label className="font-primary">Assinatura</Label>
-              <Select value={assinaturaId || "_none"} onValueChange={handleAssinaturaChange}>
-                <SelectTrigger className="font-secondary">
-                  <SelectValue placeholder="Nenhuma (pagamento avulso)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_none" className="font-secondary text-muted-foreground">
-                    Nenhuma (pagamento avulso)
-                  </SelectItem>
-                  {assinaturas.map((a) => (
-                    <SelectItem key={a.id} value={a.id} className="font-secondary">
-                      {a.servicoDescricao} — R$ {a.valor.toFixed(2)} ({a.status})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="font-primary">
+                Assinaturas
+                {assinaturaIds.length > 0 && (
+                  <span className="ml-2 text-xs text-muted-foreground font-secondary">
+                    ({assinaturaIds.length} selecionada{assinaturaIds.length > 1 ? "s" : ""})
+                  </span>
+                )}
+              </Label>
+              <div className="space-y-1.5">
+                {assinaturas.map((a) => {
+                  const selecionada = assinaturaIds.includes(a.id)
+                  return (
+                    <div
+                      key={a.id}
+                      onClick={() => toggleAssinatura(a.id, a.valor)}
+                      className={`flex items-center gap-3 p-2.5 rounded-md border cursor-pointer transition-colors font-secondary text-sm ${
+                        selecionada
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border hover:bg-muted/30 text-muted-foreground"
+                      }`}
+                    >
+                      <div className={`h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center text-xs ${
+                        selecionada ? "bg-primary border-primary text-white" : "border-muted-foreground"
+                      }`}>
+                        {selecionada && "✓"}
+                      </div>
+                      <span>
+                        {a.servicoDescricao} — <strong>R$ {a.valor.toFixed(2)}</strong>{" "}
+                        <span className="text-xs">({a.status})</span>
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
 
           {/* Agendamento (opcional) */}
-          {pacienteId && !assinaturaId && (
+          {pacienteId && !temAssinaturaSelecionada && (
             <div className="space-y-2">
               <Label className="font-primary">Agendamento</Label>
               <Select value={agendamentoId || "_none"} onValueChange={handleAgendamentoChange}>

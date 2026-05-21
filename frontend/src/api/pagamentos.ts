@@ -26,7 +26,7 @@ export async function getPagamento(id: string): Promise<Pagamento> {
 
 export async function createPagamento(payload: {
   pacienteId: string
-  assinaturaId?: string
+  assinaturaIds?: string[]
   agendamentoId?: string
   valor: number
   formaPagamento: FormaPagamento

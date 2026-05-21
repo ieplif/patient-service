@@ -99,8 +99,8 @@ class PagamentoControllerTest {
         responseDTO.setId(pagamentoId);
         responseDTO.setPacienteId(pacienteId);
         responseDTO.setPacienteNome("João Silva");
-        responseDTO.setAssinaturaId(assinaturaId);
-        responseDTO.setAssinaturaDescricao("Pilates - Mensal");
+        responseDTO.setAssinaturaIds(List.of(assinaturaId));
+        responseDTO.setAssinaturaDescricoes(List.of("Pilates - Mensal"));
         responseDTO.setValor(new BigDecimal("300.00"));
         responseDTO.setFormaPagamento(FormaPagamento.PIX);
         responseDTO.setStatus(StatusPagamento.PENDENTE);
@@ -117,7 +117,7 @@ class PagamentoControllerTest {
     void createPagamento_Authenticated_201() throws Exception {
         PagamentoRequestDTO requestDTO = new PagamentoRequestDTO();
         requestDTO.setPacienteId(pacienteId);
-        requestDTO.setAssinaturaId(assinaturaId);
+        requestDTO.setAssinaturaIds(List.of(assinaturaId));
         requestDTO.setValor(new BigDecimal("300.00"));
         requestDTO.setFormaPagamento(FormaPagamento.PIX);
         requestDTO.setNumeroParcelas(1);
@@ -206,7 +206,7 @@ class PagamentoControllerTest {
 
         mockMvc.perform(get("/api/v1/pagamentos/assinatura/{assinaturaId}", assinaturaId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].assinaturaDescricao").value("Pilates - Mensal"));
+                .andExpect(jsonPath("$[0].assinaturaDescricoes[0]").value("Pilates - Mensal"));
     }
 
     @Test

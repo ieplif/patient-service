@@ -114,7 +114,7 @@ class PagamentoServiceTest {
         pagamento = new Pagamento();
         pagamento.setId(pagamentoId);
         pagamento.setPaciente(paciente);
-        pagamento.setAssinatura(assinatura);
+        pagamento.setAssinaturas(List.of(assinatura));
         pagamento.setValor(new BigDecimal("300.00"));
         pagamento.setFormaPagamento(FormaPagamento.PIX);
         pagamento.setStatus(StatusPagamento.PENDENTE);
@@ -125,7 +125,7 @@ class PagamentoServiceTest {
 
         requestDTO = new PagamentoRequestDTO();
         requestDTO.setPacienteId(pacienteId);
-        requestDTO.setAssinaturaId(assinaturaId);
+        requestDTO.setAssinaturaIds(List.of(assinaturaId));
         requestDTO.setValor(new BigDecimal("300.00"));
         requestDTO.setFormaPagamento(FormaPagamento.PIX);
         requestDTO.setNumeroParcelas(1);
@@ -139,7 +139,8 @@ class PagamentoServiceTest {
     void createPagamento_ComAssinatura_Success() {
         when(patientRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
         when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
-        when(pagamentoMapper.toEntity(requestDTO, paciente, assinatura, null)).thenReturn(pagamento);
+        when(pagamentoMapper.toEntity(requestDTO, paciente, List.of(assinatura), null))
+                .thenReturn(pagamento);
         when(pagamentoRepository.save(any(Pagamento.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Pagamento result = pagamentoService.createPagamento(requestDTO);
@@ -153,7 +154,7 @@ class PagamentoServiceTest {
     @Test
     @DisplayName("Deve criar pagamento com agendamento avulso com sucesso")
     void createPagamento_ComAgendamento_Success() {
-        requestDTO.setAssinaturaId(null);
+        requestDTO.setAssinaturaIds(null);
         requestDTO.setAgendamentoId(agendamentoId);
 
         Pagamento pagamentoAgendamento = new Pagamento();
@@ -168,7 +169,8 @@ class PagamentoServiceTest {
 
         when(patientRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
-        when(pagamentoMapper.toEntity(requestDTO, paciente, null, agendamento)).thenReturn(pagamentoAgendamento);
+        when(pagamentoMapper.toEntity(requestDTO, paciente, List.of(), agendamento))
+                .thenReturn(pagamentoAgendamento);
         when(pagamentoRepository.save(any(Pagamento.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Pagamento result = pagamentoService.createPagamento(requestDTO);
@@ -204,7 +206,7 @@ class PagamentoServiceTest {
     @Test
     @DisplayName("Deve lançar exceção quando agendamento não encontrado")
     void createPagamento_AgendamentoNotFound() {
-        requestDTO.setAssinaturaId(null);
+        requestDTO.setAssinaturaIds(null);
         requestDTO.setAgendamentoId(agendamentoId);
 
         when(patientRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
@@ -351,7 +353,7 @@ class PagamentoServiceTest {
     @Test
     @DisplayName("Deve listar pagamentos por assinatura")
     void getPagamentosByAssinatura_Success() {
-        when(pagamentoRepository.findByAssinaturaId(assinaturaId)).thenReturn(List.of(pagamento));
+        when(pagamentoRepository.findByAssinaturasId(assinaturaId)).thenReturn(List.of(pagamento));
 
         List<Pagamento> result = pagamentoService.getPagamentosByAssinatura(assinaturaId);
 

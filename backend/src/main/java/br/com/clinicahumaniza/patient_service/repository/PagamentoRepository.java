@@ -17,7 +17,7 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, UUID>, Jpa
 
     List<Pagamento> findByPacienteId(UUID pacienteId);
 
-    List<Pagamento> findByAssinaturaId(UUID assinaturaId);
+    List<Pagamento> findByAssinaturasId(UUID assinaturaId);
 
     List<Pagamento> findByAgendamentoId(UUID agendamentoId);
 

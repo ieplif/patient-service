@@ -1,5 +1,6 @@
 package br.com.clinicahumaniza.patient_service.mapper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,10 +20,10 @@ import br.com.clinicahumaniza.patient_service.model.Patient;
 public class PagamentoMapper {
 
     public Pagamento toEntity(
-            PagamentoRequestDTO dto, Patient paciente, Assinatura assinatura, Agendamento agendamento) {
+            PagamentoRequestDTO dto, Patient paciente, List<Assinatura> assinaturas, Agendamento agendamento) {
         Pagamento pagamento = new Pagamento();
         pagamento.setPaciente(paciente);
-        pagamento.setAssinatura(assinatura);
+        pagamento.setAssinaturas(assinaturas != null ? assinaturas : new ArrayList<>());
         pagamento.setAgendamento(agendamento);
         pagamento.setValor(dto.getValor());
         pagamento.setFormaPagamento(dto.getFormaPagamento());
@@ -38,11 +39,13 @@ public class PagamentoMapper {
         dto.setPacienteId(entity.getPaciente().getId());
         dto.setPacienteNome(entity.getPaciente().getNomeCompleto());
 
-        if (entity.getAssinatura() != null) {
-            dto.setAssinaturaId(entity.getAssinatura().getId());
-            dto.setAssinaturaDescricao(
-                    entity.getAssinatura().getServico().getAtividade().getNome() + " - "
-                            + entity.getAssinatura().getServico().getPlano().getNome());
+        if (entity.getAssinaturas() != null && !entity.getAssinaturas().isEmpty()) {
+            dto.setAssinaturaIds(
+                    entity.getAssinaturas().stream().map(Assinatura::getId).collect(Collectors.toList()));
+            dto.setAssinaturaDescricoes(entity.getAssinaturas().stream()
+                    .map(a -> a.getServico().getAtividade().getNome() + " - "
+                            + a.getServico().getPlano().getNome())
+                    .collect(Collectors.toList()));
         }
 
         if (entity.getAgendamento() != null) {

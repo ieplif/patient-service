@@ -31,9 +31,12 @@ public class Pagamento {
     @JoinColumn(name = "paciente_id", nullable = false)
     private Patient paciente;
 
-    @ManyToOne
-    @JoinColumn(name = "assinatura_id")
-    private Assinatura assinatura;
+    @ManyToMany
+    @JoinTable(
+            name = "pagamento_assinaturas",
+            joinColumns = @JoinColumn(name = "pagamento_id"),
+            inverseJoinColumns = @JoinColumn(name = "assinatura_id"))
+    private List<Assinatura> assinaturas = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "agendamento_id")

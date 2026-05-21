@@ -123,7 +123,8 @@ export interface Pagamento {
   id: string
   pacienteId: string
   pacienteNome: string
-  assinaturaId?: string
+  assinaturaIds?: string[]
+  assinaturaDescricoes?: string[]
   agendamentoId?: string
   valor: number
   formaPagamento: FormaPagamento
