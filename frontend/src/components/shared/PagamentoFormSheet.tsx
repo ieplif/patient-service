@@ -82,7 +82,7 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
     setAgendamentoId("")
   }
 
-  function toggleAssinatura(id: string, assinaturaValor: number) {
+  function toggleAssinatura(id: string) {
     setAgendamentoId("")
     setAssinaturaIds((prev) => {
       const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
@@ -178,7 +178,7 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
                   return (
                     <div
                       key={a.id}
-                      onClick={() => toggleAssinatura(a.id, a.valor)}
+                      onClick={() => toggleAssinatura(a.id)}
                       className={`flex items-center gap-3 p-2.5 rounded-md border cursor-pointer transition-colors font-secondary text-sm ${
                         selecionada
                           ? "border-primary bg-primary/5 text-foreground"
