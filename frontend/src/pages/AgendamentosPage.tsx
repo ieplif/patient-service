@@ -303,16 +303,15 @@ export function AgendamentosPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="font-secondary text-sm">
-                                <DropdownMenuItem onClick={() => handleReagendar(ag)} className="gap-2">
-                                  <Clock className="h-4 w-4" /> Reagendar
-                                </DropdownMenuItem>
+                                {ag.status !== "CANCELADO" && (
+                                  <DropdownMenuItem onClick={() => handleReagendar(ag)} className="gap-2">
+                                    <Clock className="h-4 w-4" /> Reagendar
+                                  </DropdownMenuItem>
+                                )}
                                 {ag.status === "CANCELADO" && ag.direitoReposicao === true && (
-                                  <>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => handleAgendarReposicao(ag)} className="gap-2 text-violet-600 focus:text-violet-600">
-                                      <RefreshCw className="h-4 w-4" /> Agendar Reposicao
-                                    </DropdownMenuItem>
-                                  </>
+                                  <DropdownMenuItem onClick={() => handleAgendarReposicao(ag)} className="gap-2 text-violet-600 focus:text-violet-600">
+                                    <RefreshCw className="h-4 w-4" /> Agendar Reposicao
+                                  </DropdownMenuItem>
                                 )}
                                 {transitions.length > 0 && <DropdownMenuSeparator />}
                                 {transitions.map((t) => (

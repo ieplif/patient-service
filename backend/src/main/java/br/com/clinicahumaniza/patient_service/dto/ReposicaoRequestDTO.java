@@ -17,8 +17,7 @@ public class ReposicaoRequestDTO {
     @NotNull(message = "ID do agendamento de origem é obrigatório")
     private UUID agendamentoOrigemId;
 
-    @NotNull(message = "ID do profissional é obrigatório")
-    private UUID profissionalId;
+    private UUID profissionalId; // opcional — Pilates não tem profissional fixo
 
     @NotNull(message = "Data e hora são obrigatórios")
     private LocalDateTime dataHora;
