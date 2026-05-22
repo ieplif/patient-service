@@ -5,6 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 interface StatCardProps {
   title: string
   value?: number | string
+  /** Texto opcional exibido como tooltip nativo ao passar o mouse sobre o valor. */
+  valueTitle?: string
   icon: LucideIcon
   isLoading?: boolean
   description?: string
@@ -33,6 +35,7 @@ const accentStyles = {
 export function StatCard({
   title,
   value,
+  valueTitle,
   icon: Icon,
   isLoading,
   description,
@@ -58,7 +61,7 @@ export function StatCard({
         {isLoading ? (
           <Skeleton className="h-8 w-28 mt-1" />
         ) : (
-          <div className="text-2xl font-bold font-primary text-foreground">{value ?? "—"}</div>
+          <div className="text-2xl font-bold font-primary text-foreground" title={valueTitle}>{value ?? "—"}</div>
         )}
         {description && (
           <p className="text-xs text-muted-foreground mt-1 font-secondary">{description}</p>
