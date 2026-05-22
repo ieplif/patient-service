@@ -8,87 +8,66 @@
 <style>
   @page { size: A4; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: auto; }
   body { background: #fff; display: flex; justify-content: center; font-family: 'Lato', sans-serif; color: #3d3d3d; }
   .page {
-    width: 794px; min-height: 1123px; background: #faf7f4;
-    position: relative; padding-bottom: 80px;
+    width: 794px; height: 1123px; background: #faf7f4;
+    position: relative; overflow: hidden;
   }
   .header {
     background: linear-gradient(135deg, #8B7B6F 0%, #7B8B6F 40%, #6B7B5E 100%);
-    padding: 22px 40px 18px;
+    padding: 16px 40px 14px;
     display: flex; align-items: center; justify-content: space-between;
   }
   .logo-wrapper {
     background: rgba(255,255,255,0.15);
     border: 1px solid rgba(255,255,255,0.25);
     border-radius: 12px;
-    padding: 8px 16px;
+    padding: 6px 14px;
     display: flex; align-items: center;
   }
-  .logo-img { height: 50px; filter: brightness(0) invert(1); }
+  .logo-img { height: 44px; filter: brightness(0) invert(1); }
   .header-right { text-align: right; }
   .title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 24px; font-weight: 700; color: #fff;
+    font-size: 22px; font-weight: 700; color: #fff;
     letter-spacing: 2px; line-height: 1.1;
   }
-  .subtitle { font-size: 11px; color: rgba(255,255,255,0.85); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
-
-  .content { padding: 22px 44px 0; }
-  .intro {
-    font-size: 11px; line-height: 1.55; color: #4a4a4a; margin-bottom: 16px; text-align: justify;
-  }
+  .subtitle { font-size: 10px; color: rgba(255,255,255,0.85); letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+  .content { padding: 12px 38px 0; }
+  .intro { font-size: 10px; line-height: 1.42; color: #4a4a4a; margin-bottom: 9px; text-align: justify; }
   .intro strong { color: #4a5a3e; }
-
-  .section { margin-bottom: 14px; }
+  .section { margin-bottom: 8px; }
   .section-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 15px; font-weight: 700; color: #4a5a3e;
+    font-size: 13px; font-weight: 700; color: #4a5a3e;
     letter-spacing: 1px; text-transform: uppercase;
-    border-bottom: 1px solid #d8d0c8; padding-bottom: 4px; margin-bottom: 8px;
+    border-bottom: 1px solid #d8d0c8; padding-bottom: 2px; margin-bottom: 5px;
   }
-
-  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
   .field-grid.full { grid-template-columns: 1fr; }
-  .field {
-    font-size: 10.5px; color: #5a5a5a;
-    display: flex; align-items: baseline; gap: 6px;
-  }
-  .field label { font-weight: 700; color: #4a5a3e; text-transform: uppercase; font-size: 9.5px; letter-spacing: 0.5px; white-space: nowrap; }
-  .field .line { flex: 1; border-bottom: 1px solid #b9b0a6; height: 14px; }
-
-  ol.clausulas { padding-left: 22px; }
-  ol.clausulas li {
-    font-size: 10.5px; line-height: 1.55; color: #4a4a4a;
-    margin-bottom: 7px; text-align: justify;
-  }
+  .field { font-size: 9.5px; color: #5a5a5a; display: flex; align-items: baseline; gap: 5px; }
+  .field label { font-weight: 700; color: #4a5a3e; text-transform: uppercase; font-size: 8.5px; letter-spacing: 0.5px; white-space: nowrap; }
+  .field .line { flex: 1; border-bottom: 1px solid #b9b0a6; height: 11px; }
+  ol.clausulas { padding-left: 20px; }
+  ol.clausulas li { font-size: 9.5px; line-height: 1.38; color: #4a4a4a; margin-bottom: 3px; text-align: justify; }
   ol.clausulas li strong { color: #4a5a3e; }
-
-  .highlight {
-    background: rgba(123,139,111,0.08);
-    border-left: 3px solid #7B8B6F;
-    padding: 10px 14px; border-radius: 0 6px 6px 0;
-    font-size: 10.5px; color: #4a4a4a; line-height: 1.5;
-  }
-  .highlight strong { color: #4a5a3e; }
-
-  .signatures {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 36px;
-    margin-top: 24px; padding-top: 12px;
-  }
+  .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 14px; padding-top: 6px; }
   .sig-block { text-align: center; }
-  .sig-line { border-top: 1px solid #6b7b5e; margin-bottom: 6px; padding-top: 2px; }
-  .sig-label { font-size: 10px; color: #6b6b6b; text-transform: uppercase; letter-spacing: 1px; }
-
-  .local-data { text-align: right; font-size: 10.5px; color: #5a5a5a; margin-top: 14px; }
-  .local-data .line { display: inline-block; min-width: 120px; border-bottom: 1px solid #b9b0a6; height: 14px; vertical-align: bottom; }
-
+  .sig-line { border-top: 1px solid #6b7b5e; margin-bottom: 4px; padding-top: 2px; }
+  .sig-label { font-size: 9px; color: #6b6b6b; text-transform: uppercase; letter-spacing: 1px; }
+  .local-data { text-align: right; font-size: 9.5px; color: #5a5a5a; margin-top: 10px; }
+  .local-data .line { display: inline-block; min-width: 100px; border-bottom: 1px solid #b9b0a6; height: 12px; vertical-align: bottom; }
   .footer-note {
     position: absolute; bottom: 0; left: 0; right: 0;
-    text-align: center; padding: 10px 28px; font-size: 9.5px; color: #999;
+    text-align: center; padding: 6px 28px; font-size: 8.5px; color: #999;
     border-top: 1px solid #ebe6e0; line-height: 1.4;
   }
   .footer-note strong { color: #7B8B6F; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { box-shadow: none; }
+  }
 </style>
 </head>
 <body>
