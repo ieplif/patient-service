@@ -9,8 +9,14 @@ set -e
 echo "=== Puxando alterações ==="
 git pull origin main
 
-echo "=== Rebuild e restart ==="
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+echo "=== Build backend (sequencial para poupar memória) ==="
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build backend
+
+echo "=== Build frontend ==="
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build frontend
+
+echo "=== Restart dos serviços ==="
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 echo "=== Aguardando backend iniciar ==="
 for i in $(seq 1 30); do
