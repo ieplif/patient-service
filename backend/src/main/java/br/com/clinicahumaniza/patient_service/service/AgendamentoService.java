@@ -34,9 +34,6 @@ import br.com.clinicahumaniza.patient_service.spec.AgendamentoSpecification;
 @Service
 public class AgendamentoService {
 
-    private static final int LIMITE_REPOSICOES_MES = 2;
-    private static final int DIAS_VALIDADE_REPOSICAO = 20;
-
     private final AgendamentoRepository agendamentoRepository;
     private final PatientRepository patientRepository;
     private final ProfissionalRepository profissionalRepository;
@@ -374,31 +371,12 @@ public class AgendamentoService {
             throw new BusinessException("Não é possível criar reposição de uma reposição");
         }
 
-        // Validar que não expirou (20 dias)
-        if (origem.getDataLimiteReposicao() != null && LocalDateTime.now().isAfter(origem.getDataLimiteReposicao())) {
-            throw new BusinessException("O prazo para reposição expirou em " + origem.getDataLimiteReposicao());
-        }
-
         // Validar que não existe reposição já criada para esta origem
         boolean existeReposicao = agendamentoRepository.existsByReposicaoOrigemIdAndStatusIn(
                 origem.getId(),
                 List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO, StatusAgendamento.REALIZADO));
         if (existeReposicao) {
             throw new BusinessException("Já existe uma reposição para este agendamento de origem");
-        }
-
-        // Validar limite de 2 reposições por mês
-        LocalDateTime inicioMes = LocalDateTime.now()
-                .withDayOfMonth(1)
-                .withHour(0)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
-        LocalDateTime fimMes = inicioMes.plusMonths(1).minusNanos(1);
-        long reposicoesNoMes =
-                agendamentoRepository.countReposicoesNoMes(origem.getPaciente().getId(), inicioMes, fimMes);
-        if (reposicoesNoMes >= LIMITE_REPOSICOES_MES) {
-            throw new BusinessException("Limite de " + LIMITE_REPOSICOES_MES + " reposições por mês atingido");
         }
 
         // Buscar profissional (opcional — pode ficar nulo, ex.: Pilates onde varia por dia)
@@ -604,7 +582,7 @@ public class AgendamentoService {
      *
      * Quando {@code overrideManual} é informado (não-nulo), respeita a escolha
      * da recepção (caso a caso). Quando é {@code null}, aplica a regra padrão:
-     * Pilates + não-reposição + não-feriado.
+     * não-reposição + não-feriado (vale para todos os serviços).
      *
      * Nota: a antiga regra de "3h de antecedência" foi removida — a clínica
      * decide caso a caso pela UI.
@@ -612,21 +590,7 @@ public class AgendamentoService {
     private void avaliarDireitoReposicao(Agendamento agendamento, Boolean overrideManual) {
         // Override manual da recepção tem prioridade (qualquer caso)
         if (overrideManual != null) {
-            if (overrideManual) {
-                agendamento.setDireitoReposicao(true);
-                agendamento.setDataLimiteReposicao(LocalDateTime.now().plusDays(DIAS_VALIDADE_REPOSICAO));
-            } else {
-                agendamento.setDireitoReposicao(false);
-            }
-            return;
-        }
-
-        // Cálculo automático
-        String nomeAtividade = agendamento.getServico().getAtividade().getNome();
-        boolean isPilates = nomeAtividade != null && nomeAtividade.toLowerCase().contains("pilates");
-
-        if (!isPilates) {
-            agendamento.setDireitoReposicao(false);
+            agendamento.setDireitoReposicao(overrideManual);
             return;
         }
 
@@ -644,8 +608,7 @@ public class AgendamentoService {
             return;
         }
 
-        // Conceder direito a reposição
+        // Conceder direito a reposição (vale para todos os serviços)
         agendamento.setDireitoReposicao(true);
-        agendamento.setDataLimiteReposicao(LocalDateTime.now().plusDays(DIAS_VALIDADE_REPOSICAO));
     }
 }

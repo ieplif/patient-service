@@ -138,32 +138,25 @@ export function AgendamentosPage() {
   }
 
   function handleCancelar(ag: Agendamento) {
-    const isPilates = ag.servicoDescricao.toLowerCase().includes("pilates")
     setCancelAg(ag)
     setMotivoCancelamento("")
-    setGerarReposicao(isPilates)  // default checked só pra Pilates
+    setGerarReposicao(true)  // default checked para todos os serviços
     setCancelDialogOpen(true)
   }
 
   function handleConfirmCancel() {
     if (!cancelAg) return
-    const isPilates = isPilatesAppointment(cancelAg)
     statusMutation.mutate({
       id: cancelAg.id,
       status: "CANCELADO",
       motivoCancelamento: motivoCancelamento || undefined,
-      // Só envia override pra Pilates — pra outros serviços a regra padrão (sem reposição) já basta
-      gerarReposicao: isPilates ? gerarReposicao : undefined,
+      gerarReposicao,
     })
   }
 
   function handleAgendarReposicao(ag: Agendamento) {
     setReposicaoAg(ag)
     setReposicaoSheetOpen(true)
-  }
-
-  function isPilatesAppointment(ag: Agendamento): boolean {
-    return ag.servicoDescricao.toLowerCase().includes("pilates")
   }
 
   function isFisioterapia(ag: Agendamento): boolean {
@@ -372,7 +365,7 @@ export function AgendamentosPage() {
             </DialogDescription>
           </DialogHeader>
 
-          {cancelAg && isPilatesAppointment(cancelAg) && (
+          {cancelAg && (
             <div className="flex items-start gap-2 rounded-md border border-border/50 bg-muted/30 p-3">
               <input
                 id="gerar-reposicao"
@@ -386,7 +379,7 @@ export function AgendamentosPage() {
                   Gerar direito a reposição
                 </Label>
                 <p className="text-xs text-muted-foreground font-secondary mt-0.5">
-                  Quando marcado, a paciente ganha 20 dias para agendar uma reposição (limite de 2/mês).
+                  Quando marcado, a paciente poderá agendar uma reposição desta sessão.
                 </p>
               </div>
             </div>
