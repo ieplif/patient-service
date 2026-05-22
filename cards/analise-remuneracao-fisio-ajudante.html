@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Humaniza — Análise de Remuneração — Fisioterapeuta Ajudante</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Lato', sans-serif;
+    color: #3d3d3d;
+    font-size: 11px;
+    line-height: 1.5;
+    background: #fff;
+    padding: 14mm 16mm 12mm 16mm;
+  }
+  .header {
+    display: flex; align-items: center; gap: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #7B8B6F;
+    margin-bottom: 14px;
+  }
+  .logo { height: 52px; width: auto; }
+  .header-text { flex: 1; }
+  .title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 700; color: #4a5a3e;
+    letter-spacing: 1px; line-height: 1.1;
+  }
+  .subtitle {
+    font-size: 10px; color: #7B8B6F;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    margin-top: 3px;
+  }
+  .lead {
+    font-size: 11px; line-height: 1.55;
+    color: #4a4a4a; text-align: justify;
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    background: rgba(123,139,111,0.07);
+    border-left: 3px solid #7B8B6F;
+    border-radius: 0 6px 6px 0;
+  }
+  .lead strong { color: #4a5a3e; }
+  h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-weight: 700; color: #4a5a3e;
+    text-transform: uppercase; letter-spacing: 1px;
+    border-bottom: 1px solid #d8d0c8;
+    padding-bottom: 4px; margin-bottom: 8px; margin-top: 18px;
+  }
+  h2:first-of-type { margin-top: 0; }
+  h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 700; color: #4a5a3e;
+    margin-top: 10px; margin-bottom: 4px;
+  }
+  p { margin-bottom: 8px; text-align: justify; }
+  p strong { color: #4a5a3e; }
+  ul, ol { padding-left: 20px; margin-bottom: 8px; }
+  li { margin-bottom: 3px; text-align: justify; }
+  li strong { color: #4a5a3e; }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 10px; margin: 8px 0 14px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(123,139,111,0.08);
+    border-radius: 4px; overflow: hidden;
+  }
+  th {
+    background: linear-gradient(135deg, #7B8B6F, #6B7B5E);
+    color: #fff; font-family: 'Lato', sans-serif;
+    font-weight: 700; text-transform: uppercase;
+    font-size: 9px; letter-spacing: 0.8px;
+    padding: 7px 9px; text-align: left;
+  }
+  td {
+    padding: 6px 9px;
+    border-bottom: 1px solid #ebe6e0;
+    color: #4a4a4a; vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: rgba(123,139,111,0.04); }
+  td strong { color: #4a5a3e; }
+  .destaque {
+    background: linear-gradient(135deg, rgba(123,139,111,0.12), rgba(123,139,111,0.05));
+    border: 1px solid rgba(123,139,111,0.25);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 10.5px;
+  }
+  .destaque strong { color: #4a5a3e; font-size: 11.5px; }
+  .resumo {
+    margin-top: 18px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #4a5a3e, #6B7B5E);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 11px; line-height: 1.55;
+  }
+  .resumo strong { color: #faf7f4; }
+  .footer-note {
+    margin-top: 16px; padding-top: 6px;
+    border-top: 1px solid #ebe6e0;
+    text-align: center; font-size: 9px; color: #999;
+  }
+  .footer-note strong { color: #7B8B6F; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="./Vetor_H_VERDE.png" class="logo" alt="Humaniza">
+    <div class="header-text">
+      <div class="title">REMUNERAÇÃO DE FISIOTERAPEUTA AJUDANTE</div>
+      <div class="subtitle">Análise de Mercado &middot; Rio de Janeiro &middot; 2025</div>
+    </div>
+  </div>
+
+  <p class="lead">
+    Análise para definir quanto pagar a uma fisioterapeuta ajudante (não-sócia) por sessão prestada,
+    considerando que a <strong>proprietária assume o risco do negócio</strong>, todas as despesas operacionais
+    e a captação de pacientes. Referências de mercado coletadas em clínicas particulares pequenas e
+    médias do Rio de Janeiro (Zona Sul, Tijuca, Barra).
+  </p>
+
+  <h2>1. Modelos comuns de remuneração</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 26%;">Modelo</th>
+        <th>Como funciona</th>
+        <th style="width: 28%;">Onde é mais usado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>% sobre a sessão (split)</strong></td>
+        <td>Profissional recebe X% do que a paciente paga. Modelo dominante em clínicas particulares pequenas.</td>
+        <td>Estúdios de Pilates, clínicas de fisio particulares</td>
+      </tr>
+      <tr>
+        <td><strong>Valor fixo por sessão</strong></td>
+        <td>Independente do que a clínica cobra, o profissional recebe valor combinado.</td>
+        <td>Quando há plano de saúde / volume alto e estável</td>
+      </tr>
+      <tr>
+        <td><strong>CLT</strong></td>
+        <td>Salário fixo + encargos (~70–80% sobre salário). Vínculo trabalhista.</td>
+        <td>Clínicas grandes / hospitais. Raro para ajudantes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    Para uma clínica do porte da Humaniza, <strong>split percentual</strong> é o padrão. Profissional como
+    PJ (Simples Nacional) emite nota fiscal para a clínica — sem vínculo trabalhista, sem encargos.
+  </p>
+
+  <h2>2. Mercado Rio de Janeiro — referência 2025</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Modalidade</th>
+        <th>Cobrado da paciente</th>
+        <th>Sai para o profissional</th>
+        <th>% típico</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Pilates coletivo (até 4 alunos)</td>
+        <td>R$ 100 – 180</td>
+        <td>R$ 35 – 60</td>
+        <td><strong>30 – 35%</strong></td>
+      </tr>
+      <tr>
+        <td>Fisioterapia Traumato (individual)</td>
+        <td>R$ 150 – 250</td>
+        <td>R$ 70 – 110</td>
+        <td><strong>40 – 45%</strong></td>
+      </tr>
+      <tr>
+        <td>Fisioterapia Pélvica</td>
+        <td>R$ 180 – 300</td>
+        <td>R$ 90 – 140</td>
+        <td><strong>45 – 50%</strong></td>
+      </tr>
+      <tr>
+        <td>Obstetrícia</td>
+        <td>R$ 200 – 320</td>
+        <td>R$ 90 – 145</td>
+        <td><strong>45%</strong></td>
+      </tr>
+      <tr>
+        <td>Drenagem Linfática</td>
+        <td>R$ 150 – 250</td>
+        <td>R$ 55 – 95</td>
+        <td><strong>35 – 40%</strong></td>
+      </tr>
+      <tr>
+        <td>Massagem</td>
+        <td>R$ 130 – 220</td>
+        <td>R$ 50 – 85</td>
+        <td><strong>40%</strong></td>
+      </tr>
+      <tr>
+        <td>Abdômen 360° / protocolos com aparelhos</td>
+        <td>R$ 250 – 400</td>
+        <td>R$ 80 – 140</td>
+        <td><strong>30 – 35%</strong></td>
+      </tr>
+      <tr>
+        <td>Avaliação inicial</td>
+        <td>R$ 250 – 400</td>
+        <td>R$ 130 – 200</td>
+        <td><strong>50%</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Por que o % varia tanto</h3>
+  <ul>
+    <li>
+      <strong>Equipamento e insumo:</strong> quanto mais a clínica fornece, menor o %. Pilates exige
+      Reformer e Cadillac caros. Abdômen 360° usa radiofrequência + bioestimuladores — clínica fica com mais.
+    </li>
+    <li>
+      <strong>Especialização e formação:</strong> técnicas raras (Pélvica, Obstetrícia) exigem cursos
+      específicos e bom profissional é difícil de achar → paga melhor.
+    </li>
+    <li>
+      <strong>Avaliação inicial:</strong> tem % maior porque é onde a profissional "ganha" a paciente
+      — vincula ela ao próprio atendimento dali em diante.
+    </li>
+  </ul>
+
+  <h2>3. O que justifica a clínica ficar com a maior fatia</h2>
+
+  <p>
+    Estrutura de custos fixos típica de uma clínica pequena/média na Zona Sul, Tijuca ou Barra do Rio:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 50%;">Item de custo</th>
+        <th>Faixa mensal</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Aluguel + condomínio</td><td>R$ 5.000 – 12.000</td></tr>
+      <tr><td>Recepção / limpeza</td><td>R$ 2.000 – 4.000</td></tr>
+      <tr><td>Luz, água, internet, telefone</td><td>R$ 800 – 1.500</td></tr>
+      <tr><td>Sistema, marketing, redes sociais</td><td>R$ 500 – 1.500</td></tr>
+      <tr><td>Equipamentos (depreciação + manutenção + insumos)</td><td>R$ 1.000 – 3.000</td></tr>
+      <tr><td>Pró-labore da proprietária</td><td>R$ 5.000 – 10.000</td></tr>
+      <tr><td>Impostos (Simples Nacional ~6–15%)</td><td>variável conforme faturamento</td></tr>
+      <tr><td><strong>Total fixo mensal</strong></td><td><strong>R$ 14.000 – 32.000</strong></td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    A dona assume isso <strong>mesmo em mês fraco</strong>. A ajudante só "recebe se trabalhou". Esse risco
+    é o que justifica a clínica ficar com 55–70% — não é margem livre, é cobertura de operação.
+  </p>
+
+  <div class="destaque">
+    <strong>Simulação rápida:</strong><br>
+    Fisio ajudante atendendo 40 sessões/mês a R$ 200, split de 40%:<br>
+    &middot; Profissional: <strong>R$ 3.200/mês</strong> (bom complemento de renda)<br>
+    &middot; Clínica: <strong>R$ 4.800/mês</strong> (ajuda a cobrir os fixos)<br>
+    Se a dona pagasse 60% (R$ 4.800), sobrariam só R$ 3.200 pra cobrir todo o resto. Inviável.
+  </div>
+
+  <h2>4. Recomendação prática para a Humaniza</h2>
+
+  <p>
+    Para uma fisioterapeuta ajudante <strong>iniciante</strong> (1–3 anos pós-formada, sem público próprio
+    formado), aplicar split por modalidade na <strong>faixa baixa</strong> das praticadas no mercado:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Serviço</th>
+        <th>% sugerido</th>
+        <th>Valor estimado por sessão</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Pilates coletivo</td><td><strong>30%</strong></td><td>R$ 30 – 45 dependendo do plano</td></tr>
+      <tr><td>Fisio Traumato</td><td><strong>40%</strong></td><td>~R$ 80 (sobre avulso de R$ 198)</td></tr>
+      <tr><td>Fisio Pélvica</td><td><strong>45%</strong></td><td>~R$ 90</td></tr>
+      <tr><td>Drenagem</td><td><strong>35%</strong></td><td>~R$ 70</td></tr>
+      <tr><td>Abdômen 360°</td><td><strong>30%</strong></td><td>~R$ 85 (sobre avulso de R$ 284)</td></tr>
+      <tr><td>Avaliação</td><td><strong>50%</strong></td><td>~R$ 165</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Para uma fisioterapeuta <strong>experiente</strong> (5+ anos, com público), suba <strong>5 p.p. em cada linha</strong>.
+    Se ela traz pacientes próprios, pode chegar a <strong>55–60%</strong> na fisio individual — porque ela está
+    "alugando a sala/marca" e não dependendo da captação da clínica.
+  </p>
+
+  <h2>5. Pontos finos que evitam atrito</h2>
+  <ol>
+    <li>
+      <strong>No-show / cancelamento &lt;24h:</strong> como o termo da paciente prevê que a sessão é
+      consumida, alinhe se a ajudante também recebe nesse caso. Sugestão justa:
+      <strong>paga 50%</strong> (a fisio reservou o horário e perdeu).
+    </li>
+    <li>
+      <strong>Avaliação que não vira tratamento:</strong> paga normal — a fisio trabalhou;
+      quem perdeu foi a clínica.
+    </li>
+    <li>
+      <strong>Pagamento quinzenal</strong> (5º e 20º dias úteis) fideliza mais que mensal.
+    </li>
+    <li>
+      <strong>Contrato escrito de prestação de serviços PJ</strong> — proteção dos dois lados.
+      Define escopo, percentuais por modalidade, regras de cancelamento e prazos de pagamento.
+    </li>
+    <li>
+      <strong>Crefito ativo</strong> + responsabilidade técnica documentada — necessário para eventual
+      cobertura de plano de saúde e proteção legal em caso de intercorrência.
+    </li>
+  </ol>
+
+  <div class="resumo">
+    <strong>Em uma frase:</strong> no mercado Rio, ajudante de fisioterapia ganha entre
+    <strong>30%</strong> (modalidades com equipamento pesado) e <strong>50%</strong>
+    (avaliação/especialização) do valor pago pela paciente. Para começar uma conversa com uma
+    profissional iniciante, <strong>35–40% no carro-chefe</strong> é justo e competitivo —
+    deixando margem de manobra para subir conforme ela ganhe público próprio e tempo de casa.
+  </div>
+
+  <div class="footer-note">
+    <strong>Clínica Humaniza</strong> &middot; Rio de Janeiro / RJ &middot; Instagram: @humaniza.rj &middot;
+    documento interno de análise — não constitui obrigação contratual.
+  </div>
+
+</body>
+</html>
