@@ -6,82 +6,104 @@
 <title>Humaniza — Termo de Contratação — Massagem</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
-  @page { size: A4; margin: 0; }
+  @page { size: A4; margin: 12mm 14mm 10mm 14mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: auto; }
-  body { background: #fff; display: flex; justify-content: center; font-family: 'Lato', sans-serif; color: #3d3d3d; }
-  .page {
-    width: 794px; height: 1123px; background: #faf7f4;
-    position: relative; overflow: hidden;
+  body {
+    font-family: 'Lato', sans-serif;
+    color: #3d3d3d;
+    font-size: 10.5px;
+    line-height: 1.45;
+    background: #fff;
   }
   .header {
-    background: linear-gradient(135deg, #8B7B6F 0%, #7B8B6F 40%, #6B7B5E 100%);
-    padding: 16px 40px 14px;
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; gap: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #7B8B6F;
+    margin-bottom: 12px;
   }
-  .logo-wrapper {
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 12px;
-    padding: 6px 14px;
-    display: flex; align-items: center;
-  }
-  .logo-img { height: 44px; filter: brightness(0) invert(1); }
-  .header-right { text-align: right; }
+  .logo { height: 50px; width: auto; }
+  .header-text { flex: 1; }
   .title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 22px; font-weight: 700; color: #fff;
-    letter-spacing: 2px; line-height: 1.1;
+    font-size: 19px; font-weight: 700; color: #4a5a3e;
+    letter-spacing: 1.5px; line-height: 1.1;
   }
-  .subtitle { font-size: 10px; color: rgba(255,255,255,0.85); letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
-  .content { padding: 12px 38px 0; }
-  .intro { font-size: 10px; line-height: 1.42; color: #4a4a4a; margin-bottom: 9px; text-align: justify; }
+  .subtitle {
+    font-size: 9.5px; color: #7B8B6F;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .intro {
+    font-size: 10.5px; line-height: 1.5;
+    margin-bottom: 12px; text-align: justify;
+  }
   .intro strong { color: #4a5a3e; }
-  .section { margin-bottom: 8px; }
+  .section { margin-bottom: 10px; }
   .section-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: 13px; font-weight: 700; color: #4a5a3e;
-    letter-spacing: 1px; text-transform: uppercase;
-    border-bottom: 1px solid #d8d0c8; padding-bottom: 2px; margin-bottom: 5px;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    border-bottom: 1px solid #d8d0c8;
+    padding-bottom: 3px; margin-bottom: 6px;
   }
-  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; }
   .field-grid.full { grid-template-columns: 1fr; }
-  .field { font-size: 9.5px; color: #5a5a5a; display: flex; align-items: baseline; gap: 5px; }
-  .field label { font-weight: 700; color: #4a5a3e; text-transform: uppercase; font-size: 8.5px; letter-spacing: 0.5px; white-space: nowrap; }
-  .field .line { flex: 1; border-bottom: 1px solid #b9b0a6; height: 11px; }
-  ol.clausulas { padding-left: 20px; }
-  ol.clausulas li { font-size: 9.5px; line-height: 1.38; color: #4a4a4a; margin-bottom: 3px; text-align: justify; }
+  .field { display: flex; align-items: baseline; gap: 5px; font-size: 10px; color: #5a5a5a; }
+  .field label {
+    font-weight: 700; color: #4a5a3e;
+    text-transform: uppercase; font-size: 8.5px;
+    letter-spacing: 0.5px; white-space: nowrap;
+  }
+  .field .line { flex: 1; border-bottom: 1px solid #b9b0a6; height: 13px; }
+  ol.clausulas { padding-left: 18px; }
+  ol.clausulas li {
+    font-size: 10px; line-height: 1.5;
+    margin-bottom: 4px; text-align: justify; color: #4a4a4a;
+  }
   ol.clausulas li strong { color: #4a5a3e; }
-  .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 14px; padding-top: 6px; }
+  .local-data {
+    text-align: right; font-size: 10px;
+    margin-top: 14px; color: #4a4a4a;
+  }
+  .local-data .line {
+    display: inline-block; min-width: 90px;
+    border-bottom: 1px solid #b9b0a6; height: 13px;
+    vertical-align: bottom;
+  }
+  .signatures {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 32px; margin-top: 18px;
+  }
   .sig-block { text-align: center; }
-  .sig-line { border-top: 1px solid #6b7b5e; margin-bottom: 4px; padding-top: 2px; }
-  .sig-label { font-size: 9px; color: #6b6b6b; text-transform: uppercase; letter-spacing: 1px; }
-  .local-data { text-align: right; font-size: 9.5px; color: #5a5a5a; margin-top: 10px; }
-  .local-data .line { display: inline-block; min-width: 100px; border-bottom: 1px solid #b9b0a6; height: 12px; vertical-align: bottom; }
+  .sig-line {
+    border-top: 1px solid #6b7b5e;
+    margin-bottom: 3px; padding-top: 2px;
+  }
+  .sig-label {
+    font-size: 9px; color: #6b6b6b;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
   .footer-note {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    text-align: center; padding: 6px 28px; font-size: 8.5px; color: #999;
-    border-top: 1px solid #ebe6e0; line-height: 1.4;
+    margin-top: 14px; padding-top: 5px;
+    border-top: 1px solid #ebe6e0;
+    text-align: center; font-size: 8.5px; color: #999;
   }
   .footer-note strong { color: #7B8B6F; }
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page { box-shadow: none; }
   }
 </style>
 </head>
 <body>
-<div class="page">
   <div class="header">
-    <div class="logo-wrapper"><img src="./logo.png" class="logo-img" alt="Humaniza"></div>
-    <div class="header-right">
+    <img src="./Vetor_H_VERDE.png" class="logo" alt="Humaniza">
+    <div class="header-text">
       <div class="title">TERMO DE CONTRATAÇÃO</div>
       <div class="subtitle">Massagem &middot; Massoterapia</div>
     </div>
   </div>
 
-  <div class="content">
-    <p class="intro">
+  <p class="intro">
       Pelo presente instrumento particular, a <strong>Clínica Humaniza</strong>, com sede no Rio de Janeiro/RJ,
       doravante denominada CONTRATADA, e o(a) paciente abaixo qualificado(a), doravante denominado(a) CONTRATANTE,
       celebram o presente termo de prestação de serviços em <strong>Massagem</strong>
@@ -197,11 +219,7 @@
         <div class="sig-label">Clínica Humaniza</div>
       </div>
     </div>
-  </div>
 
-  <div class="footer-note">
-    <strong>Clínica Humaniza</strong> &middot; Rio de Janeiro / RJ &middot; app.humanizarj.com.br
-  </div>
-</div>
+  <div class="footer-note"><strong>Clínica Humaniza</strong> &middot; Rio de Janeiro / RJ &middot; app.humanizarj.com.br</div>
 </body>
 </html>
