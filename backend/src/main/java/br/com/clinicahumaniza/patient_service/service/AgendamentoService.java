@@ -424,33 +424,20 @@ public class AgendamentoService {
         // Verificar que o paciente existe
         patientRepository.findById(pacienteId).orElseThrow(() -> new ResourceNotFoundException("Paciente", pacienteId));
 
-        // Contar reposições usadas no mês corrente
-        LocalDateTime inicioMes = LocalDateTime.now()
-                .withDayOfMonth(1)
-                .withHour(0)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
-        LocalDateTime fimMes = inicioMes.plusMonths(1).minusNanos(1);
-        long reposicoesUsadas = agendamentoRepository.countReposicoesNoMes(pacienteId, inicioMes, fimMes);
+        // Buscar agendamentos com direito a reposição sem reposição já criada
+        List<UUID> agendamentosComDireito =
+                agendamentoRepository.findByPacienteIdAndDireitoReposicaoTrue(pacienteId).stream()
+                        .filter(a -> !agendamentoRepository.existsByReposicaoOrigemIdAndStatusIn(
+                                a.getId(),
+                                List.of(
+                                        StatusAgendamento.AGENDADO,
+                                        StatusAgendamento.CONFIRMADO,
+                                        StatusAgendamento.REALIZADO)))
+                        .map(Agendamento::getId)
+                        .collect(Collectors.toList());
 
-        // Buscar agendamentos com direito a reposição ainda válidos
-        List<UUID> agendamentosComDireito = agendamentoRepository
-                .findByPacienteIdAndDireitoReposicaoTrueAndDataLimiteReposicaoAfter(pacienteId, LocalDateTime.now())
-                .stream()
-                .filter(a -> {
-                    // Filtrar os que não têm reposição já criada
-                    return !agendamentoRepository.existsByReposicaoOrigemIdAndStatusIn(
-                            a.getId(),
-                            List.of(
-                                    StatusAgendamento.AGENDADO,
-                                    StatusAgendamento.CONFIRMADO,
-                                    StatusAgendamento.REALIZADO));
-                })
-                .map(Agendamento::getId)
-                .collect(Collectors.toList());
-
-        return new ReposicaoInfoDTO(reposicoesUsadas, LIMITE_REPOSICOES_MES, agendamentosComDireito);
+        // Sem limite mensal — retorna 0 para indicar sem restrição
+        return new ReposicaoInfoDTO(0L, 0, agendamentosComDireito);
     }
 
     // --- Validações privadas ---
