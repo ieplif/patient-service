@@ -141,6 +141,7 @@ public class AgendamentoService {
     public Page<Agendamento> getAllAgendamentos(
             StatusAgendamento status,
             UUID pacienteId,
+            String pacienteNome,
             UUID profissionalId,
             UUID assinaturaId,
             LocalDateTime dataInicio,
@@ -149,6 +150,7 @@ public class AgendamentoService {
         Specification<Agendamento> spec = Specification.allOf(
                 AgendamentoSpecification.hasStatus(status),
                 AgendamentoSpecification.hasPaciente(pacienteId),
+                AgendamentoSpecification.hasPacienteNome(pacienteNome),
                 AgendamentoSpecification.hasProfissional(profissionalId),
                 AgendamentoSpecification.hasAssinatura(assinaturaId),
                 AgendamentoSpecification.betweenDatas(dataInicio, dataFim));

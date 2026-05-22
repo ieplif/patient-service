@@ -68,6 +68,7 @@ public class PagamentoController {
             @RequestParam(required = false) StatusPagamento status,
             @RequestParam(required = false) FormaPagamento formaPagamento,
             @RequestParam(required = false) UUID pacienteId,
+            @RequestParam(required = false) String pacienteNome,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate pagamentoInicio,
@@ -75,7 +76,15 @@ public class PagamentoController {
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(pagamentoService
                 .getAllPagamentos(
-                        status, formaPagamento, pacienteId, inicio, fim, pagamentoInicio, pagamentoFim, pageable)
+                        status,
+                        formaPagamento,
+                        pacienteId,
+                        pacienteNome,
+                        inicio,
+                        fim,
+                        pagamentoInicio,
+                        pagamentoFim,
+                        pageable)
                 .map(pagamentoMapper::toResponseDTO));
     }
 

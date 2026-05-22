@@ -26,6 +26,8 @@ export async function getAgendamentos(params?: {
   sort?: string
   status?: StatusAgendamento
   pacienteId?: string
+  /** Busca por nome do paciente (LIKE case-insensitive). */
+  pacienteNome?: string
   profissionalId?: string
   assinaturaId?: string
   dataInicio?: string

@@ -8,6 +8,8 @@ export async function getPagamentos(params?: {
   status?: StatusPagamento
   formaPagamento?: FormaPagamento
   pacienteId?: string
+  /** Busca por nome do paciente (LIKE case-insensitive). */
+  pacienteNome?: string
   /** Filtro por dataVencimento. */
   inicio?: string
   fim?: string

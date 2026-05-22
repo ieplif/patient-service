@@ -70,14 +70,24 @@ export function PagamentosPage() {
   const [page, setPage] = useState(0)
   const [statusFilter, setStatusFilter] = useState<StatusPagamento | "TODOS">("TODOS")
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [sheetOpen, setSheetOpen] = useState(false)
+
+  function handleSearch(value: string) {
+    setSearch(value)
+    clearTimeout((window as unknown as { _stPag?: ReturnType<typeof setTimeout> })._stPag)
+    ;(window as unknown as { _stPag?: ReturnType<typeof setTimeout> })._stPag = setTimeout(() => {
+      setDebouncedSearch(value)
+      setPage(0)
+    }, 400)
+  }
   // Edição de pagamento — reutiliza o mesmo Sheet com initialData
   const [editAlvo, setEditAlvo] = useState<Pagamento | null>(null)
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
   const { data, isLoading } = useQuery({
-    queryKey: ["pagamentos", page, statusFilter],
+    queryKey: ["pagamentos", page, statusFilter, debouncedSearch],
     queryFn: () =>
       getPagamentos({
         page,
@@ -87,6 +97,7 @@ export function PagamentosPage() {
         // depois dos pagamentos com vencimento em maio.
         sort: "dataVencimento,desc",
         status: statusFilter !== "TODOS" ? statusFilter : undefined,
+        pacienteNome: debouncedSearch || undefined,
       }),
   })
 
@@ -161,9 +172,8 @@ export function PagamentosPage() {
     })
   }
 
-  const filtered = data?.content.filter((pag) =>
-    !search || pag.pacienteNome.toLowerCase().includes(search.toLowerCase())
-  )
+  // Busca por paciente agora é server-side (parâmetro pacienteNome) — cobre todas as páginas
+  const filtered = data?.content
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -205,7 +215,7 @@ export function PagamentosPage() {
               <Input
                 placeholder="Buscar por paciente..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
                 className="pl-9 font-secondary text-sm"
               />
             </div>

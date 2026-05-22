@@ -25,6 +25,8 @@ export async function getAssinaturas(params?: {
   sort?: string
   status?: StatusAssinatura
   pacienteId?: string
+  /** Busca por nome do paciente (LIKE case-insensitive). */
+  pacienteNome?: string
 }): Promise<PageResponse<Assinatura>> {
   const { data } = await apiClient.get<PageResponse<Assinatura>>("/api/v1/assinaturas", {
     params,

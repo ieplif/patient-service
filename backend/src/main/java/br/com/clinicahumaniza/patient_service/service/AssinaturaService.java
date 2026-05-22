@@ -86,9 +86,12 @@ public class AssinaturaService {
         return assinaturaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
     }
 
-    public Page<Assinatura> getAllAssinaturas(StatusAssinatura status, UUID pacienteId, Pageable pageable) {
+    public Page<Assinatura> getAllAssinaturas(
+            StatusAssinatura status, UUID pacienteId, String pacienteNome, Pageable pageable) {
         Specification<Assinatura> spec = Specification.allOf(
-                AssinaturaSpecification.hasStatus(status), AssinaturaSpecification.hasPaciente(pacienteId));
+                AssinaturaSpecification.hasStatus(status),
+                AssinaturaSpecification.hasPaciente(pacienteId),
+                AssinaturaSpecification.hasPacienteNome(pacienteNome));
         return assinaturaRepository.findAll(spec, pageable);
     }
 

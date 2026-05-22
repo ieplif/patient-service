@@ -77,9 +77,10 @@ public class AssinaturaController {
     public ResponseEntity<Page<AssinaturaResponseDTO>> getAllAssinaturas(
             @RequestParam(required = false) StatusAssinatura status,
             @RequestParam(required = false) UUID pacienteId,
+            @RequestParam(required = false) String pacienteNome,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(assinaturaService
-                .getAllAssinaturas(status, pacienteId, pageable)
+                .getAllAssinaturas(status, pacienteId, pacienteNome, pageable)
                 .map(assinaturaMapper::toResponseDTO));
     }
 

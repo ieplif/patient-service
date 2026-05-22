@@ -72,6 +72,7 @@ public class AgendamentoController {
     public ResponseEntity<Page<AgendamentoResponseDTO>> getAllAgendamentos(
             @RequestParam(required = false) StatusAgendamento status,
             @RequestParam(required = false) UUID pacienteId,
+            @RequestParam(required = false) String pacienteNome,
             @RequestParam(required = false) UUID profissionalId,
             @RequestParam(required = false) UUID assinaturaId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
@@ -80,7 +81,8 @@ public class AgendamentoController {
         LocalDateTime dtInicio = dataInicio != null ? dataInicio.atStartOfDay() : null;
         LocalDateTime dtFim = dataFim != null ? dataFim.atTime(LocalTime.MAX) : null;
         return ResponseEntity.ok(agendamentoService
-                .getAllAgendamentos(status, pacienteId, profissionalId, assinaturaId, dtInicio, dtFim, pageable)
+                .getAllAgendamentos(
+                        status, pacienteId, pacienteNome, profissionalId, assinaturaId, dtInicio, dtFim, pageable)
                 .map(agendamentoMapper::toResponseDTO));
     }
 

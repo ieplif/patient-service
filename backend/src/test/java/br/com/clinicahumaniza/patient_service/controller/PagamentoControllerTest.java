@@ -154,7 +154,8 @@ class PagamentoControllerTest {
     @DisplayName("Deve listar pagamentos com autenticação - 200")
     @WithMockUser
     void getAllPagamentos_Authenticated_200() throws Exception {
-        when(pagamentoService.getAllPagamentos(any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+        when(pagamentoService.getAllPagamentos(
+                        any(), any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(pagamento)));
         when(pagamentoMapper.toResponseDTO(pagamento)).thenReturn(responseDTO);
 

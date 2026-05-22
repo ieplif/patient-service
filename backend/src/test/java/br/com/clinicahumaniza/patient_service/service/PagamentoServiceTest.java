@@ -335,7 +335,8 @@ class PagamentoServiceTest {
                         org.mockito.ArgumentMatchers.<Specification<Pagamento>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(pagamento)));
 
-        Page<Pagamento> result = pagamentoService.getAllPagamentos(null, null, null, null, null, null, null, pageable);
+        Page<Pagamento> result =
+                pagamentoService.getAllPagamentos(null, null, null, null, null, null, null, null, pageable);
 
         assertThat(result.getContent()).hasSize(1);
     }

@@ -33,6 +33,13 @@ public class PagamentoSpecification {
         };
     }
 
+    public static Specification<Pagamento> hasPacienteNome(String nome) {
+        return (root, query, cb) -> {
+            if (nome == null || nome.isBlank()) return null;
+            return cb.like(cb.lower(root.get("paciente").get("nomeCompleto")), "%" + nome.toLowerCase() + "%");
+        };
+    }
+
     public static Specification<Pagamento> betweenVencimento(LocalDate inicio, LocalDate fim) {
         return (root, query, cb) -> {
             if (inicio == null && fim == null) return null;

@@ -154,7 +154,8 @@ class AgendamentoControllerTest {
     @DisplayName("Deve listar agendamentos com autenticação - 200")
     @WithMockUser
     void getAllAgendamentos_Authenticated_200() throws Exception {
-        when(agendamentoService.getAllAgendamentos(any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+        when(agendamentoService.getAllAgendamentos(
+                        any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(agendamento)));
         when(agendamentoMapper.toResponseDTO(agendamento)).thenReturn(responseDTO);
 

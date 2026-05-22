@@ -24,6 +24,13 @@ public class AgendamentoSpecification {
         };
     }
 
+    public static Specification<Agendamento> hasPacienteNome(String nome) {
+        return (root, query, cb) -> {
+            if (nome == null || nome.isBlank()) return null;
+            return cb.like(cb.lower(root.get("paciente").get("nomeCompleto")), "%" + nome.toLowerCase() + "%");
+        };
+    }
+
     public static Specification<Agendamento> hasProfissional(UUID profissionalId) {
         return (root, query, cb) -> {
             if (profissionalId == null) return null;

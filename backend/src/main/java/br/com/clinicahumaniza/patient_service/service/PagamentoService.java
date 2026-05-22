@@ -92,6 +92,7 @@ public class PagamentoService {
             StatusPagamento status,
             FormaPagamento formaPagamento,
             UUID pacienteId,
+            String pacienteNome,
             LocalDate inicio,
             LocalDate fim,
             LocalDate pagamentoInicio,
@@ -101,6 +102,7 @@ public class PagamentoService {
                 PagamentoSpecification.hasStatus(status),
                 PagamentoSpecification.hasFormaPagamento(formaPagamento),
                 PagamentoSpecification.hasPaciente(pacienteId),
+                PagamentoSpecification.hasPacienteNome(pacienteNome),
                 PagamentoSpecification.betweenVencimento(inicio, fim),
                 PagamentoSpecification.betweenDataPagamento(pagamentoInicio, pagamentoFim));
         return pagamentoRepository.findAll(spec, pageable);

@@ -86,7 +86,17 @@ export function AgendamentosPage() {
   // Pode trocar para "TODOS" pelo filtro acima da tabela.
   const [statusFilter, setStatusFilter] = useState<StatusAgendamento | "TODOS">("AGENDADO")
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [sheetOpen, setSheetOpen] = useState(false)
+
+  function handleSearch(value: string) {
+    setSearch(value)
+    clearTimeout((window as unknown as { _stAg?: ReturnType<typeof setTimeout> })._stAg)
+    ;(window as unknown as { _stAg?: ReturnType<typeof setTimeout> })._stAg = setTimeout(() => {
+      setDebouncedSearch(value)
+      setPage(0)
+    }, 400)
+  }
   const [selectedAg, setSelectedAg] = useState<Agendamento | null>(null)
   const [reposicaoSheetOpen, setReposicaoSheetOpen] = useState(false)
   const [reposicaoAg, setReposicaoAg] = useState<Agendamento | null>(null)
@@ -98,13 +108,14 @@ export function AgendamentosPage() {
   const queryClient = useQueryClient()
 
   const { data, isLoading } = useQuery({
-    queryKey: ["agendamentos", page, statusFilter],
+    queryKey: ["agendamentos", page, statusFilter, debouncedSearch],
     queryFn: () =>
       getAgendamentos({
         page,
         size: PAGE_SIZE,
         sort: "dataHora,asc",
         status: statusFilter !== "TODOS" ? statusFilter : undefined,
+        pacienteNome: debouncedSearch || undefined,
       }),
   })
 
@@ -163,11 +174,8 @@ export function AgendamentosPage() {
     return ag.servicoDescricao.toLowerCase().includes("fisio")
   }
 
-  const filteredContent = search.trim()
-    ? data?.content.filter((ag) =>
-        ag.pacienteNome.toLowerCase().includes(search.toLowerCase())
-      )
-    : data?.content
+  // Busca por paciente agora é server-side (parâmetro pacienteNome) — cobre todas as páginas
+  const filteredContent = data?.content
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -210,7 +218,7 @@ export function AgendamentosPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
                 placeholder="Buscar por paciente..."
                 className="pl-9 font-secondary text-sm"
               />

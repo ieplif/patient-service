@@ -159,7 +159,7 @@ class AssinaturaControllerTest {
     @DisplayName("Deve listar assinaturas com autenticação - 200")
     @WithMockUser
     void getAllAssinaturas_Authenticated_200() throws Exception {
-        when(assinaturaService.getAllAssinaturas(any(), any(), any(Pageable.class)))
+        when(assinaturaService.getAllAssinaturas(any(), any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(assinatura)));
         when(assinaturaMapper.toResponseDTO(assinatura)).thenReturn(responseDTO);
 

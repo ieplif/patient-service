@@ -83,7 +83,17 @@ export function AssinaturasPage() {
   const [page, setPage] = useState(0)
   const [statusFilter, setStatusFilter] = useState<StatusAssinatura | "TODOS">("TODOS")
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [sheetOpen, setSheetOpen] = useState(false)
+
+  function handleSearch(value: string) {
+    setSearch(value)
+    clearTimeout((window as unknown as { _stAs?: ReturnType<typeof setTimeout> })._stAs)
+    ;(window as unknown as { _stAs?: ReturnType<typeof setTimeout> })._stAs = setTimeout(() => {
+      setDebouncedSearch(value)
+      setPage(0)
+    }, 400)
+  }
   const [editAssinatura, setEditAssinatura] = useState<Assinatura | null>(null)
   // Suspensão/reativação
   const [suspenderOpen, setSuspenderOpen] = useState(false)
@@ -94,13 +104,14 @@ export function AssinaturasPage() {
   const { toast } = useToast()
 
   const { data, isLoading } = useQuery({
-    queryKey: ["assinaturas", page, statusFilter],
+    queryKey: ["assinaturas", page, statusFilter, debouncedSearch],
     queryFn: () =>
       getAssinaturas({
         page,
         size: PAGE_SIZE,
         sort: "createdAt,desc",
         status: statusFilter !== "TODOS" ? statusFilter : undefined,
+        pacienteNome: debouncedSearch || undefined,
       }),
   })
 
@@ -362,9 +373,8 @@ export function AssinaturasPage() {
     setSheetOpen(true)
   }
 
-  const filtered = data?.content.filter((as) =>
-    !search || as.pacienteNome.toLowerCase().includes(search.toLowerCase())
-  )
+  // Busca por paciente agora é server-side (parâmetro pacienteNome) — cobre todas as páginas
+  const filtered = data?.content
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -406,7 +416,7 @@ export function AssinaturasPage() {
               <Input
                 placeholder="Buscar por paciente..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
                 className="pl-9 font-secondary text-sm"
               />
             </div>

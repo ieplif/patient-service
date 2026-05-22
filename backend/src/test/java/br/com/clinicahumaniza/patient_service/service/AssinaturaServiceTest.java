@@ -211,7 +211,7 @@ class AssinaturaServiceTest {
                         org.mockito.ArgumentMatchers.<Specification<Assinatura>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(assinatura)));
 
-        Page<Assinatura> result = assinaturaService.getAllAssinaturas(null, null, pageable);
+        Page<Assinatura> result = assinaturaService.getAllAssinaturas(null, null, null, pageable);
 
         assertThat(result.getContent()).hasSize(1);
     }
