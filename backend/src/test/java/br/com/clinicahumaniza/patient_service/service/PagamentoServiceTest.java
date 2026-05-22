@@ -393,7 +393,7 @@ class PagamentoServiceTest {
         updateDTO.setObservacoes("Atualizado");
 
         when(pagamentoRepository.findById(pagamentoId)).thenReturn(Optional.of(pagamento));
-        doNothing().when(pagamentoMapper).updateEntityFromDto(updateDTO, pagamento);
+        doNothing().when(pagamentoMapper).updateEntityFromDto(updateDTO, pagamento, null, null, null);
         when(pagamentoRepository.save(pagamento)).thenReturn(pagamento);
 
         Pagamento result = pagamentoService.updatePagamento(pagamentoId, updateDTO);

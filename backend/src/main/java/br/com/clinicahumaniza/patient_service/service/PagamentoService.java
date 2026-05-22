@@ -158,7 +158,46 @@ public class PagamentoService {
         Pagamento pagamento =
                 pagamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pagamento", id));
 
-        pagamentoMapper.updateEntityFromDto(dto, pagamento);
+        // Resolve entidades relacionadas se foram enviadas no DTO
+        Patient paciente = null;
+        if (dto.getPacienteId() != null) {
+            paciente = patientRepository
+                    .findById(dto.getPacienteId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Paciente", dto.getPacienteId()));
+        }
+
+        List<Assinatura> assinaturas = null;
+        if (dto.getAssinaturaIds() != null) {
+            assinaturas = new ArrayList<>();
+            for (UUID assinaturaId : dto.getAssinaturaIds()) {
+                Assinatura assinatura = assinaturaRepository
+                        .findById(assinaturaId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Assinatura", assinaturaId));
+                assinaturas.add(assinatura);
+            }
+        }
+
+        Agendamento agendamento = null;
+        if (dto.getAgendamentoId() != null) {
+            agendamento = agendamentoRepository
+                    .findById(dto.getAgendamentoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Agendamento", dto.getAgendamentoId()));
+        }
+
+        // Detecta se valor / parcelas / vencimento mudaram → precisa regenerar parcelas
+        boolean valorMudou = dto.getValor() != null && pagamento.getValor().compareTo(dto.getValor()) != 0;
+        boolean parcelasMudou =
+                dto.getNumeroParcelas() != null && !dto.getNumeroParcelas().equals(pagamento.getNumeroParcelas());
+        boolean vencimentoMudou =
+                dto.getDataVencimento() != null && !dto.getDataVencimento().equals(pagamento.getDataVencimento());
+
+        pagamentoMapper.updateEntityFromDto(dto, pagamento, paciente, assinaturas, agendamento);
+
+        if (valorMudou || parcelasMudou || vencimentoMudou) {
+            pagamento.getParcelas().clear();
+            gerarParcelas(pagamento);
+        }
+
         return pagamentoRepository.save(pagamento);
     }
 

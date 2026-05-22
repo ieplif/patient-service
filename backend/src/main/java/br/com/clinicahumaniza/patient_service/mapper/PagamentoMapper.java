@@ -89,9 +89,34 @@ public class PagamentoMapper {
         return dto;
     }
 
-    public void updateEntityFromDto(PagamentoUpdateDTO dto, Pagamento entity) {
+    /**
+     * Aplica os campos do DTO na entidade. Campos nulos no DTO são ignorados
+     * (não sobrescrevem). As entidades relacionadas (paciente, assinaturas,
+     * agendamento) devem ser pré-resolvidas pelo Service.
+     */
+    public void updateEntityFromDto(
+            PagamentoUpdateDTO dto,
+            Pagamento entity,
+            Patient paciente,
+            List<Assinatura> assinaturas,
+            Agendamento agendamento) {
+        if (paciente != null) {
+            entity.setPaciente(paciente);
+        }
+        if (dto.getAssinaturaIds() != null) {
+            entity.setAssinaturas(assinaturas != null ? assinaturas : new ArrayList<>());
+        }
+        if (dto.getAgendamentoId() != null) {
+            entity.setAgendamento(agendamento);
+        }
+        if (dto.getValor() != null) {
+            entity.setValor(dto.getValor());
+        }
         if (dto.getFormaPagamento() != null) {
             entity.setFormaPagamento(dto.getFormaPagamento());
+        }
+        if (dto.getNumeroParcelas() != null) {
+            entity.setNumeroParcelas(dto.getNumeroParcelas());
         }
         if (dto.getDataVencimento() != null) {
             entity.setDataVencimento(dto.getDataVencimento());

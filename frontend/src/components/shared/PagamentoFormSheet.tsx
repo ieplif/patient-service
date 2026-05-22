@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getPatients } from "@/api/patients"
 import { getAssinaturas } from "@/api/assinaturas"
 import { getAgendamentos } from "@/api/agendamentos"
-import type { FormaPagamento } from "@/types"
+import type { FormaPagamento, Pagamento } from "@/types"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
@@ -33,9 +33,12 @@ interface PagamentoFormSheetProps {
     observacoes?: string
   }) => void
   isPending?: boolean
+  /** Quando fornecido, abre em modo edição: preenche os campos e altera labels/botões. */
+  initialData?: Pagamento | null
 }
 
-export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: PagamentoFormSheetProps) {
+export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending, initialData }: PagamentoFormSheetProps) {
+  const isEdit = !!initialData
   const [pacienteId, setPacienteId] = useState("")
   const [assinaturaIds, setAssinaturaIds] = useState<string[]>([])
   const [agendamentoId, setAgendamentoId] = useState("")
@@ -65,16 +68,29 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
 
   useEffect(() => {
     if (open) {
-      setPacienteId("")
-      setAssinaturaIds([])
-      setAgendamentoId("")
-      setValor("")
-      setFormaPagamento("")
-      setNumeroParcelas("1")
-      setDataVencimento(new Date().toISOString().split("T")[0])
-      setObservacoes("")
+      if (initialData) {
+        // Modo edição: preenche os campos com os dados existentes
+        setPacienteId(initialData.pacienteId)
+        setAssinaturaIds(initialData.assinaturaIds ?? [])
+        setAgendamentoId(initialData.agendamentoId ?? "")
+        setValor(String(initialData.valor))
+        setFormaPagamento(initialData.formaPagamento)
+        setNumeroParcelas(String(initialData.numeroParcelas ?? 1))
+        setDataVencimento(initialData.dataVencimento.split("T")[0])
+        setObservacoes(initialData.observacoes ?? "")
+      } else {
+        // Modo criação: zera tudo
+        setPacienteId("")
+        setAssinaturaIds([])
+        setAgendamentoId("")
+        setValor("")
+        setFormaPagamento("")
+        setNumeroParcelas("1")
+        setDataVencimento(new Date().toISOString().split("T")[0])
+        setObservacoes("")
+      }
     }
-  }, [open])
+  }, [open, initialData])
 
   function handlePacienteChange(id: string) {
     setPacienteId(id)
@@ -138,9 +154,11 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="font-primary">Novo Pagamento</SheetTitle>
+          <SheetTitle className="font-primary">{isEdit ? "Editar Pagamento" : "Novo Pagamento"}</SheetTitle>
           <SheetDescription className="font-secondary">
-            Registre um novo pagamento de paciente.
+            {isEdit
+              ? "Atualize os dados do pagamento. Mudar valor, parcelas ou vencimento regenera as parcelas."
+              : "Registre um novo pagamento de paciente."}
           </SheetDescription>
         </SheetHeader>
 
@@ -318,7 +336,7 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending }: 
               className="flex-1 bg-primary text-primary-foreground font-primary"
               disabled={!pacienteId || !valor || !formaPagamento || !dataVencimento || isPending}
             >
-              {isPending ? "Salvando..." : "Registrar Pagamento"}
+              {isPending ? "Salvando..." : isEdit ? "Salvar alterações" : "Registrar Pagamento"}
             </Button>
           </div>
         </form>

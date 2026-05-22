@@ -41,7 +41,12 @@ export async function createPagamento(payload: {
 export async function updatePagamento(
   id: string,
   payload: {
+    pacienteId?: string
+    assinaturaIds?: string[]
+    agendamentoId?: string
+    valor?: number
     formaPagamento?: FormaPagamento
+    numeroParcelas?: number
     dataVencimento?: string
     observacoes?: string
   }
