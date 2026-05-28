@@ -74,9 +74,27 @@ const nextStatuses: Partial<Record<StatusAgendamento, { status: StatusAgendament
     { status: "NAO_COMPARECEU", label: "Não compareceu" },
   ],
   CONFIRMADO: [
-    { status: "REALIZADO", label: "Marcar como realizado" },
-    { status: "CANCELADO", label: "Cancelar" },
+    { status: "AGENDADO",   label: "Reverter para Agendado" },
+    { status: "REALIZADO",  label: "Marcar como realizado" },
+    { status: "CANCELADO",  label: "Cancelar" },
     { status: "NAO_COMPARECEU", label: "Não compareceu" },
+  ],
+  // Os 3 status "finais" agora podem ser revertidos para corrigir engano da recepção
+  REALIZADO: [
+    { status: "AGENDADO",       label: "Reverter para Agendado" },
+    { status: "CONFIRMADO",     label: "Reverter para Confirmado" },
+    { status: "NAO_COMPARECEU", label: "Marcar como não compareceu" },
+    { status: "CANCELADO",      label: "Cancelar" },
+  ],
+  CANCELADO: [
+    { status: "AGENDADO",   label: "Reverter para Agendado" },
+    { status: "CONFIRMADO", label: "Reverter para Confirmado" },
+    { status: "REALIZADO",  label: "Marcar como realizado" },
+  ],
+  NAO_COMPARECEU: [
+    { status: "AGENDADO",   label: "Reverter para Agendado" },
+    { status: "REALIZADO",  label: "Marcar como realizado" },
+    { status: "CANCELADO",  label: "Cancelar" },
   ],
 }
 

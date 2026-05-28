@@ -265,30 +265,54 @@ public class AgendamentoService {
         Agendamento agendamento =
                 agendamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
 
-        validarTransicaoStatus(agendamento.getStatus(), dto.getStatus());
+        StatusAgendamento statusAnterior = agendamento.getStatus();
+        StatusAgendamento statusNovo = dto.getStatus();
 
-        agendamento.setStatus(dto.getStatus());
+        validarTransicaoStatus(statusAnterior, statusNovo);
+
+        agendamento.setStatus(statusNovo);
 
         // Salvar motivo de cancelamento se fornecido
         if (dto.getMotivoCancelamento() != null) {
             agendamento.setMotivoCancelamento(dto.getMotivoCancelamento());
         }
 
-        // Se marcou como REALIZADO e tem assinatura vinculada, registrar sessão
-        if (dto.getStatus() == StatusAgendamento.REALIZADO && agendamento.getAssinatura() != null) {
+        // === Efeitos colaterais nas sessões da assinatura ===
+        // Marcou como REALIZADO agora (não era antes) → registrar sessão
+        if (statusNovo == StatusAgendamento.REALIZADO
+                && statusAnterior != StatusAgendamento.REALIZADO
+                && agendamento.getAssinatura() != null) {
             assinaturaService.registrarSessao(agendamento.getAssinatura().getId());
         }
+        // Saiu de REALIZADO para outro status (correção de engano) → reverter sessão
+        if (statusAnterior == StatusAgendamento.REALIZADO
+                && statusNovo != StatusAgendamento.REALIZADO
+                && agendamento.getAssinatura() != null) {
+            assinaturaService.reverterSessao(agendamento.getAssinatura().getId());
+        }
 
-        // Avaliar direito a reposição ao cancelar
-        if (dto.getStatus() == StatusAgendamento.CANCELADO) {
+        // === Direito a reposição ===
+        if (statusNovo == StatusAgendamento.CANCELADO) {
             avaliarDireitoReposicao(agendamento, dto.getGerarReposicao());
+        }
+        // Saiu de CANCELADO → limpar direito a reposição (não faz mais sentido)
+        if (statusAnterior == StatusAgendamento.CANCELADO && statusNovo != StatusAgendamento.CANCELADO) {
+            agendamento.setDireitoReposicao(false);
+            agendamento.setMotivoCancelamento(null);
         }
 
         Agendamento saved = agendamentoRepository.save(agendamento);
 
-        // Se cancelado, remover evento do Google Calendar
-        if (dto.getStatus() == StatusAgendamento.CANCELADO) {
+        // === Google Calendar ===
+        // Entrou em CANCELADO agora → remover evento
+        if (statusNovo == StatusAgendamento.CANCELADO && statusAnterior != StatusAgendamento.CANCELADO) {
             googleCalendarService.ifPresent(g -> g.deleteEvent(saved));
+        }
+        // Saiu de CANCELADO → recriar evento (se tem profissional)
+        if (statusAnterior == StatusAgendamento.CANCELADO
+                && statusNovo != StatusAgendamento.CANCELADO
+                && saved.getProfissional() != null) {
+            googleCalendarService.ifPresent(g -> g.createEvent(saved));
         }
 
         return saved;
@@ -536,30 +560,26 @@ public class AgendamentoService {
         }
     }
 
+    /**
+     * Política de transições — qualquer status pode ir para qualquer outro,
+     * exceto "no-op" (mesmo status). Os efeitos colaterais (contagem de sessão
+     * na assinatura, Google Calendar, motivo de cancelamento) são tratados em
+     * updateStatus() comparando statusAnterior x statusNovo.
+     *
+     * Status "finais" (REALIZADO, CANCELADO, NAO_COMPARECEU) podem ser revertidos
+     * para corrigir engano da recepção.
+     */
     private void validarTransicaoStatus(StatusAgendamento atual, StatusAgendamento novo) {
-        if (isStatusFinal(atual)) {
-            throw new BusinessException("Não é possível alterar um agendamento com status " + atual);
-        }
-
-        boolean transicaoValida =
-                switch (atual) {
-                        // AGENDADO → REALIZADO direto: atalho útil para registros retroativos e
-                        // para casos em que a recepção esquece de confirmar antes da aula
-                    case AGENDADO -> novo == StatusAgendamento.CONFIRMADO
-                            || novo == StatusAgendamento.REALIZADO
-                            || novo == StatusAgendamento.CANCELADO
-                            || novo == StatusAgendamento.NAO_COMPARECEU;
-                    case CONFIRMADO -> novo == StatusAgendamento.REALIZADO
-                            || novo == StatusAgendamento.CANCELADO
-                            || novo == StatusAgendamento.NAO_COMPARECEU;
-                    default -> false;
-                };
-
-        if (!transicaoValida) {
-            throw new BusinessException("Transição de status inválida: " + atual + " → " + novo);
+        if (atual == novo) {
+            throw new BusinessException("O agendamento já está com status " + atual);
         }
     }
 
+    /**
+     * Status considerados "fechados" — usados pelo updateAgendamento para bloquear
+     * edição de dados sensíveis (data, profissional, serviço) de uma sessão que
+     * já encerrou. O status em si ainda pode ser revertido via updateStatus.
+     */
     private boolean isStatusFinal(StatusAgendamento status) {
         return status == StatusAgendamento.REALIZADO
                 || status == StatusAgendamento.CANCELADO

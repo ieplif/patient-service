@@ -339,8 +339,8 @@ class AgendamentoIntegrationTest {
     }
 
     @Test
-    @DisplayName("Deve rejeitar alteração de agendamento com status final (CANCELADO)")
-    void updateStatus_InvalidTransition() throws Exception {
+    @DisplayName("Deve permitir reverter status final (CANCELADO → CONFIRMADO) para corrigir engano")
+    void updateStatus_RevertFinalStatus() throws Exception {
         // Cria agendamento para próxima segunda
         LocalDate proximaSegunda = LocalDate.now().plusDays(1);
         while (proximaSegunda.getDayOfWeek() != DayOfWeek.MONDAY) proximaSegunda = proximaSegunda.plusDays(1);
@@ -371,7 +371,7 @@ class AgendamentoIntegrationTest {
                         .content(objectMapper.writeValueAsString(cancelar)))
                 .andExpect(status().isOk());
 
-        // Tenta alterar status do CANCELADO → CONFIRMADO (status final, inválido)
+        // Reverte CANCELADO → CONFIRMADO (correção de engano da recepção)
         AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO();
         statusDTO.setStatus(br.com.clinicahumaniza.patient_service.model.StatusAgendamento.CONFIRMADO);
 
@@ -379,7 +379,7 @@ class AgendamentoIntegrationTest {
                         .header("Authorization", "Bearer " + token)
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(statusDTO)))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isOk());
     }
 
     @Test

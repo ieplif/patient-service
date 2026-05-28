@@ -648,29 +648,50 @@ class AgendamentoServiceTest {
     }
 
     @Test
-    @DisplayName("Deve lançar exceção ao alterar status final CANCELADO")
-    void updateStatus_StatusFinalCancelado() {
+    @DisplayName("Deve permitir reverter status CANCELADO de volta para AGENDADO")
+    void updateStatus_RevertCanceladoToAgendado() {
         agendamento.setStatus(StatusAgendamento.CANCELADO);
+        agendamento.setDireitoReposicao(true);
+        agendamento.setMotivoCancelamento("engano");
         AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.AGENDADO, null, null);
 
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.save(any(Agendamento.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        assertThatThrownBy(() -> agendamentoService.updateStatus(agendamentoId, statusDTO))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("CANCELADO");
+        Agendamento result = agendamentoService.updateStatus(agendamentoId, statusDTO);
+
+        assertThat(result.getStatus()).isEqualTo(StatusAgendamento.AGENDADO);
+        assertThat(result.getDireitoReposicao()).isFalse();
+        assertThat(result.getMotivoCancelamento()).isNull();
     }
 
     @Test
-    @DisplayName("Deve lançar exceção ao alterar status final REALIZADO")
-    void updateStatus_StatusFinalRealizado() {
+    @DisplayName("Deve permitir reverter status REALIZADO e decrementar sessão da assinatura")
+    void updateStatus_RevertRealizadoToAgendado() {
         agendamento.setStatus(StatusAgendamento.REALIZADO);
+        agendamento.setAssinatura(assinatura);
+        AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.AGENDADO, null, null);
+
+        when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.save(any(Agendamento.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Agendamento result = agendamentoService.updateStatus(agendamentoId, statusDTO);
+
+        assertThat(result.getStatus()).isEqualTo(StatusAgendamento.AGENDADO);
+        verify(assinaturaService).reverterSessao(assinatura.getId());
+    }
+
+    @Test
+    @DisplayName("Deve rejeitar transição para o mesmo status")
+    void updateStatus_MesmoStatus() {
+        agendamento.setStatus(StatusAgendamento.AGENDADO);
         AgendamentoStatusDTO statusDTO = new AgendamentoStatusDTO(StatusAgendamento.AGENDADO, null, null);
 
         when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
 
         assertThatThrownBy(() -> agendamentoService.updateStatus(agendamentoId, statusDTO))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("REALIZADO");
+                .hasMessageContaining("já está com status");
     }
 
     // --- Testes de deleção ---

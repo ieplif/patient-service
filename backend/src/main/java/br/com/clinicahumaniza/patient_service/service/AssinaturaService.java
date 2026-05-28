@@ -145,6 +145,30 @@ public class AssinaturaService {
     }
 
     /**
+     * Decrementa o contador de sessoesRealizadas. Usado quando um agendamento
+     * REALIZADO é corrigido para outro status (engano da recepção).
+     *
+     * Se a assinatura estava FINALIZADA por ter atingido o total, ela volta para ATIVO.
+     */
+    @Transactional
+    public Assinatura reverterSessao(UUID id) {
+        Assinatura assinatura =
+                assinaturaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Assinatura", id));
+
+        if (assinatura.getSessoesRealizadas() > 0) {
+            assinatura.setSessoesRealizadas(assinatura.getSessoesRealizadas() - 1);
+        }
+
+        // Se estava FINALIZADO só por ter atingido o total, reabre como ATIVO
+        if (assinatura.getStatus() == StatusAssinatura.FINALIZADO
+                && assinatura.getSessoesRealizadas() < assinatura.getSessoesContratadas()) {
+            assinatura.setStatus(StatusAssinatura.ATIVO);
+        }
+
+        return assinaturaRepository.save(assinatura);
+    }
+
+    /**
      * Suspende uma assinatura ATIVO. Casos típicos: paciente engravida, lesão,
      * viagem prolongada. Saldo de sessões é preservado para retomada futura.
      *
