@@ -15,7 +15,7 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
--- 2. Serviço 1 — sessão avulsa (R$ 284)
+-- 2. Serviço 1 — sessão avulsa (R$ 264)
 --    Como servicos não tem natural-key única (id é gen_random_uuid()), usamos
 --    um WHERE NOT EXISTS para tornar idempotente baseado em atividade+plano.
 INSERT INTO servicos (id, atividade_id, plano_id, tipo_atendimento, quantidade, unidade_servico, modalidade_local, valor, ativo, created_at, updated_at)
@@ -24,7 +24,7 @@ SELECT
     'a1000000-0000-0000-0000-000000000011',
     'b1000000-0000-0000-0000-000000000007',  -- plano "Sessão"
     'Individual', 1, 'sessão', 'Clínica',
-    284.00, true,
+    264.00, true,
     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 WHERE NOT EXISTS (
     SELECT 1 FROM servicos
@@ -32,14 +32,14 @@ WHERE NOT EXISTS (
       AND plano_id = 'b1000000-0000-0000-0000-000000000007'
 );
 
--- 3. Serviço 2 — pacote 12 sessões (R$ 2590)
+-- 3. Serviço 2 — pacote 12 sessões (R$ 2376)
 INSERT INTO servicos (id, atividade_id, plano_id, tipo_atendimento, quantidade, unidade_servico, modalidade_local, valor, ativo, created_at, updated_at)
 SELECT
     gen_random_uuid(),
     'a1000000-0000-0000-0000-000000000011',
     'b1000000-0000-0000-0000-000000000008',  -- plano "Pacote" (90 dias de validade)
     'Individual', 12, 'sessão', 'Clínica',
-    2590.00, true,
+    2376.00, true,
     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 WHERE NOT EXISTS (
     SELECT 1 FROM servicos
