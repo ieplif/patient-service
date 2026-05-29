@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPatients } from "@/api/patients"
 import { shortenName } from "@/lib/names"
 import { getAgendamentos } from "@/api/agendamentos"
-import { getPagamentos } from "@/api/pagamentos"
+import { getPagamentos, getReceita } from "@/api/pagamentos"
 import { getAssinaturas } from "@/api/assinaturas"
 import { useAuthStore } from "@/store/authStore"
 import type { StatusAgendamento } from "@/types"
@@ -104,13 +104,12 @@ export function DashboardPage() {
     enabled: !isProfissional,
   })
 
-  const { data: pagamentosMes, isLoading: loadingReceitaMes } = useQuery({
-    queryKey: ["receita-mes"],
-    queryFn: () =>
-      // Filtra por data de VENCIMENTO — uma mensalidade de abril, mesmo paga
-      // em maio, conta como receita de abril (o pagamento "pertence" ao mês
-      // de competência do vencimento).
-      getPagamentos({ status: "PAGO", inicio: monthStart, fim: today, size: 1000 }),
+  // Receita do mês = soma das PARCELAS PAGAS cuja dataPagamento cai no mês.
+  // Reflete o regime de CAIXA — dinheiro efetivamente recebido — e inclui
+  // pagamentos parcialmente pagos (ex: 1ª parcela de 2x já entrou no mês).
+  const { data: receitaMesValor, isLoading: loadingReceitaMes } = useQuery({
+    queryKey: ["receita-mes", monthStart, today],
+    queryFn: () => getReceita(monthStart, today),
     enabled: !isProfissional,
   })
 
@@ -132,7 +131,7 @@ export function DashboardPage() {
     enabled: !isProfissional,
   })
 
-  const receitaMes = pagamentosMes?.content.reduce((sum, p) => sum + p.valor, 0) ?? 0
+  const receitaMes = receitaMesValor ?? 0
 
   return (
     <div className="space-y-6 animate-fade-in">

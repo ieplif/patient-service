@@ -26,6 +26,17 @@ export async function getPagamento(id: string): Promise<Pagamento> {
   return data
 }
 
+/**
+ * Soma de parcelas PAGAS no período. Reflete o caixa efetivo —
+ * inclui pagamentos parcialmente pagos. Para o card "Receita do mês".
+ */
+export async function getReceita(inicio: string, fim: string): Promise<number> {
+  const { data } = await apiClient.get<number>("/api/v1/pagamentos/receita", {
+    params: { inicio, fim },
+  })
+  return Number(data)
+}
+
 export async function createPagamento(payload: {
   pacienteId: string
   assinaturaIds?: string[]

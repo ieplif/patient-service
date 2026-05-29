@@ -88,6 +88,19 @@ public class PagamentoController {
                 .map(pagamentoMapper::toResponseDTO));
     }
 
+    @GetMapping("/receita")
+    @Operation(
+            summary = "Receita do período",
+            description = "Soma o valor das parcelas PAGAS cuja dataPagamento cai no período "
+                    + "[inicio, fim]. Inclui pagamentos parcialmente pagos. Use no dashboard "
+                    + "para o card 'Receita do mês'.")
+    @ApiResponse(responseCode = "200", description = "Receita calculada com sucesso")
+    public ResponseEntity<java.math.BigDecimal> getReceita(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
+        return ResponseEntity.ok(pagamentoService.calcularReceitaPorParcelas(inicio, fim));
+    }
+
     @GetMapping("/export/csv")
     @Operation(summary = "Exportar pagamentos em CSV")
     @ApiResponse(responseCode = "200", description = "CSV de pagamentos gerado com sucesso")

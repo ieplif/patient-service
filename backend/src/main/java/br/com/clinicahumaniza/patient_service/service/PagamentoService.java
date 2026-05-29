@@ -27,6 +27,7 @@ import br.com.clinicahumaniza.patient_service.model.*;
 import br.com.clinicahumaniza.patient_service.repository.AgendamentoRepository;
 import br.com.clinicahumaniza.patient_service.repository.AssinaturaRepository;
 import br.com.clinicahumaniza.patient_service.repository.PagamentoRepository;
+import br.com.clinicahumaniza.patient_service.repository.ParcelaRepository;
 import br.com.clinicahumaniza.patient_service.repository.PatientRepository;
 import br.com.clinicahumaniza.patient_service.spec.PagamentoSpecification;
 
@@ -34,6 +35,7 @@ import br.com.clinicahumaniza.patient_service.spec.PagamentoSpecification;
 public class PagamentoService {
 
     private final PagamentoRepository pagamentoRepository;
+    private final ParcelaRepository parcelaRepository;
     private final PatientRepository patientRepository;
     private final AssinaturaRepository assinaturaRepository;
     private final AgendamentoRepository agendamentoRepository;
@@ -42,15 +44,27 @@ public class PagamentoService {
     @Autowired
     public PagamentoService(
             PagamentoRepository pagamentoRepository,
+            ParcelaRepository parcelaRepository,
             PatientRepository patientRepository,
             AssinaturaRepository assinaturaRepository,
             AgendamentoRepository agendamentoRepository,
             PagamentoMapper pagamentoMapper) {
         this.pagamentoRepository = pagamentoRepository;
+        this.parcelaRepository = parcelaRepository;
         this.patientRepository = patientRepository;
         this.assinaturaRepository = assinaturaRepository;
         this.agendamentoRepository = agendamentoRepository;
         this.pagamentoMapper = pagamentoMapper;
+    }
+
+    /**
+     * Soma o valor de todas as parcelas PAGAS cuja dataPagamento cai no período.
+     * Reflete o dinheiro efetivamente recebido — inclui pagamentos parcialmente pagos.
+     */
+    public BigDecimal calcularReceitaPorParcelas(LocalDate inicio, LocalDate fim) {
+        LocalDateTime dtInicio = inicio.atStartOfDay();
+        LocalDateTime dtFim = fim.atTime(java.time.LocalTime.MAX);
+        return parcelaRepository.sumParcelasPagasBetween(dtInicio, dtFim);
     }
 
     @Transactional
