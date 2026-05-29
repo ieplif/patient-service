@@ -45,6 +45,13 @@ public class AgendamentoRecorrenteRequestDTO {
     @Min(1)
     private Integer totalSessoes;
 
+    /**
+     * Data a partir da qual começar a gerar agendamentos. Se nulo, usa a
+     * dataInicio da assinatura (se vinculada) ou amanhã. Usado pela renovação
+     * automática pra forçar geração no próximo período (vencimento + 1).
+     */
+    private LocalDate dataInicio;
+
     private LocalDate dataFim;
 
     private String observacoes;

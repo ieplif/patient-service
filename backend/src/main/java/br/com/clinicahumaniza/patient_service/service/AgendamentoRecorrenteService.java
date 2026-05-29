@@ -107,9 +107,14 @@ public class AgendamentoRecorrenteService {
             }
         }
 
-        // Determinar data de início referência (da assinatura se disponível)
+        // Determinar data de início referência.
+        // Prioridade: dto.dataInicio (explícito — usado pela renovação automática
+        // pra forçar geração no próximo período) > assinatura.dataInicio (mantém
+        // a referência original ao criar a 1ª vez) > amanhã (fallback).
         LocalDate dataInicioRef = null;
-        if (assinatura != null && assinatura.getDataInicio() != null) {
+        if (dto.getDataInicio() != null) {
+            dataInicioRef = dto.getDataInicio();
+        } else if (assinatura != null && assinatura.getDataInicio() != null) {
             dataInicioRef = assinatura.getDataInicio();
         }
 

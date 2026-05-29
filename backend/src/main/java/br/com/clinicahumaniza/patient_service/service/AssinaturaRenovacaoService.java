@@ -108,6 +108,10 @@ public class AssinaturaRenovacaoService {
             dto.setHoraInicio(template.getHoraInicio());
             dto.setDuracaoMinutos(template.getDuracaoMinutos());
             dto.setTotalSessoes(sessoesParaEsteSlot);
+            // FORÇA a geração no próximo período (vencimento+1 .. novoVencimento).
+            // Sem isso, createRecorrente usaria assinatura.dataInicio (a data ORIGINAL)
+            // e repetiria as mesmas datas do mês anterior.
+            dto.setDataInicio(novaDataInicio);
             dto.setDataFim(novaDataVencimento);
 
             try {
