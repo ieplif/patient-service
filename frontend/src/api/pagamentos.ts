@@ -68,3 +68,21 @@ export async function updatePagamentoStatus(
   })
   return data
 }
+
+export type StatusParcela = "PENDENTE" | "PAGO" | "CANCELADO"
+
+export async function updateParcelaStatus(
+  pagamentoId: string,
+  parcelaId: string,
+  status: StatusParcela,
+  dataPagamento?: string
+): Promise<Pagamento> {
+  const { data } = await apiClient.patch<Pagamento>(
+    `/api/v1/pagamentos/${pagamentoId}/parcelas/${parcelaId}/status`,
+    {
+      status,
+      ...(dataPagamento ? { dataPagamento } : {}),
+    }
+  )
+  return data
+}
