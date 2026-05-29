@@ -312,6 +312,41 @@ export function PagamentoFormSheet({ open, onOpenChange, onSubmit, isPending, in
             )}
           </div>
 
+          {/* Preview das parcelas — só aparece quando parcelado (>1x) e tem valor/vencimento preenchidos */}
+          {Number(numeroParcelas) > 1 && Number(valor) > 0 && dataVencimento && (() => {
+            const total = Number(valor)
+            const n = Number(numeroParcelas)
+            // Reproduz a lógica do backend: divide com 2 casas (round down),
+            // última parcela leva a diferença pra fechar o total
+            const valorParcela = Math.floor((total / n) * 100) / 100
+            const somaAnterior = valorParcela * (n - 1)
+            const valorUltima = Math.round((total - somaAnterior) * 100) / 100
+            const inicio = new Date(dataVencimento + "T00:00:00")
+            const parcelas = Array.from({ length: n }, (_, i) => {
+              const venc = new Date(inicio)
+              venc.setMonth(venc.getMonth() + i)
+              const v = i === n - 1 ? valorUltima : valorParcela
+              return { numero: i + 1, valor: v, vencimento: venc }
+            })
+            return (
+              <div className="space-y-2 rounded-md border border-border/60 bg-muted/20 p-3">
+                <Label className="font-primary text-sm">Parcelas que serão geradas</Label>
+                <div className="space-y-1">
+                  {parcelas.map((p) => (
+                    <div key={p.numero} className="flex items-center justify-between text-sm font-secondary">
+                      <span className="text-muted-foreground">
+                        {p.numero}/{n} — venc. {p.vencimento.toLocaleDateString("pt-BR")}
+                      </span>
+                      <span className="font-semibold text-accent">
+                        {p.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
           <div className="space-y-2">
             <Label className="font-primary">Observações</Label>
             <textarea
