@@ -284,7 +284,7 @@ export function AgendamentosPage() {
                       const abdomen = isAbdomen360(ag)
                       // Prioridade visual: Abdômen 360° (rose) > Fisioterapia (earth) > default
                       const rowClass = abdomen
-                        ? "border-border/40 bg-rose-50 border-l-4 border-l-rose-400 hover:bg-rose-100"
+                        ? "border-border/40 bg-violet-50 border-l-4 border-l-violet-400 hover:bg-violet-100"
                         : fisio
                           ? "border-border/40 bg-[#B47C64]/10 border-l-4 border-l-[#B47C64] hover:bg-[#B47C64]/20"
                           : "border-border/40 hover:bg-muted/20"
