@@ -192,6 +192,11 @@ export function AgendamentosPage() {
     return ag.servicoDescricao.toLowerCase().includes("fisio")
   }
 
+  function isAbdomen360(ag: Agendamento): boolean {
+    return ag.servicoDescricao.toLowerCase().includes("abdômen 360")
+      || ag.servicoDescricao.toLowerCase().includes("abdomen 360")
+  }
+
   // Busca por paciente agora é server-side (parâmetro pacienteNome) — cobre todas as páginas
   const filteredContent = data?.content
 
@@ -257,7 +262,7 @@ export function AgendamentosPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/50 hover:bg-transparent">
-                      {["Paciente", "Serviço", "Data/Hora", "Duração", "Status", ""].map((h, i) => (
+                      {["Paciente", "Serviço", "Data/Hora", "Status", ""].map((h, i) => (
                       <TableHead key={i} className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
                         {h}
                       </TableHead>
@@ -267,7 +272,7 @@ export function AgendamentosPage() {
                 <TableBody>
                   {!filteredContent?.length ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground font-secondary py-12">
+                      <TableCell colSpan={5} className="text-center text-muted-foreground font-secondary py-12">
                         Nenhum agendamento encontrado
                       </TableCell>
                     </TableRow>
@@ -276,15 +281,15 @@ export function AgendamentosPage() {
                       const cfg = statusConfig[ag.status]
                       const transitions = nextStatuses[ag.status] ?? []
                       const fisio = isFisioterapia(ag)
+                      const abdomen = isAbdomen360(ag)
+                      // Prioridade visual: Abdômen 360° (rose) > Fisioterapia (earth) > default
+                      const rowClass = abdomen
+                        ? "border-border/40 bg-rose-50 border-l-4 border-l-rose-400 hover:bg-rose-100"
+                        : fisio
+                          ? "border-border/40 bg-[#B47C64]/10 border-l-4 border-l-[#B47C64] hover:bg-[#B47C64]/20"
+                          : "border-border/40 hover:bg-muted/20"
                       return (
-                        <TableRow
-                          key={ag.id}
-                          className={
-                            fisio
-                              ? "border-border/40 bg-[#B47C64]/10 border-l-4 border-l-[#B47C64] hover:bg-[#B47C64]/20"
-                              : "border-border/40 hover:bg-muted/20"
-                          }
-                        >
+                        <TableRow key={ag.id} className={rowClass}>
                           <TableCell className="font-semibold font-primary text-sm text-foreground" title={ag.pacienteNome}>
                             {shortenName(ag.pacienteNome)}
                           </TableCell>
@@ -293,9 +298,6 @@ export function AgendamentosPage() {
                           </TableCell>
                           <TableCell className="text-sm font-secondary text-muted-foreground whitespace-nowrap">
                             {format(new Date(ag.dataHora), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                          </TableCell>
-                          <TableCell className="text-sm font-secondary text-muted-foreground">
-                            {ag.duracaoMinutos ? `${ag.duracaoMinutos} min` : "—"}
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap items-center gap-1">
