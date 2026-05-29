@@ -270,6 +270,22 @@ export function AssinaturaFormSheet({ open, onOpenChange, onSubmit, assinatura, 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
+    // Validação: nº de agendamentos preenchidos deve bater com sessões contratadas
+    // (evita criar assinatura com 12 sessões mas só 10 agendamentos efetivos)
+    if (showAgendamentosIndividuais) {
+      const preenchidos = agendamentos.filter(a => a.dataHora).length
+      const contratadas = Number(sessoesContratadas)
+      if (preenchidos !== contratadas) {
+        const ok = window.confirm(
+          `Atenção: você contratou ${contratadas} sessões mas só preencheu ${preenchidos} agendamentos.\n\n` +
+          `Se continuar, apenas ${preenchidos} agendamentos serão criados. ` +
+          `Os outros ${contratadas - preenchidos} ficarão para agendar manualmente depois.\n\n` +
+          `Deseja continuar?`
+        )
+        if (!ok) return
+      }
+    }
+
     // Build horários text for observações
     let obsFinais = observacoes
     if (showHorarios && horariosFixos.some(h => h.dia && h.horario)) {
