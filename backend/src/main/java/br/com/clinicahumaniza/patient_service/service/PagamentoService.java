@@ -228,8 +228,27 @@ public class PagamentoService {
 
         if (dto.getStatus() == StatusPagamento.PAGO) {
             // Permite registrar pagamentos retroativos com a data correta do recibo
-            pagamento.setDataPagamento(
-                    dto.getDataPagamento() != null ? dto.getDataPagamento().atStartOfDay() : LocalDateTime.now());
+            LocalDateTime dataPag =
+                    dto.getDataPagamento() != null ? dto.getDataPagamento().atStartOfDay() : LocalDateTime.now();
+            pagamento.setDataPagamento(dataPag);
+            // Propaga PAGO para as parcelas que ainda estavam pendentes —
+            // evita inconsistência visual e garante que o cálculo de receita
+            // (que soma parcelas pagas) reflita o pagamento.
+            for (Parcela parcela : pagamento.getParcelas()) {
+                if (parcela.getStatus() == StatusParcela.PENDENTE) {
+                    parcela.setStatus(StatusParcela.PAGO);
+                    parcela.setDataPagamento(dataPag);
+                }
+            }
+        }
+
+        if (dto.getStatus() == StatusPagamento.CANCELADO) {
+            // Propaga CANCELADO para as parcelas pendentes
+            for (Parcela parcela : pagamento.getParcelas()) {
+                if (parcela.getStatus() == StatusParcela.PENDENTE) {
+                    parcela.setStatus(StatusParcela.CANCELADO);
+                }
+            }
         }
 
         return pagamentoRepository.save(pagamento);
