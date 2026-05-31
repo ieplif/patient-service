@@ -163,6 +163,20 @@ public class AssinaturaController {
         return ResponseEntity.ok(Map.of("renovadas", renovadas));
     }
 
+    @PostMapping("/{id}/renovar")
+    @Operation(
+            summary = "Renovar assinatura individual",
+            description =
+                    "Renova manualmente uma assinatura: gera os agendamentos do próximo ciclo e reativa se estiver FINALIZADA")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Assinatura renovada"),
+        @ApiResponse(responseCode = "404", description = "Assinatura não encontrada")
+    })
+    public ResponseEntity<AssinaturaResponseDTO> renovarAssinatura(@PathVariable UUID id) {
+        Assinatura assinatura = renovacaoService.renovarAssinaturaManual(id);
+        return ResponseEntity.ok(assinaturaMapper.toResponseDTO(assinatura));
+    }
+
     @PostMapping("/{id}/suspender")
     @Operation(
             summary = "Suspender assinatura",

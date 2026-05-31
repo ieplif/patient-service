@@ -2,7 +2,6 @@ package br.com.clinicahumaniza.patient_service.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -61,8 +60,8 @@ class AssinaturaRenovacaoServiceTest {
     @Test
     @DisplayName("Deve retornar 0 quando não há assinaturas próximas do vencimento")
     void renovar_NenhumaAssinatura() {
-        when(assinaturaRepository.findByRenovacaoAutomaticaTrueAndStatusAndDataVencimentoLessThanEqual(
-                        eq(StatusAssinatura.ATIVO), any(LocalDate.class)))
+        when(assinaturaRepository.findByRenovacaoAutomaticaTrueAndStatusInAndDataVencimentoLessThanEqual(
+                        any(), any(LocalDate.class)))
                 .thenReturn(List.of());
 
         int renovadas = renovacaoService.renovarAssinaturasProximasDoVencimento();
@@ -73,8 +72,8 @@ class AssinaturaRenovacaoServiceTest {
     @Test
     @DisplayName("Deve pular assinatura sem agendamentos recorrentes vinculados")
     void renovar_AssinaturaSemTemplates() {
-        when(assinaturaRepository.findByRenovacaoAutomaticaTrueAndStatusAndDataVencimentoLessThanEqual(
-                        eq(StatusAssinatura.ATIVO), any(LocalDate.class)))
+        when(assinaturaRepository.findByRenovacaoAutomaticaTrueAndStatusInAndDataVencimentoLessThanEqual(
+                        any(), any(LocalDate.class)))
                 .thenReturn(List.of(assinatura));
         when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinatura.getId()))
                 .thenReturn(List.of());
@@ -88,8 +87,8 @@ class AssinaturaRenovacaoServiceTest {
     @Test
     @DisplayName("Deve capturar erro de renovação e anotar nas observações")
     void renovar_ErroNaRenovacao() {
-        when(assinaturaRepository.findByRenovacaoAutomaticaTrueAndStatusAndDataVencimentoLessThanEqual(
-                        eq(StatusAssinatura.ATIVO), any(LocalDate.class)))
+        when(assinaturaRepository.findByRenovacaoAutomaticaTrueAndStatusInAndDataVencimentoLessThanEqual(
+                        any(), any(LocalDate.class)))
                 .thenReturn(List.of(assinatura));
         // Template presente mas servico null -> NPE dentro de renovarAssinatura,
         // capturada pelo loop externo

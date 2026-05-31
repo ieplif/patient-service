@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Star, Plus, Pencil, Ban, MoreHorizontal, Search, RefreshCw, Pause, Play } from "lucide-react"
 import { format } from "date-fns"
-import { getAssinaturas, createAssinatura, updateAssinatura, updateAssinaturaStatus, regenerarHorarios, suspenderAssinatura, reativarAssinatura } from "@/api/assinaturas"
+import { getAssinaturas, createAssinatura, updateAssinatura, updateAssinaturaStatus, regenerarHorarios, suspenderAssinatura, reativarAssinatura, renovarAssinatura } from "@/api/assinaturas"
 import type { HorarioFixoSlotDTO } from "@/api/assinaturas"
 import { shortenName } from "@/lib/names"
 import { createAgendamento, createAgendamentoRecorrente } from "@/api/agendamentos"
@@ -286,6 +286,31 @@ export function AssinaturasPage() {
     },
   })
 
+  const renovarMutation = useMutation({
+    mutationFn: (id: string) => renovarAssinatura(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assinaturas"] })
+      queryClient.invalidateQueries({ queryKey: ["agendamentos"] })
+      toast({
+        title: "Assinatura renovada",
+        description: "Novo ciclo gerado: agendamentos criados e vencimento avançado.",
+      })
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { mensagem?: string; message?: string } } })?.response?.data?.mensagem
+        || (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        || "Erro ao renovar assinatura."
+      toast({ title: "Erro", description: msg, variant: "destructive" })
+    },
+  })
+
+  function handleRenovar(as: Assinatura) {
+    if (!window.confirm(`Renovar agora a assinatura de ${as.pacienteNome}?\n\nIsso gera os agendamentos do próximo ciclo e reativa a assinatura.`)) {
+      return
+    }
+    renovarMutation.mutate(as.id)
+  }
+
   function openSuspenderDialog(as: Assinatura) {
     setSuspenderAlvo(as)
     setMotivoSuspensao("")
@@ -563,6 +588,16 @@ export function AssinaturasPage() {
                                   <DropdownMenuItem onClick={() => handleEdit(as)}>
                                     <Pencil className="h-4 w-4 mr-2" /> Renovar
                                   </DropdownMenuItem>
+                                )}
+                                {as.status === "FINALIZADO" && (
+                                  <>
+                                    <DropdownMenuItem onClick={() => handleRenovar(as)}>
+                                      <RefreshCw className="h-4 w-4 mr-2" /> Renovar agora
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleEdit(as)}>
+                                      <Pencil className="h-4 w-4 mr-2" /> Editar
+                                    </DropdownMenuItem>
+                                  </>
                                 )}
                               </DropdownMenuContent>
                             </DropdownMenu>

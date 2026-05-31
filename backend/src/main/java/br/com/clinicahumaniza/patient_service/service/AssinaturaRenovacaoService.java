@@ -40,9 +40,11 @@ public class AssinaturaRenovacaoService {
     public int renovarAssinaturasProximasDoVencimento() {
         LocalDate limitDate = LocalDate.now().plusDays(DIAS_ANTECEDENCIA_RENOVACAO);
 
+        // Inclui FINALIZADO: assinaturas recorrentes que completaram todas as sessões viram
+        // FINALIZADO e ainda assim devem renovar (são reativadas para ATIVO ao gerar o novo ciclo).
         List<Assinatura> assinaturas =
-                assinaturaRepository.findByRenovacaoAutomaticaTrueAndStatusAndDataVencimentoLessThanEqual(
-                        StatusAssinatura.ATIVO, limitDate);
+                assinaturaRepository.findByRenovacaoAutomaticaTrueAndStatusInAndDataVencimentoLessThanEqual(
+                        List.of(StatusAssinatura.ATIVO, StatusAssinatura.FINALIZADO), limitDate);
 
         log.info("Encontradas {} assinaturas para renovacao automatica", assinaturas.size());
 
@@ -66,6 +68,21 @@ public class AssinaturaRenovacaoService {
 
         log.info("Renovacao automatica concluida: {}/{} assinaturas renovadas", renovadas, assinaturas.size());
         return renovadas;
+    }
+
+    /**
+     * Renova manualmente uma única assinatura (botão "Renovar agora"), independente da
+     * antecedência do vencimento. Gera os agendamentos do próximo ciclo a partir do
+     * vencimento atual e reativa a assinatura caso estivesse FINALIZADA.
+     */
+    @Transactional
+    public Assinatura renovarAssinaturaManual(java.util.UUID id) {
+        Assinatura assinatura = assinaturaRepository
+                .findById(id)
+                .orElseThrow(() -> new br.com.clinicahumaniza.patient_service.exception.ResourceNotFoundException(
+                        "Assinatura", id));
+        renovarAssinatura(assinatura);
+        return assinaturaRepository.findById(id).orElse(assinatura);
     }
 
     private void renovarAssinatura(Assinatura assinatura) {
@@ -140,6 +157,9 @@ public class AssinaturaRenovacaoService {
         if (totalAgendamentosCriados > 0) {
             assinatura.setDataVencimento(novaDataVencimento);
             assinatura.setSessoesContratadas(assinatura.getSessoesContratadas() + totalNovasSessoes);
+            // Reabre o ciclo: uma assinatura que estava FINALIZADA (sessões completas) volta a ATIVO,
+            // já que o novo período acrescenta sessões (realizadas < contratadas novamente).
+            assinatura.setStatus(StatusAssinatura.ATIVO);
             appendObservacao(
                     assinatura,
                     "Renovado automaticamente em " + formatDate(LocalDate.now()) + " (" + totalAgendamentosCriados

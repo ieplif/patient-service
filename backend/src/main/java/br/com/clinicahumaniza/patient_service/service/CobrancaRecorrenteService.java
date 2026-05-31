@@ -63,8 +63,11 @@ public class CobrancaRecorrenteService {
         LocalDate inicioMes = hoje.withDayOfMonth(1);
         LocalDate limite = hoje.with(TemporalAdjusters.lastDayOfMonth()).plusDays(DIAS_MARGEM);
 
-        List<Assinatura> ativas = assinaturaRepository.findByStatus(StatusAssinatura.ATIVO);
-        log.info("Geracao de cobrancas Pilates: {} assinaturas ativas para avaliar", ativas.size());
+        // ATIVO + FINALIZADO: recorrentes que completaram as sessões também devem ser cobradas
+        // (a renovação as reativa, mas a idempotência por vencimento evita duplicar).
+        List<Assinatura> ativas =
+                assinaturaRepository.findByStatusIn(List.of(StatusAssinatura.ATIVO, StatusAssinatura.FINALIZADO));
+        log.info("Geracao de cobrancas Pilates: {} assinaturas candidatas para avaliar", ativas.size());
 
         int geradas = 0;
         for (Assinatura assinatura : ativas) {

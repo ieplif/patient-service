@@ -85,7 +85,7 @@ class CobrancaRecorrenteServiceTest {
     @DisplayName("Deve gerar cobrança para Pilates mensal com vencimento no mês corrente")
     void gera_PilatesMensalNoMes() {
         Assinatura assinatura = pilatesMensal(LocalDate.now().withDayOfMonth(15));
-        when(assinaturaRepository.findByStatus(StatusAssinatura.ATIVO)).thenReturn(List.of(assinatura));
+        when(assinaturaRepository.findByStatusIn(any())).thenReturn(List.of(assinatura));
         when(pagamentoRepository.existsByAssinaturaAndVencimento(eq(assinatura.getId()), any(LocalDate.class)))
                 .thenReturn(false);
 
@@ -101,7 +101,7 @@ class CobrancaRecorrenteServiceTest {
     @DisplayName("Não deve duplicar cobrança quando já existe pagamento para o vencimento")
     void naoDuplica_QuandoJaExiste() {
         Assinatura assinatura = pilatesMensal(LocalDate.now().withDayOfMonth(15));
-        when(assinaturaRepository.findByStatus(StatusAssinatura.ATIVO)).thenReturn(List.of(assinatura));
+        when(assinaturaRepository.findByStatusIn(any())).thenReturn(List.of(assinatura));
         when(pagamentoRepository.existsByAssinaturaAndVencimento(eq(assinatura.getId()), any(LocalDate.class)))
                 .thenReturn(true);
 
@@ -116,7 +116,7 @@ class CobrancaRecorrenteServiceTest {
     void ignora_NaoPilates() {
         Assinatura fisio = assinatura(
                 "Fisioterapia Pélvica", "mensal", LocalDate.now().withDayOfMonth(15), true, new BigDecimal("400.00"));
-        when(assinaturaRepository.findByStatus(StatusAssinatura.ATIVO)).thenReturn(List.of(fisio));
+        when(assinaturaRepository.findByStatusIn(any())).thenReturn(List.of(fisio));
 
         int geradas = cobrancaService.gerarCobrancasPilatesDoMes();
 
@@ -129,7 +129,7 @@ class CobrancaRecorrenteServiceTest {
     void ignora_SemRenovacaoAutomatica() {
         Assinatura avulso = assinatura(
                 "Pilates Clássico", "avulso", LocalDate.now().withDayOfMonth(15), false, new BigDecimal("80.00"));
-        when(assinaturaRepository.findByStatus(StatusAssinatura.ATIVO)).thenReturn(List.of(avulso));
+        when(assinaturaRepository.findByStatusIn(any())).thenReturn(List.of(avulso));
 
         int geradas = cobrancaService.gerarCobrancasPilatesDoMes();
 
@@ -142,7 +142,7 @@ class CobrancaRecorrenteServiceTest {
     void ignora_VencimentoForaDaJanela() {
         Assinatura trimestral = assinatura(
                 "Pilates Funcional", "trimestral", LocalDate.now().plusMonths(2), true, new BigDecimal("800.00"));
-        when(assinaturaRepository.findByStatus(StatusAssinatura.ATIVO)).thenReturn(List.of(trimestral));
+        when(assinaturaRepository.findByStatusIn(any())).thenReturn(List.of(trimestral));
 
         int geradas = cobrancaService.gerarCobrancasPilatesDoMes();
 
@@ -155,7 +155,7 @@ class CobrancaRecorrenteServiceTest {
     void usaValorAssinatura_QuandoServicoSemPreco() {
         Assinatura assinatura = pilatesMensal(LocalDate.now().withDayOfMonth(10));
         assinatura.getServico().setValor(null);
-        when(assinaturaRepository.findByStatus(StatusAssinatura.ATIVO)).thenReturn(List.of(assinatura));
+        when(assinaturaRepository.findByStatusIn(any())).thenReturn(List.of(assinatura));
         when(pagamentoRepository.existsByAssinaturaAndVencimento(eq(assinatura.getId()), any(LocalDate.class)))
                 .thenReturn(false);
 

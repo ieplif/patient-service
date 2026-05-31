@@ -21,10 +21,12 @@ public interface AssinaturaRepository extends JpaRepository<Assinatura, UUID>, J
 
     List<Assinatura> findByStatus(StatusAssinatura status);
 
+    List<Assinatura> findByStatusIn(List<StatusAssinatura> statuses);
+
     List<Assinatura> findByPacienteIdAndStatus(UUID pacienteId, StatusAssinatura status);
 
-    List<Assinatura> findByRenovacaoAutomaticaTrueAndStatusAndDataVencimentoLessThanEqual(
-            StatusAssinatura status, LocalDate limitDate);
+    List<Assinatura> findByRenovacaoAutomaticaTrueAndStatusInAndDataVencimentoLessThanEqual(
+            List<StatusAssinatura> statuses, LocalDate limitDate);
 
     @Query(value = "SELECT * FROM assinaturas", nativeQuery = true)
     List<Assinatura> findAllIncludingInactive();

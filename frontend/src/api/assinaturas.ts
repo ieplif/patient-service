@@ -84,6 +84,12 @@ export async function deleteAssinatura(id: string): Promise<void> {
   await apiClient.delete(`/api/v1/assinaturas/${id}`)
 }
 
+/** Renova manualmente uma assinatura: gera o próximo ciclo e reativa se estiver FINALIZADA. */
+export async function renovarAssinatura(id: string): Promise<Assinatura> {
+  const { data } = await apiClient.post<Assinatura>(`/api/v1/assinaturas/${id}/renovar`)
+  return data
+}
+
 export async function suspenderAssinatura(
   id: string,
   payload: { motivo: string; dataPrevistaRetomada?: string }
