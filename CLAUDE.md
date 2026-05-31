@@ -128,6 +128,10 @@ completa.** Resumo do que mudou desde a versao inicial:
 - Telefone NAO unico (mae + filha podem compartilhar)
 - Assinatura ganha estado **SUSPENSO** (gravidez/lesao/viagem)
 - Renovacao automatica de assinaturas mensais (scheduler 06h diario)
+- Geracao automatica de cobrancas (pagamentos PENDENTES) das assinaturas de
+  Pilates recorrentes (mensal/trimestral/semestral) na virada do mes (scheduler
+  dia 1 as 05h, 1h antes da renovacao), seguindo o ciclo do plano; valor = preco
+  vigente do servico; idempotente por (assinatura, vencimento)
 
 ## Seguranca
 

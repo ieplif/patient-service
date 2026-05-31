@@ -98,6 +98,30 @@ public class PagamentoService {
         return pagamentoRepository.save(pagamento);
     }
 
+    /**
+     * Cria uma cobrança PENDENTE a partir de uma assinatura (usado pela geração automática
+     * de mensalidades recorrentes). Valor padrão = preço vigente do serviço; forma de pagamento
+     * default PIX (ajustável ao receber). Uma única parcela.
+     */
+    @Transactional
+    public Pagamento gerarCobrancaPendente(Assinatura assinatura, BigDecimal valor, LocalDate dataVencimento) {
+        Pagamento pagamento = new Pagamento();
+        pagamento.setPaciente(assinatura.getPaciente());
+        pagamento.getAssinaturas().add(assinatura);
+        pagamento.setValor(valor);
+        pagamento.setFormaPagamento(FormaPagamento.PIX);
+        pagamento.setStatus(StatusPagamento.PENDENTE);
+        pagamento.setNumeroParcelas(1);
+        pagamento.setDataVencimento(dataVencimento);
+        pagamento.setObservacoes("Cobrança gerada automaticamente em "
+                + LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                + " (mensalidade Pilates). Confirme a forma de pagamento ao receber.");
+
+        gerarParcelas(pagamento);
+
+        return pagamentoRepository.save(pagamento);
+    }
+
     public Pagamento getPagamentoById(UUID id) {
         return pagamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pagamento", id));
     }
