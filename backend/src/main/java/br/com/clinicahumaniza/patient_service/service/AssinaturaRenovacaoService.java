@@ -102,17 +102,34 @@ public class AssinaturaRenovacaoService {
         LocalDate novaDataInicio = assinatura.getDataVencimento().plusDays(1);
         LocalDate novaDataVencimento = novaDataInicio.plusDays(validadeDias - 1);
 
-        // createRecorrente exige que a assinatura esteja ATIVA. Uma assinatura recorrente
-        // FINALIZADA (sessões completas) é justamente o caso que queremos renovar, então
-        // reativamos ANTES de gerar o próximo ciclo (a mesma instância gerenciada é vista
-        // por createRecorrente na transação corrente) e revertemos se nada for criado.
-        StatusAssinatura statusOriginal = assinatura.getStatus();
-        if (statusOriginal != StatusAssinatura.ATIVO) {
-            assinatura.setStatus(StatusAssinatura.ATIVO);
-            assinaturaRepository.save(assinatura);
+        // Pré-calcula quantas sessões o próximo ciclo vai gerar (somando todos os slots).
+        int totalNovasSessoesPrevistas = 0;
+        for (AgendamentoRecorrente template : templates) {
+            List<DayOfWeek> diasSemana = Arrays.stream(template.getDiasSemana().split(","))
+                    .map(DayOfWeek::valueOf)
+                    .collect(Collectors.toList());
+            totalNovasSessoesPrevistas += contarDiasDaSemanaNoPeríodo(novaDataInicio, validadeDias, diasSemana);
+        }
+        if (totalNovasSessoesPrevistas == 0) {
+            log.warn(
+                    "Renovacao da assinatura {} nao gera novas sessoes no periodo {} a {}; pulando",
+                    assinatura.getId(),
+                    novaDataInicio,
+                    novaDataVencimento);
+            return;
         }
 
-        int totalNovasSessoes = 0;
+        // createRecorrente/createAgendamento exigem assinatura ATIVA e COM sessões restantes.
+        // Uma assinatura recorrente FINALIZADA (sessões completas) é justamente o caso que
+        // queremos renovar: reativamos e já ampliamos as sessões contratadas ANTES do laço
+        // (a mesma instância gerenciada é vista pelas validações na transação corrente) para
+        // abrir espaço. Reconciliamos com o total real ao final e revertemos se nada for criado.
+        StatusAssinatura statusOriginal = assinatura.getStatus();
+        int contratadasOriginais = assinatura.getSessoesContratadas();
+        assinatura.setStatus(StatusAssinatura.ATIVO);
+        assinatura.setSessoesContratadas(contratadasOriginais + totalNovasSessoesPrevistas);
+        assinaturaRepository.save(assinatura);
+
         int totalAgendamentosCriados = 0;
 
         for (AgendamentoRecorrente template : templates) {
@@ -147,7 +164,6 @@ public class AssinaturaRenovacaoService {
                         ? result.getAgendamentosCriados().size()
                         : 0;
                 totalAgendamentosCriados += criados;
-                totalNovasSessoes += sessoesParaEsteSlot;
 
                 log.info(
                         "Renovacao assinatura {}: slot {} {} - {} agendamentos criados",
@@ -166,7 +182,9 @@ public class AssinaturaRenovacaoService {
 
         if (totalAgendamentosCriados > 0) {
             assinatura.setDataVencimento(novaDataVencimento);
-            assinatura.setSessoesContratadas(assinatura.getSessoesContratadas() + totalNovasSessoes);
+            // Reconcilia as sessões contratadas com o que realmente foi criado — algumas datas
+            // podem ter sido ignoradas por conflito de horário (menos que o previsto).
+            assinatura.setSessoesContratadas(contratadasOriginais + totalAgendamentosCriados);
             // Reabre o ciclo: uma assinatura que estava FINALIZADA (sessões completas) volta a ATIVO,
             // já que o novo período acrescenta sessões (realizadas < contratadas novamente).
             assinatura.setStatus(StatusAssinatura.ATIVO);
@@ -177,18 +195,16 @@ public class AssinaturaRenovacaoService {
             assinaturaRepository.save(assinatura);
 
             log.info(
-                    "Assinatura {} renovada: nova data vencimento={}, +{} sessoes, {} agendamentos",
+                    "Assinatura {} renovada: nova data vencimento={}, +{} agendamentos/sessoes",
                     assinatura.getId(),
                     novaDataVencimento,
-                    totalNovasSessoes,
                     totalAgendamentosCriados);
         } else {
-            // Nada foi criado: reverte a reativação para não deixar a assinatura num
-            // estado inconsistente (ATIVO porém com sessões esgotadas).
-            if (statusOriginal != StatusAssinatura.ATIVO) {
-                assinatura.setStatus(statusOriginal);
-                assinaturaRepository.save(assinatura);
-            }
+            // Nada foi criado: reverte a reativação e a ampliação de sessões para não deixar
+            // a assinatura num estado inconsistente (ATIVO porém sem novas sessões reais).
+            assinatura.setStatus(statusOriginal);
+            assinatura.setSessoesContratadas(contratadasOriginais);
+            assinaturaRepository.save(assinatura);
             log.warn("Nenhum agendamento criado na renovacao da assinatura {}", assinatura.getId());
         }
     }

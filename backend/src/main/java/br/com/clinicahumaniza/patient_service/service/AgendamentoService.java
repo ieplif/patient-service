@@ -69,7 +69,13 @@ public class AgendamentoService {
         this.googleCalendarService = googleCalendarService;
     }
 
-    @Transactional
+    // noRollbackFor BusinessException: todas as BusinessException aqui (duração ausente,
+    // conflito de horário, assinatura inválida) são lançadas ANTES de qualquer escrita no
+    // banco — não há nada para desfazer. Sem isto, quando este método participa de uma
+    // transação maior (ex.: renovação/recorrência criando vários agendamentos em lote) e uma
+    // data conflita, o proxy marcaria a transação inteira como rollback-only, fazendo o lote
+    // todo falhar com "Transaction silently rolled back" mesmo capturando a exceção no laço.
+    @Transactional(noRollbackFor = BusinessException.class)
     public Agendamento createAgendamento(AgendamentoRequestDTO dto) {
         Patient paciente = patientRepository
                 .findById(dto.getPacienteId())
