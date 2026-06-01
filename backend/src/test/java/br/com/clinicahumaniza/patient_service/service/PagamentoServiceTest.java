@@ -336,7 +336,7 @@ class PagamentoServiceTest {
                 .thenReturn(new PageImpl<>(List.of(pagamento)));
 
         Page<Pagamento> result =
-                pagamentoService.getAllPagamentos(null, null, null, null, null, null, null, null, pageable);
+                pagamentoService.getAllPagamentos(null, null, null, null, null, null, null, null, null, pageable);
 
         assertThat(result.getContent()).hasSize(1);
     }

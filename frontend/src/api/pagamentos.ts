@@ -6,6 +6,8 @@ export async function getPagamentos(params?: {
   size?: number
   sort?: string
   status?: StatusPagamento
+  /** Filtro por múltiplos status (status IN ...). Ex.: pendentes em aberto = PENDENTE + PARCIALMENTE_PAGO. */
+  statusIn?: StatusPagamento[]
   formaPagamento?: FormaPagamento
   pacienteId?: string
   /** Busca por nome do paciente (LIKE case-insensitive). */
@@ -17,7 +19,14 @@ export async function getPagamentos(params?: {
   pagamentoInicio?: string
   pagamentoFim?: string
 }): Promise<PageResponse<Pagamento>> {
-  const { data } = await apiClient.get<PageResponse<Pagamento>>("/api/v1/pagamentos", { params })
+  const { statusIn, ...rest } = params ?? {}
+  const query = {
+    ...rest,
+    ...(statusIn && statusIn.length ? { statusIn: statusIn.join(",") } : {}),
+  }
+  const { data } = await apiClient.get<PageResponse<Pagamento>>("/api/v1/pagamentos", {
+    params: query,
+  })
   return data
 }
 

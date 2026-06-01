@@ -2,6 +2,7 @@ package br.com.clinicahumaniza.patient_service.spec;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -16,6 +17,17 @@ public class PagamentoSpecification {
         return (root, query, cb) -> {
             if (status == null) return null;
             return cb.equal(root.get("status"), status);
+        };
+    }
+
+    /**
+     * Filtra por um conjunto de status (status IN ...). Útil para "pagamentos em aberto",
+     * que abrange PENDENTE e PARCIALMENTE_PAGO (ambos ainda têm parcelas a receber).
+     */
+    public static Specification<Pagamento> hasStatusIn(List<StatusPagamento> statuses) {
+        return (root, query, cb) -> {
+            if (statuses == null || statuses.isEmpty()) return null;
+            return root.get("status").in(statuses);
         };
     }
 

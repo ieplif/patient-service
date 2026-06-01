@@ -155,7 +155,7 @@ class PagamentoControllerTest {
     @WithMockUser
     void getAllPagamentos_Authenticated_200() throws Exception {
         when(pagamentoService.getAllPagamentos(
-                        any(), any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+                        any(), any(), any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(pagamento)));
         when(pagamentoMapper.toResponseDTO(pagamento)).thenReturn(responseDTO);
 

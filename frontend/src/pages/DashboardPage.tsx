@@ -98,9 +98,12 @@ export function DashboardPage() {
     queryFn: () => getAgendamentos({ dataInicio: today, dataFim: today, size: 1 }),
   })
 
+  // "Em aberto" = PENDENTE + PARCIALMENTE_PAGO. Um pagamento parcelado vira
+  // PARCIALMENTE_PAGO assim que a 1ª parcela é paga, mas ainda tem parcelas a
+  // receber — então também conta como pendente.
   const { data: pagamentosPendentes, isLoading: loadingPagPendentes } = useQuery({
     queryKey: ["pagamentos-pendentes-count"],
-    queryFn: () => getPagamentos({ status: "PENDENTE", size: 1 }),
+    queryFn: () => getPagamentos({ statusIn: ["PENDENTE", "PARCIALMENTE_PAGO"], size: 1 }),
     enabled: !isProfissional,
   })
 
@@ -127,7 +130,7 @@ export function DashboardPage() {
 
   const { data: pagamentosPendentesLista, isLoading: loadingPagLista } = useQuery({
     queryKey: ["pagamentos-pendentes-lista"],
-    queryFn: () => getPagamentos({ status: "PENDENTE", size: 5 }),
+    queryFn: () => getPagamentos({ statusIn: ["PENDENTE", "PARCIALMENTE_PAGO"], size: 5 }),
     enabled: !isProfissional,
   })
 

@@ -128,6 +128,7 @@ public class PagamentoService {
 
     public Page<Pagamento> getAllPagamentos(
             StatusPagamento status,
+            List<StatusPagamento> statusIn,
             FormaPagamento formaPagamento,
             UUID pacienteId,
             String pacienteNome,
@@ -138,6 +139,7 @@ public class PagamentoService {
             Pageable pageable) {
         Specification<Pagamento> spec = Specification.allOf(
                 PagamentoSpecification.hasStatus(status),
+                PagamentoSpecification.hasStatusIn(statusIn),
                 PagamentoSpecification.hasFormaPagamento(formaPagamento),
                 PagamentoSpecification.hasPaciente(pacienteId),
                 PagamentoSpecification.hasPacienteNome(pacienteNome),

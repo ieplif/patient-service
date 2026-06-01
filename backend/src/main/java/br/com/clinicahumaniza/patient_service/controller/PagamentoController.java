@@ -66,6 +66,7 @@ public class PagamentoController {
     @ApiResponse(responseCode = "200", description = "Lista paginada de pagamentos retornada com sucesso")
     public ResponseEntity<Page<PagamentoResponseDTO>> getAllPagamentos(
             @RequestParam(required = false) StatusPagamento status,
+            @RequestParam(required = false) List<StatusPagamento> statusIn,
             @RequestParam(required = false) FormaPagamento formaPagamento,
             @RequestParam(required = false) UUID pacienteId,
             @RequestParam(required = false) String pacienteNome,
@@ -77,6 +78,7 @@ public class PagamentoController {
         return ResponseEntity.ok(pagamentoService
                 .getAllPagamentos(
                         status,
+                        statusIn,
                         formaPagamento,
                         pacienteId,
                         pacienteNome,
