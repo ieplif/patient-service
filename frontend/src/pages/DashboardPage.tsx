@@ -130,7 +130,13 @@ export function DashboardPage() {
 
   const { data: pagamentosPendentesLista, isLoading: loadingPagLista } = useQuery({
     queryKey: ["pagamentos-pendentes-lista"],
-    queryFn: () => getPagamentos({ statusIn: ["PENDENTE", "PARCIALMENTE_PAGO"], size: 5 }),
+    // Ordena por vencimento ascendente: os mais próximos (e atrasados) primeiro.
+    queryFn: () =>
+      getPagamentos({
+        statusIn: ["PENDENTE", "PARCIALMENTE_PAGO"],
+        sort: "dataVencimento,asc",
+        size: 5,
+      }),
     enabled: !isProfissional,
   })
 
