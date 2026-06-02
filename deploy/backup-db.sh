@@ -10,12 +10,12 @@
 #   SUPABASE_URL, SUPABASE_SERVICE_KEY                  (para upload remoto)
 #
 # --- Pré-requisitos na Lightsail (uma vez) ---------------------------------
-#   # cliente Postgres 15 (versão do servidor no Supabase):
+#   # cliente Postgres 17 (versão do servidor no Supabase):
 #   sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt jammy-pgdg main" \
 #     > /etc/apt/sources.list.d/pgdg.list'
 #   curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
 #     | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
-#   sudo apt update && sudo apt install -y postgresql-client-15
+#   sudo apt update && sudo apt install -y postgresql-client-17
 #
 #   # criar bucket PRIVADO "backups" no painel do Supabase (Storage → New bucket)
 #
@@ -74,6 +74,15 @@ DB_PORT="${HOSTPORT##*:}"
 [ "$DB_PORT" = "$DB_HOST" ] && DB_PORT=5432
 DB_NAME="${DB_NAME:-postgres}"
 DB_USER="${DB_USER:-postgres}"
+
+# O pooler do Supabase em modo TRANSAÇÃO (porta 6543, PgBouncer) não suporta
+# pg_dump. Usa o mesmo pooler em modo SESSÃO (porta 5432) — host/usuário/senha
+# idênticos. Pode forçar outra porta via BACKUP_DB_PORT no .env.
+DB_PORT="${BACKUP_DB_PORT:-$DB_PORT}"
+if [ "$DB_PORT" = "6543" ]; then
+  log "Porta 6543 (pooler transação) não suporta pg_dump — usando 5432 (modo sessão)."
+  DB_PORT=5432
+fi
 
 mkdir -p "$BACKUP_DIR"
 STAMP="$(date +%F)"                     # YYYY-MM-DD
