@@ -182,15 +182,25 @@ export function DashboardPage() {
 
   const { data: pagamentosPendentesLista, isLoading: loadingPagLista } = useQuery({
     queryKey: ["pagamentos-pendentes-lista"],
-    // Ordena por vencimento ascendente: os mais próximos (e atrasados) primeiro.
+    // Busca todos os pendentes (set pequeno) para reordenar pela parcela em aberto.
     queryFn: () =>
       getPagamentos({
         statusIn: ["PENDENTE", "PARCIALMENTE_PAGO"],
         sort: "dataVencimento,asc",
-        size: 5,
+        size: 200,
       }),
     enabled: !isProfissional,
   })
+
+  // Ordena pela PRÓXIMA parcela em aberto (não pela 1ª, que pode já estar paga
+  // num pagamento parcelado) e mostra os 5 mais próximos. Assim a lista começa
+  // na cobrança realmente pendente mais imminente, não em datas já quitadas.
+  const pendentesOrdenados = useMemo(() => {
+    const items = pagamentosPendentesLista?.content ?? []
+    return [...items]
+      .sort((a, b) => proximoVencimento(a).localeCompare(proximoVencimento(b)))
+      .slice(0, 5)
+  }, [pagamentosPendentesLista])
 
   const receitaMes = receitaMesValor ?? 0
 
@@ -366,7 +376,7 @@ export function DashboardPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pagamentosPendentesLista?.content.length === 0 ? (
+                    {pendentesOrdenados.length === 0 ? (
                       <TableRow>
                         <TableCell
                           colSpan={4}
@@ -376,7 +386,7 @@ export function DashboardPage() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      pagamentosPendentesLista?.content.map((pag) => (
+                      pendentesOrdenados.map((pag) => (
                         <TableRow key={pag.id} className="border-border/40 hover:bg-muted/20">
                           <TableCell className="font-semibold font-primary text-sm text-foreground" title={pag.pacienteNome}>
                             {shortenName(pag.pacienteNome)}
