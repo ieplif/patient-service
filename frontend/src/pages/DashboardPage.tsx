@@ -59,20 +59,6 @@ function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value)
 }
 
-/**
- * Formata em "R$ X,X mil" / "R$ X,X mi" para o card compacto da Receita do mês.
- * Abaixo de 1.000 mostra valor cheio. Mantém o tooltip com o valor exato.
- */
-function formatCurrencyCompact(value: number) {
-  if (value >= 1_000_000) {
-    return `R$ ${(value / 1_000_000).toFixed(1).replace(".", ",")} mi`
-  }
-  if (value >= 1_000) {
-    return `R$ ${(value / 1_000).toFixed(1).replace(".", ",")} mil`
-  }
-  return formatCurrency(value)
-}
-
 function formatDateTime(value: string) {
   return format(new Date(value), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
 }
@@ -225,8 +211,7 @@ export function DashboardPage() {
         {!isProfissional && (
           <StatCard
             title="Receita do Mes"
-            value={loadingReceitaMes ? undefined : formatCurrencyCompact(receitaMes)}
-            valueTitle={!loadingReceitaMes ? formatCurrency(receitaMes) : undefined}
+            value={loadingReceitaMes ? undefined : formatCurrency(receitaMes)}
             icon={TrendingUp}
             isLoading={loadingReceitaMes}
             accent="beige"
