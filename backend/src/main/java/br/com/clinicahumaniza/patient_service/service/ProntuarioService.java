@@ -110,16 +110,16 @@ public class ProntuarioService {
         Page<Prontuario> page = (tipo != null)
                 ? prontuarioRepository.findByPacienteIdAndTipo(pacienteId, tipo, pageable)
                 : prontuarioRepository.findByPacienteId(pacienteId, pageable);
-        return page.map(this::toDTO);
+        // Regenera a URL assinada na hora de servir: a guardada no banco expira em 1h
+        // após o upload e causaria InvalidJWT ("exp" claim) ao abrir depois.
+        return page.map(this::toDTOComUrlFresca);
     }
 
     public ProntuarioResponseDTO getById(UUID id) {
         Prontuario p = prontuarioRepository
                 .findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Prontuário não encontrado"));
-        // Refresh signed URL
-        p.setStorageUrl(storageService.getSignedUrl(p.getStoragePath()));
-        return toDTO(p);
+        return toDTOComUrlFresca(p);
     }
 
     public void delete(UUID id) {
@@ -128,6 +128,13 @@ public class ProntuarioService {
                 .orElseThrow(() -> new EntityNotFoundException("Prontuário não encontrado"));
         storageService.delete(p.getStoragePath());
         prontuarioRepository.delete(p);
+    }
+
+    /** DTO com URL assinada gerada na hora (evita servir URL expirada do banco). */
+    private ProntuarioResponseDTO toDTOComUrlFresca(Prontuario p) {
+        ProntuarioResponseDTO dto = toDTO(p);
+        dto.setStorageUrl(storageService.getSignedUrl(p.getStoragePath()));
+        return dto;
     }
 
     private ProntuarioResponseDTO toDTO(Prontuario p) {

@@ -94,7 +94,9 @@ public class SupabaseStorageService {
         headers.set("Authorization", "Bearer " + supabaseServiceKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        String body = "{\"expiresIn\": 3600}";
+        // 3h: cobre uma sessão de trabalho típica. A URL é regenerada a cada
+        // listagem/visualização, então não precisa ser longa (link sensível).
+        String body = "{\"expiresIn\": 10800}";
         HttpEntity<String> entity = new HttpEntity<>(body, headers);
 
         try {
