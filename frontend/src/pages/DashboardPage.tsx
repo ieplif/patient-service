@@ -60,15 +60,15 @@ function formatCurrency(value: number) {
 }
 
 /**
- * Formata em "R$ X,X mil" / "R$ X,X mi" para caber no card compacto da Receita.
+ * Formata em "R$ X,XK" / "R$ X,XM" para caber no card compacto da Receita.
  * Abaixo de 1.000 mostra o valor cheio. O valor exato vai no tooltip (valueTitle).
  */
 function formatCurrencyCompact(value: number) {
   if (value >= 1_000_000) {
-    return `R$ ${(value / 1_000_000).toFixed(1).replace(".", ",")} mi`
+    return `R$ ${(value / 1_000_000).toFixed(1).replace(".", ",")}M`
   }
   if (value >= 1_000) {
-    return `R$ ${(value / 1_000).toFixed(1).replace(".", ",")} mil`
+    return `R$ ${(value / 1_000).toFixed(1).replace(".", ",")}K`
   }
   return formatCurrency(value)
 }
