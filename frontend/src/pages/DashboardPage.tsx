@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Users, Calendar, CreditCard, TrendingUp, Star } from "lucide-react"
-import { format, startOfMonth, endOfMonth, subMonths, isSameMonth, parse } from "date-fns"
+import { format, startOfMonth, endOfMonth, subMonths, isSameMonth, parse, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { StatCard } from "@/components/shared/StatCard"
 import { Badge } from "@/components/ui/badge"
@@ -28,7 +28,7 @@ import { getAgendamentos } from "@/api/agendamentos"
 import { getPagamentos, getReceita } from "@/api/pagamentos"
 import { getAssinaturas } from "@/api/assinaturas"
 import { useAuthStore } from "@/store/authStore"
-import type { StatusAgendamento } from "@/types"
+import type { StatusAgendamento, Pagamento } from "@/types"
 
 const today = format(new Date(), "yyyy-MM-dd")
 
@@ -71,6 +71,25 @@ function formatCurrencyCompact(value: number) {
     return `R$ ${(value / 1_000).toFixed(1).replace(".", ",")}K`
   }
   return formatCurrency(value)
+}
+
+/**
+ * Saldo realmente em aberto de um pagamento: soma só as parcelas PENDENTES.
+ * Para pagamentos parcialmente pagos, ignora o que já foi quitado/cancelado.
+ * Sem parcelas (caso raro), cai no valor total.
+ */
+function saldoPendente(pag: Pagamento): number {
+  const pendentes = pag.parcelas?.filter((p) => p.status === "PENDENTE") ?? []
+  if (pendentes.length === 0) return pag.valor
+  return pendentes.reduce((acc, p) => acc + p.valor, 0)
+}
+
+/** Data da próxima parcela em aberto (a mais antiga). Sem parcelas, usa o vencimento do pagamento. */
+function proximoVencimento(pag: Pagamento): string {
+  const pendentes = pag.parcelas?.filter((p) => p.status === "PENDENTE") ?? []
+  if (pendentes.length === 0) return pag.dataVencimento
+  // datas no formato "yyyy-MM-dd" comparam corretamente como string
+  return pendentes.reduce((min, p) => (p.dataVencimento < min ? p.dataVencimento : min), pendentes[0].dataVencimento)
 }
 
 function formatDateTime(value: string) {
@@ -362,11 +381,18 @@ export function DashboardPage() {
                           <TableCell className="font-semibold font-primary text-sm text-foreground" title={pag.pacienteNome}>
                             {shortenName(pag.pacienteNome)}
                           </TableCell>
-                          <TableCell className="text-sm font-secondary font-semibold text-accent">
-                            {formatCurrency(pag.valor)}
+                          <TableCell
+                            className="text-sm font-secondary font-semibold text-accent"
+                            title={
+                              saldoPendente(pag) !== pag.valor
+                                ? `Saldo em aberto de ${formatCurrency(saldoPendente(pag))} (total ${formatCurrency(pag.valor)})`
+                                : undefined
+                            }
+                          >
+                            {formatCurrency(saldoPendente(pag))}
                           </TableCell>
                           <TableCell className="text-sm font-secondary text-muted-foreground">
-                            {format(new Date(pag.dataVencimento), "dd/MM/yyyy")}
+                            {format(parseISO(proximoVencimento(pag)), "dd/MM/yyyy")}
                           </TableCell>
                           <TableCell>
                             <Badge
