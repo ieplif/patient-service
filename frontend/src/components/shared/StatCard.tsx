@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import type { LucideIcon } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -11,6 +12,8 @@ interface StatCardProps {
   isLoading?: boolean
   description?: string
   accent?: "sage" | "blue" | "earth" | "beige"
+  /** Controle opcional (ex.: seletor de mês) renderizado abaixo do valor. */
+  headerAction?: ReactNode
 }
 
 const accentStyles = {
@@ -40,6 +43,7 @@ export function StatCard({
   isLoading,
   description,
   accent = "sage",
+  headerAction,
 }: StatCardProps) {
   const styles = accentStyles[accent]
 
@@ -66,6 +70,7 @@ export function StatCard({
         {description && (
           <p className="text-xs text-muted-foreground mt-1 font-secondary">{description}</p>
         )}
+        {headerAction && <div className="mt-3">{headerAction}</div>}
       </CardContent>
     </Card>
   )

@@ -1,10 +1,18 @@
+import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Users, Calendar, CreditCard, TrendingUp, Star } from "lucide-react"
-import { format, startOfMonth } from "date-fns"
+import { format, startOfMonth, endOfMonth, subMonths, isSameMonth, parse } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { StatCard } from "@/components/shared/StatCard"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -23,7 +31,6 @@ import { useAuthStore } from "@/store/authStore"
 import type { StatusAgendamento } from "@/types"
 
 const today = format(new Date(), "yyyy-MM-dd")
-const monthStart = format(startOfMonth(new Date()), "yyyy-MM-dd")
 
 const statusConfig: Record<StatusAgendamento, { label: string; className: string }> = {
   AGENDADO: {
@@ -88,6 +95,32 @@ export function DashboardPage() {
   const { user } = useAuthStore()
   const isProfissional = user?.role === "ROLE_PROFISSIONAL"
 
+  // Mês selecionado para o card "Receita do Mês" (formato "yyyy-MM").
+  const [selectedMonth, setSelectedMonth] = useState(() => format(new Date(), "yyyy-MM"))
+
+  // Últimos 12 meses (mais recente primeiro) para o seletor de receita.
+  const monthOptions = useMemo(() => {
+    const agora = new Date()
+    return Array.from({ length: 12 }).map((_, i) => {
+      const date = subMonths(agora, i)
+      return {
+        value: format(date, "yyyy-MM"),
+        label: format(date, "MMM 'de' yyyy", { locale: ptBR }),
+      }
+    })
+  }, [])
+
+  // Intervalo (início/fim) do mês escolhido. Para o mês corrente o fim é hoje,
+  // refletindo apenas o que já foi recebido até o momento.
+  const { receitaInicio, receitaFim } = useMemo(() => {
+    const base = parse(selectedMonth, "yyyy-MM", new Date())
+    const inicio = format(startOfMonth(base), "yyyy-MM-dd")
+    const fim = isSameMonth(base, new Date())
+      ? today
+      : format(endOfMonth(base), "yyyy-MM-dd")
+    return { receitaInicio: inicio, receitaFim: fim }
+  }, [selectedMonth])
+
   const { data: patientsData, isLoading: loadingPatients } = useQuery({
     queryKey: ["patients-count"],
     queryFn: () => getPatients({ size: 1 }),
@@ -111,8 +144,8 @@ export function DashboardPage() {
   // Reflete o regime de CAIXA — dinheiro efetivamente recebido — e inclui
   // pagamentos parcialmente pagos (ex: 1ª parcela de 2x já entrou no mês).
   const { data: receitaMesValor, isLoading: loadingReceitaMes } = useQuery({
-    queryKey: ["receita-mes", monthStart, today],
-    queryFn: () => getReceita(monthStart, today),
+    queryKey: ["receita-mes", receitaInicio, receitaFim],
+    queryFn: () => getReceita(receitaInicio, receitaFim),
     enabled: !isProfissional,
   })
 
@@ -197,6 +230,20 @@ export function DashboardPage() {
             icon={TrendingUp}
             isLoading={loadingReceitaMes}
             accent="beige"
+            headerAction={
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="h-8 w-full text-xs font-secondary">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs capitalize">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            }
           />
         )}
       </div>
