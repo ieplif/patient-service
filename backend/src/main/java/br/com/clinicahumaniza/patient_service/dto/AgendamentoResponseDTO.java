@@ -28,6 +28,9 @@ public class AgendamentoResponseDTO {
     private String observacoes;
     private TipoAgendamento tipoAgendamento;
     private Boolean direitoReposicao;
+    // Derivado: true quando este agendamento (cancelado, com direito) já possui
+    // uma reposição ativa (AGENDADO/CONFIRMADO/REALIZADO) criada a partir dele.
+    private Boolean reposicaoAgendada;
     private UUID reposicaoOrigemId;
     private LocalDateTime dataLimiteReposicao;
     private String motivoCancelamento;

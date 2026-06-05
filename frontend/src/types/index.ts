@@ -96,6 +96,7 @@ export interface Agendamento {
   observacoes?: string
   tipoAgendamento?: "REGULAR" | "REPOSICAO"
   direitoReposicao?: boolean
+  reposicaoAgendada?: boolean
   reposicaoOrigemId?: string
   dataLimiteReposicao?: string
   motivoCancelamento?: string

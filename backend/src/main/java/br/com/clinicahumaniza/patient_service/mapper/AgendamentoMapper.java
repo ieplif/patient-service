@@ -1,14 +1,23 @@
 package br.com.clinicahumaniza.patient_service.mapper;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 import br.com.clinicahumaniza.patient_service.dto.AgendamentoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AgendamentoResponseDTO;
 import br.com.clinicahumaniza.patient_service.dto.AgendamentoUpdateDTO;
 import br.com.clinicahumaniza.patient_service.model.*;
+import br.com.clinicahumaniza.patient_service.repository.AgendamentoRepository;
 
 @Component
 public class AgendamentoMapper {
+
+    private final AgendamentoRepository agendamentoRepository;
+
+    public AgendamentoMapper(AgendamentoRepository agendamentoRepository) {
+        this.agendamentoRepository = agendamentoRepository;
+    }
 
     public Agendamento toEntity(
             AgendamentoRequestDTO dto,
@@ -54,6 +63,15 @@ public class AgendamentoMapper {
         dto.setObservacoes(entity.getObservacoes());
         dto.setTipoAgendamento(entity.getTipoAgendamento());
         dto.setDireitoReposicao(entity.getDireitoReposicao());
+        // Só consulta o banco para quem realmente pode ter reposição (cancelado + direito);
+        // evita N+1 desnecessário nos demais agendamentos da lista.
+        boolean reposicaoAgendada = entity.getId() != null
+                && entity.getStatus() == StatusAgendamento.CANCELADO
+                && Boolean.TRUE.equals(entity.getDireitoReposicao())
+                && agendamentoRepository.existsByReposicaoOrigemIdAndStatusIn(
+                        entity.getId(),
+                        List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO, StatusAgendamento.REALIZADO));
+        dto.setReposicaoAgendada(reposicaoAgendada);
         dto.setReposicaoOrigemId(entity.getReposicaoOrigemId());
         dto.setDataLimiteReposicao(entity.getDataLimiteReposicao());
         dto.setMotivoCancelamento(entity.getMotivoCancelamento());

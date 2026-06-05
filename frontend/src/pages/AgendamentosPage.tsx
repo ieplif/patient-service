@@ -310,9 +310,15 @@ export function AgendamentosPage() {
                                 </span>
                               )}
                               {ag.status === "CANCELADO" && ag.direitoReposicao === true && (
-                                <span className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 px-2 py-0.5 text-xs font-medium font-primary">
-                                  Direito a reposicao
-                                </span>
+                                ag.reposicaoAgendada ? (
+                                  <span className="inline-flex items-center rounded-full border border-border bg-muted text-muted-foreground px-2 py-0.5 text-xs font-medium font-primary">
+                                    Reposicao feita
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 px-2 py-0.5 text-xs font-medium font-primary">
+                                    Direito a reposicao
+                                  </span>
+                                )
                               )}
                             </div>
                           </TableCell>
@@ -329,7 +335,7 @@ export function AgendamentosPage() {
                                     <Clock className="h-4 w-4" /> Reagendar
                                   </DropdownMenuItem>
                                 )}
-                                {ag.status === "CANCELADO" && ag.direitoReposicao === true && (
+                                {ag.status === "CANCELADO" && ag.direitoReposicao === true && !ag.reposicaoAgendada && (
                                   <DropdownMenuItem onClick={() => handleAgendarReposicao(ag)} className="gap-2 text-violet-600 focus:text-violet-600">
                                     <RefreshCw className="h-4 w-4" /> Agendar Reposicao
                                   </DropdownMenuItem>
