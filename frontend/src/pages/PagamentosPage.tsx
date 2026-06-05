@@ -75,7 +75,9 @@ const statusOptions: { value: StatusPagamento | "TODOS"; label: string }[] = [
 
 export function PagamentosPage() {
   const [page, setPage] = useState(0)
-  const [statusFilter, setStatusFilter] = useState<StatusPagamento | "TODOS">("TODOS")
+  // Default "PENDENTE" — assim como Agendamentos abre em "Agendado", a recepção
+  // quase sempre quer ver o que ainda está em aberto. Troque para "TODOS" no filtro.
+  const [statusFilter, setStatusFilter] = useState<StatusPagamento | "TODOS">("PENDENTE")
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -99,10 +101,10 @@ export function PagamentosPage() {
       getPagamentos({
         page,
         size: PAGE_SIZE,
-        // Ordena por data de vencimento (mais recente primeiro). Suporta lançamentos
-        // retroativos: um pagamento criado hoje com vencimento de abril aparece
-        // depois dos pagamentos com vencimento em maio.
-        sort: "dataVencimento,desc",
+        // Ordena por data de vencimento crescente (o que vence primeiro no topo),
+        // espelhando Agendamentos. Para a lista de pendentes, mostra primeiro o que
+        // está vencido/vence antes — o que a recepção precisa cobrar a seguir.
+        sort: "dataVencimento,asc",
         status: statusFilter !== "TODOS" ? statusFilter : undefined,
         pacienteNome: debouncedSearch || undefined,
       }),
