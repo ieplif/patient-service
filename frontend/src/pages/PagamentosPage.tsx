@@ -283,7 +283,7 @@ export function PagamentosPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/50 hover:bg-transparent">
-                      {["Paciente", "Valor", "Forma", "Vencimento", "Parcela", "Status", ""].map((h) => (
+                      {["Paciente", "Valor", "Forma", "Vencimento", "Pago em", "Parcela", "Status", ""].map((h) => (
                       <TableHead key={h || "actions"} className="text-xs font-semibold font-primary text-muted-foreground uppercase tracking-wide">
                         {h}
                       </TableHead>
@@ -293,7 +293,7 @@ export function PagamentosPage() {
                 <TableBody>
                   {linhas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground font-secondary py-12">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground font-secondary py-12">
                         Nenhum pagamento encontrado
                       </TableCell>
                     </TableRow>
@@ -304,6 +304,7 @@ export function PagamentosPage() {
                       const isParcela = !!parc
                       const valor = isParcela ? parc!.valor : pag.valor
                       const venc = isParcela ? parc!.dataVencimento : pag.dataVencimento
+                      const pagoEm = isParcela ? parc!.dataPagamento : pag.dataPagamento
                       const status = isParcela ? parc!.status : pag.status
                       const cfg = parcelaStatusConfig[status] ?? statusConfig[status as StatusPagamento]
                       const rowKey = isParcela ? `${pag.id}-${parc!.id}` : pag.id
@@ -328,6 +329,9 @@ export function PagamentosPage() {
                           </TableCell>
                           <TableCell className="text-sm font-secondary text-muted-foreground">
                             {format(new Date(venc), "dd/MM/yyyy")}
+                          </TableCell>
+                          <TableCell className="text-sm font-secondary text-muted-foreground">
+                            {pagoEm ? format(new Date(pagoEm), "dd/MM/yyyy") : "—"}
                           </TableCell>
                           <TableCell className="text-sm font-secondary text-muted-foreground text-center">
                             {parcelaLabel}
