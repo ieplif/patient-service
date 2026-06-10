@@ -97,8 +97,8 @@ export function PagamentosPage() {
 
   // Pendentes (e demais status): vencimento crescente — o que vence antes no topo,
   // que é o que a recepção precisa cobrar a seguir. Já em "Pago", o interesse é ver
-  // os pagamentos mais recentes primeiro, então invertemos para decrescente.
-  const sort = statusFilter === "PAGO" ? "dataVencimento,desc" : "dataVencimento,asc"
+  // os pagamentos mais recentes primeiro, ordenados pela data em que foram pagos.
+  const sort = statusFilter === "PAGO" ? "dataPagamento,desc" : "dataVencimento,asc"
 
   const { data, isLoading } = useQuery({
     queryKey: ["pagamentos", page, statusFilter, debouncedSearch, sort],
