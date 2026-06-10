@@ -95,16 +95,18 @@ export function PagamentosPage() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
+  // Pendentes (e demais status): vencimento crescente — o que vence antes no topo,
+  // que é o que a recepção precisa cobrar a seguir. Já em "Pago", o interesse é ver
+  // os pagamentos mais recentes primeiro, então invertemos para decrescente.
+  const sort = statusFilter === "PAGO" ? "dataVencimento,desc" : "dataVencimento,asc"
+
   const { data, isLoading } = useQuery({
-    queryKey: ["pagamentos", page, statusFilter, debouncedSearch],
+    queryKey: ["pagamentos", page, statusFilter, debouncedSearch, sort],
     queryFn: () =>
       getPagamentos({
         page,
         size: PAGE_SIZE,
-        // Ordena por data de vencimento crescente (o que vence primeiro no topo),
-        // espelhando Agendamentos. Para a lista de pendentes, mostra primeiro o que
-        // está vencido/vence antes — o que a recepção precisa cobrar a seguir.
-        sort: "dataVencimento,asc",
+        sort,
         status: statusFilter !== "TODOS" ? statusFilter : undefined,
         pacienteNome: debouncedSearch || undefined,
       }),
