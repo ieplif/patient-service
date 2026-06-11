@@ -106,12 +106,19 @@ export function PagamentosPage() {
   // pagamentos são removidas depois, ao montar as linhas.
   const isPendenteView = statusFilter === "PENDENTE"
 
+  // Na visão "Pendente" a ordem correta é pela data de vencimento da PARCELA em
+  // aberto (e não do pagamento-pai, que nos parcelados guarda a data original).
+  // Por isso buscamos tudo de uma vez (sem paginar no servidor) e ordenamos/paginamos
+  // no cliente — caso contrário a 2/2 apareceria fora de ordem entre páginas.
+  const fetchPage = isPendenteView ? 0 : page
+  const fetchSize = isPendenteView ? 500 : PAGE_SIZE
+
   const { data, isLoading } = useQuery({
-    queryKey: ["pagamentos", page, statusFilter, debouncedSearch, sort],
+    queryKey: ["pagamentos", fetchPage, fetchSize, statusFilter, debouncedSearch, sort],
     queryFn: () =>
       getPagamentos({
-        page,
-        size: PAGE_SIZE,
+        page: fetchPage,
+        size: fetchSize,
         sort,
         ...(isPendenteView
           ? { statusIn: ["PENDENTE", "PARCIALMENTE_PAGO"] }
@@ -227,7 +234,9 @@ export function PagamentosPage() {
   // Para pagamentos com 1 parcela, mostra a linha "tradicional" (com ações de cancelar/reembolsar do pai).
   // Para pagamentos com N>1 parcelas, mostra N linhas independentes que podem ser pagas separadamente.
   type Linha = { pag: Pagamento; parc: Parcela | null }
-  const linhas: Linha[] = (data?.content ?? []).flatMap<Linha>((pag) => {
+  const vencimentoDaLinha = (l: Linha) => (l.parc ? l.parc.dataVencimento : l.pag.dataVencimento)
+
+  const todasLinhas: Linha[] = (data?.content ?? []).flatMap<Linha>((pag) => {
     if (pag.parcelas.length === 0) return [{ pag, parc: null }]
     // Na visão "Pendente", mostra só as parcelas ainda em aberto — assim a 2/2
     // pendente aparece sem trazer junto a 1/2 já paga do mesmo pagamento.
@@ -236,6 +245,19 @@ export function PagamentosPage() {
       : pag.parcelas
     return parcelas.map<Linha>((parc) => ({ pag, parc }))
   })
+
+  // Na visão "Pendente": ordena pela data de vencimento da parcela exibida (asc) e
+  // pagina no cliente, já que buscamos todos os pendentes de uma vez. Nas demais
+  // visões, a ordenação e a paginação vêm prontas do servidor.
+  const linhasOrdenadas = isPendenteView
+    ? [...todasLinhas].sort((a, b) => vencimentoDaLinha(a).localeCompare(vencimentoDaLinha(b)))
+    : todasLinhas
+
+  const totalElements = isPendenteView ? linhasOrdenadas.length : (data?.totalElements ?? 0)
+  const totalPages = isPendenteView ? Math.ceil(linhasOrdenadas.length / PAGE_SIZE) : (data?.totalPages ?? 0)
+  const linhas = isPendenteView
+    ? linhasOrdenadas.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
+    : linhasOrdenadas
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -408,8 +430,8 @@ export function PagamentosPage() {
               </div>
               <Pagination
                 page={page}
-                totalPages={data?.totalPages ?? 0}
-                totalElements={data?.totalElements ?? 0}
+                totalPages={totalPages}
+                totalElements={totalElements}
                 size={PAGE_SIZE}
                 onPageChange={setPage}
               />
