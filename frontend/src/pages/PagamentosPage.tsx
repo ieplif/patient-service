@@ -100,6 +100,12 @@ export function PagamentosPage() {
   // os pagamentos mais recentes primeiro, ordenados pela data em que foram pagos.
   const sort = statusFilter === "PAGO" ? "dataPagamento,desc" : "dataVencimento,asc"
 
+  // "Pendente" precisa incluir também os PARCIALMENTE_PAGO: uma parcela em aberto
+  // (ex.: 2/2) vive num pagamento cujo status-pai é PARCIALMENTE_PAGO, então filtrar
+  // só por PENDENTE no pai esconderia essa parcela. As parcelas já pagas desses
+  // pagamentos são removidas depois, ao montar as linhas.
+  const isPendenteView = statusFilter === "PENDENTE"
+
   const { data, isLoading } = useQuery({
     queryKey: ["pagamentos", page, statusFilter, debouncedSearch, sort],
     queryFn: () =>
@@ -107,7 +113,11 @@ export function PagamentosPage() {
         page,
         size: PAGE_SIZE,
         sort,
-        status: statusFilter !== "TODOS" ? statusFilter : undefined,
+        ...(isPendenteView
+          ? { statusIn: ["PENDENTE", "PARCIALMENTE_PAGO"] }
+          : statusFilter !== "TODOS"
+            ? { status: statusFilter }
+            : {}),
         pacienteNome: debouncedSearch || undefined,
       }),
   })
@@ -217,11 +227,15 @@ export function PagamentosPage() {
   // Para pagamentos com 1 parcela, mostra a linha "tradicional" (com ações de cancelar/reembolsar do pai).
   // Para pagamentos com N>1 parcelas, mostra N linhas independentes que podem ser pagas separadamente.
   type Linha = { pag: Pagamento; parc: Parcela | null }
-  const linhas: Linha[] = (data?.content ?? []).flatMap<Linha>((pag) =>
-    pag.parcelas.length > 0
-      ? pag.parcelas.map<Linha>((parc) => ({ pag, parc }))
-      : [{ pag, parc: null }]
-  )
+  const linhas: Linha[] = (data?.content ?? []).flatMap<Linha>((pag) => {
+    if (pag.parcelas.length === 0) return [{ pag, parc: null }]
+    // Na visão "Pendente", mostra só as parcelas ainda em aberto — assim a 2/2
+    // pendente aparece sem trazer junto a 1/2 já paga do mesmo pagamento.
+    const parcelas = isPendenteView
+      ? pag.parcelas.filter((parc) => parc.status === "PENDENTE")
+      : pag.parcelas
+    return parcelas.map<Linha>((parc) => ({ pag, parc }))
+  })
 
   return (
     <div className="space-y-5 animate-fade-in">
