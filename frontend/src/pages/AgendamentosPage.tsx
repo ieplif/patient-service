@@ -125,13 +125,18 @@ export function AgendamentosPage() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
+  // "Realizado" lista o histórico, então o interesse é ver o mais recente primeiro
+  // (decrescente). Nos demais status (Agendado etc.) a ordem é crescente — o
+  // próximo a acontecer no topo.
+  const sort = statusFilter === "REALIZADO" ? "dataHora,desc" : "dataHora,asc"
+
   const { data, isLoading } = useQuery({
-    queryKey: ["agendamentos", page, statusFilter, debouncedSearch],
+    queryKey: ["agendamentos", page, statusFilter, debouncedSearch, sort],
     queryFn: () =>
       getAgendamentos({
         page,
         size: PAGE_SIZE,
-        sort: "dataHora,asc",
+        sort,
         status: statusFilter !== "TODOS" ? statusFilter : undefined,
         pacienteNome: debouncedSearch || undefined,
       }),
