@@ -1,5 +1,7 @@
 package br.com.clinicahumaniza.patient_service.controller;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.Valid;
@@ -13,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import br.com.clinicahumaniza.patient_service.dto.AniversarianteDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientExportDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientResponseDTO;
@@ -62,6 +65,16 @@ public class PatientController {
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(
                 patientService.getAllPatients(nome, email, cpf, pageable).map(patientMapper::toResponseDTO));
+    }
+
+    @GetMapping("/aniversariantes")
+    @Operation(
+            summary = "Aniversariantes do mês",
+            description = "Lista pacientes ativos que fazem aniversário no mês informado (padrão: mês atual)")
+    @ApiResponse(responseCode = "200", description = "Lista de aniversariantes retornada com sucesso")
+    public ResponseEntity<List<AniversarianteDTO>> getAniversariantes(@RequestParam(required = false) Integer mes) {
+        int mesEfetivo = (mes != null) ? mes : LocalDate.now().getMonthValue();
+        return ResponseEntity.ok(patientService.getAniversariantesDoMes(mesEfetivo));
     }
 
     @GetMapping("/{id}")

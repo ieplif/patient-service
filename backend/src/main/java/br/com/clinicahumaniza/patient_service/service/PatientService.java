@@ -1,6 +1,7 @@
 package br.com.clinicahumaniza.patient_service.service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -16,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.clinicahumaniza.patient_service.dto.AniversarianteDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientExportDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.PatientUpdateDTO;
@@ -97,6 +99,19 @@ public class PatientService {
                 PatientSpecification.hasEmail(email),
                 PatientSpecification.hasCpf(cpf));
         return patientRepository.findAll(spec, pageable);
+    }
+
+    /**
+     * Aniversariantes de um mês (1-12), ordenados pelo dia. Aniversário compara só
+     * mês/dia (ignora o ano). O filtro é feito em memória — DB-agnóstico (Postgres
+     * em prod, H2 nos testes) e suficiente para o volume da clínica.
+     */
+    public List<AniversarianteDTO> getAniversariantesDoMes(int mes) {
+        return patientRepository.findByStatusAtivoTrueAndDataNascimentoIsNotNull().stream()
+                .filter(p -> p.getDataNascimento().getMonthValue() == mes)
+                .sorted(Comparator.comparingInt(p -> p.getDataNascimento().getDayOfMonth()))
+                .map(p -> new AniversarianteDTO(p.getId(), p.getNomeCompleto(), p.getDataNascimento()))
+                .collect(Collectors.toList());
     }
 
     @Transactional

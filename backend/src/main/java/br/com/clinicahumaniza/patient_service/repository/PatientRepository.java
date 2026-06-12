@@ -1,5 +1,6 @@
 package br.com.clinicahumaniza.patient_service.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,4 +19,8 @@ public interface PatientRepository
     Optional<Patient> findByCpf(String cpf);
 
     Optional<Patient> findByEmail(String email);
+
+    // Pacientes ativos com data de nascimento preenchida — base para o cálculo dos
+    // aniversariantes do mês (o filtro por mês/dia é feito em memória no service).
+    List<Patient> findByStatusAtivoTrueAndDataNascimentoIsNotNull();
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Users, Calendar, CreditCard, TrendingUp, Star } from "lucide-react"
+import { Users, Calendar, CreditCard, TrendingUp, Star, Cake } from "lucide-react"
 import { format, startOfMonth, endOfMonth, subMonths, isSameMonth, parse, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { StatCard } from "@/components/shared/StatCard"
@@ -22,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getPatients } from "@/api/patients"
+import { getPatients, getAniversariantes } from "@/api/patients"
 import { shortenName } from "@/lib/names"
 import { getAgendamentos } from "@/api/agendamentos"
 import { getPagamentos, getReceita } from "@/api/pagamentos"
@@ -31,6 +31,14 @@ import { useAuthStore } from "@/store/authStore"
 import type { StatusAgendamento, Pagamento } from "@/types"
 
 const today = format(new Date(), "yyyy-MM-dd")
+// "MM-dd" de hoje — usado para destacar o aniversariante do dia.
+const hojeMesDia = format(new Date(), "MM-dd")
+
+// Meses do ano (1-12) para o seletor de aniversariantes.
+const MESES = Array.from({ length: 12 }).map((_, i) => {
+  const nome = format(new Date(2000, i, 1), "MMMM", { locale: ptBR })
+  return { value: i + 1, label: nome.charAt(0).toUpperCase() + nome.slice(1) }
+})
 
 const statusConfig: Record<StatusAgendamento, { label: string; className: string }> = {
   AGENDADO: {
@@ -203,6 +211,13 @@ export function DashboardPage() {
   }, [pagamentosPendentesLista])
 
   const receitaMes = receitaMesValor ?? 0
+
+  // Mês escolhido no card de aniversariantes (1-12). Começa no mês atual.
+  const [aniversariantesMes, setAniversariantesMes] = useState(() => new Date().getMonth() + 1)
+  const { data: aniversariantes, isLoading: loadingAniversariantes } = useQuery({
+    queryKey: ["aniversariantes", aniversariantesMes],
+    queryFn: () => getAniversariantes(aniversariantesMes),
+  })
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -422,6 +437,66 @@ export function DashboardPage() {
           </CardContent>
         </Card>}
       </div>
+
+      {/* Aniversariantes do mês */}
+      <Card className="border border-border/60 shadow-soft">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <CardTitle className="text-base font-semibold font-primary text-foreground flex items-center gap-2">
+              <Cake className="h-4 w-4 text-primary" />
+              Aniversariantes do mês
+            </CardTitle>
+            <Select value={String(aniversariantesMes)} onValueChange={(v) => setAniversariantesMes(Number(v))}>
+              <SelectTrigger className="h-8 w-full sm:w-44 text-xs font-secondary">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MESES.map((m) => (
+                  <SelectItem key={m.value} value={String(m.value)} className="text-sm font-secondary">
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loadingAniversariantes ? (
+            <TableSkeleton cols={2} />
+          ) : !aniversariantes?.length ? (
+            <p className="text-center text-muted-foreground font-secondary py-8 text-sm">
+              Nenhum aniversariante neste mês
+            </p>
+          ) : (
+            <ul className="divide-y divide-border/40">
+              {aniversariantes.map((a) => {
+                const isHoje = format(parseISO(a.dataNascimento), "MM-dd") === hojeMesDia
+                return (
+                  <li
+                    key={a.id}
+                    className={`flex items-center gap-3 py-2.5 ${isHoje ? "bg-primary/5 -mx-2 px-2 rounded-md" : ""}`}
+                  >
+                    <span className="text-sm font-semibold font-primary text-primary tabular-nums w-12">
+                      {format(parseISO(a.dataNascimento), "dd/MM")}
+                    </span>
+                    <span
+                      className="text-sm font-secondary text-foreground flex-1 truncate"
+                      title={a.nomeCompleto}
+                    >
+                      {shortenName(a.nomeCompleto)}
+                    </span>
+                    {isHoje && (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium font-primary text-primary">
+                        <Cake className="h-3.5 w-3.5" /> Hoje
+                      </span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -44,6 +44,12 @@ export interface Patient {
   createdAt: string
 }
 
+export interface Aniversariante {
+  id: string
+  nomeCompleto: string
+  dataNascimento: string
+}
+
 export type TipoDocumento = "PRONTUARIO" | "TERMO" | "NOTA_FISCAL"
 
 export interface Prontuario {

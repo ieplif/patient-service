@@ -1,5 +1,5 @@
 import { apiClient } from "./client"
-import type { PageResponse, Patient } from "@/types"
+import type { PageResponse, Patient, Aniversariante } from "@/types"
 
 export interface PatientCreateData {
   nomeCompleto: string
@@ -38,6 +38,14 @@ export async function getPatients(params?: {
   cpf?: string
 }): Promise<PageResponse<Patient>> {
   const { data } = await apiClient.get<PageResponse<Patient>>("/api/v1/patients", { params })
+  return data
+}
+
+/** Aniversariantes do mês (1-12). Sem `mes`, o backend usa o mês atual. */
+export async function getAniversariantes(mes?: number): Promise<Aniversariante[]> {
+  const { data } = await apiClient.get<Aniversariante[]>("/api/v1/patients/aniversariantes", {
+    params: mes ? { mes } : undefined,
+  })
   return data
 }
 
