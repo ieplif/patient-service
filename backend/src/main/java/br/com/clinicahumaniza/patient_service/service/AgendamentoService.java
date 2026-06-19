@@ -14,7 +14,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -160,7 +162,20 @@ public class AgendamentoService {
                 AgendamentoSpecification.hasProfissional(profissionalId),
                 AgendamentoSpecification.hasAssinatura(assinaturaId),
                 AgendamentoSpecification.betweenDatas(dataInicio, dataFim));
-        return agendamentoRepository.findAll(spec, pageable);
+        return agendamentoRepository.findAll(spec, comDesempate(pageable));
+    }
+
+    /**
+     * Acrescenta o id como último critério de ordenação para garantir paginação
+     * estável. Sem isso, quando muitos registros compartilham a mesma dataHora,
+     * o banco pode reordenar os empates entre páginas — fazendo um agendamento
+     * aparecer duas vezes e outro sumir da lista.
+     */
+    private Pageable comDesempate(Pageable pageable) {
+        return PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort().and(Sort.by("id")));
     }
 
     public byte[] exportCsv(LocalDate inicio, LocalDate fim, StatusAgendamento status) {

@@ -11,7 +11,9 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -145,7 +147,20 @@ public class PagamentoService {
                 PagamentoSpecification.hasPacienteNome(pacienteNome),
                 PagamentoSpecification.betweenVencimento(inicio, fim),
                 PagamentoSpecification.betweenDataPagamento(pagamentoInicio, pagamentoFim));
-        return pagamentoRepository.findAll(spec, pageable);
+        return pagamentoRepository.findAll(spec, comDesempate(pageable));
+    }
+
+    /**
+     * Acrescenta o id como último critério de ordenação para garantir paginação
+     * estável. Sem isso, quando muitos registros compartilham a mesma data
+     * (vencimento/pagamento), o banco pode reordenar os empates entre páginas —
+     * duplicando um pagamento e omitindo outro.
+     */
+    private Pageable comDesempate(Pageable pageable) {
+        return PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort().and(Sort.by("id")));
     }
 
     public byte[] exportCsv(LocalDate inicio, LocalDate fim, StatusPagamento status) {
