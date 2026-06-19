@@ -3,6 +3,8 @@ package br.com.clinicahumaniza.patient_service.spec;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import jakarta.persistence.criteria.JoinType;
+
 import org.springframework.data.jpa.domain.Specification;
 
 import br.com.clinicahumaniza.patient_service.model.Agendamento;
@@ -51,6 +53,35 @@ public class AgendamentoSpecification {
             if (inicio == null) return cb.lessThanOrEqualTo(root.get("dataHora"), fim);
             if (fim == null) return cb.greaterThanOrEqualTo(root.get("dataHora"), inicio);
             return cb.between(root.get("dataHora"), inicio, fim);
+        };
+    }
+
+    /**
+     * Oculta agendamentos confidenciais: os da atividade {@code atividadeNome} atendidos
+     * pelo profissional cujo usuário tem e-mail {@code profissionalEmail}. Aplicado apenas
+     * quando {@code aplicar} é true (ou seja, para perfis que não devem ver esses registros).
+     *
+     * Mantém a linha quando NÃO for (atividade confidencial E profissional confidencial).
+     * O {@code isNull} no profissional preserva agendamentos sem profissional vinculado, e
+     * o LEFT JOIN evita descartar essas linhas.
+     */
+    public static Specification<Agendamento> ocultarConfidencial(
+            boolean aplicar, String atividadeNome, String profissionalEmail) {
+        return (root, query, cb) -> {
+            if (!aplicar
+                    || atividadeNome == null
+                    || atividadeNome.isBlank()
+                    || profissionalEmail == null
+                    || profissionalEmail.isBlank()) {
+                return null;
+            }
+            var profJoin = root.join("profissional", JoinType.LEFT);
+            var userJoin = profJoin.join("user", JoinType.LEFT);
+            return cb.or(
+                    cb.notEqual(
+                            cb.lower(root.get("servico").get("atividade").get("nome")), atividadeNome.toLowerCase()),
+                    profJoin.get("id").isNull(),
+                    cb.notEqual(cb.lower(userJoin.get("email")), profissionalEmail.toLowerCase()));
         };
     }
 }

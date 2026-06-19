@@ -24,6 +24,10 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import br.com.clinicahumaniza.patient_service.dto.AgendamentoRequestDTO;
 import br.com.clinicahumaniza.patient_service.dto.AgendamentoStatusDTO;
@@ -768,5 +772,81 @@ class AgendamentoServiceTest {
         List<LocalDateTime> slots = agendamentoService.getAvailableSlots(profissionalId, data, 50, 1);
 
         assertThat(slots).isEmpty();
+    }
+
+    // --- Confidencialidade: Fisioterapia Pélvica da Caíssa ---
+
+    private static final String EMAIL_CAISSA = "caissapm@humaniza.com";
+    private static final String ATIVIDADE_CONFIDENCIAL = "Fisioterapia Pélvica";
+
+    /** Configura a regra e transforma o agendamento padrão num confidencial (Pélvica + Caíssa). */
+    private void configurarConfidencial() {
+        ReflectionTestUtils.setField(agendamentoService, "atividadeConfidencialNome", ATIVIDADE_CONFIDENCIAL);
+        ReflectionTestUtils.setField(agendamentoService, "profissionalConfidencialEmail", EMAIL_CAISSA);
+        atividade.setNome(ATIVIDADE_CONFIDENCIAL);
+        User userCaissa = new User();
+        userCaissa.setEmail(EMAIL_CAISSA);
+        profissional.setUser(userCaissa);
+    }
+
+    private void autenticar(String email, String role) {
+        var auth = new UsernamePasswordAuthenticationToken(email, "x", List.of(new SimpleGrantedAuthority(role)));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void limparContextoSeguranca() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    @DisplayName("Outro profissional não enxerga agendamento confidencial por id (404)")
+    void getById_Confidencial_OutroProfissional_NaoEncontra() {
+        configurarConfidencial();
+        autenticar("beatrizpr@humaniza.com", "ROLE_PROFISSIONAL");
+        when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
+
+        assertThatThrownBy(() -> agendamentoService.getAgendamentoById(agendamentoId))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("A própria Caíssa enxerga seu agendamento confidencial por id")
+    void getById_Confidencial_Caissa_Enxerga() {
+        configurarConfidencial();
+        autenticar(EMAIL_CAISSA, "ROLE_PROFISSIONAL");
+        when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
+
+        assertThat(agendamentoService.getAgendamentoById(agendamentoId)).isEqualTo(agendamento);
+    }
+
+    @Test
+    @DisplayName("Admin enxerga agendamento confidencial por id")
+    void getById_Confidencial_Admin_Enxerga() {
+        configurarConfidencial();
+        autenticar("caissa@humaniza.com", "ROLE_ADMIN");
+        when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
+
+        assertThat(agendamentoService.getAgendamentoById(agendamentoId)).isEqualTo(agendamento);
+    }
+
+    @Test
+    @DisplayName("Lista por paciente oculta confidenciais para outro profissional")
+    void getByPaciente_Confidencial_OutroProfissional_Filtra() {
+        configurarConfidencial();
+        autenticar("beatrizpr@humaniza.com", "ROLE_PROFISSIONAL");
+        when(agendamentoRepository.findByPacienteId(pacienteId)).thenReturn(List.of(agendamento));
+
+        assertThat(agendamentoService.getAgendamentosByPaciente(pacienteId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Lista por paciente mantém confidenciais para a própria Caíssa")
+    void getByPaciente_Confidencial_Caissa_Mantem() {
+        configurarConfidencial();
+        autenticar(EMAIL_CAISSA, "ROLE_PROFISSIONAL");
+        when(agendamentoRepository.findByPacienteId(pacienteId)).thenReturn(List.of(agendamento));
+
+        assertThat(agendamentoService.getAgendamentosByPaciente(pacienteId)).containsExactly(agendamento);
     }
 }

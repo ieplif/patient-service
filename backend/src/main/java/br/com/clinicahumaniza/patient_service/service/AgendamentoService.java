@@ -13,11 +13,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +49,14 @@ public class AgendamentoService {
     private final AgendamentoMapper agendamentoMapper;
     private final AssinaturaService assinaturaService;
     private final Optional<GoogleCalendarService> googleCalendarService;
+
+    // Regra de confidencialidade: agendamentos desta atividade atendidos por este
+    // profissional (e-mail do usuário vinculado) ficam ocultos para os demais perfis.
+    @Value("${app.visibilidade.atividade-confidencial-nome:}")
+    private String atividadeConfidencialNome;
+
+    @Value("${app.visibilidade.profissional-confidencial-email:}")
+    private String profissionalConfidencialEmail;
 
     @Autowired
     public AgendamentoService(
@@ -143,7 +154,62 @@ public class AgendamentoService {
     }
 
     public Agendamento getAgendamentoById(UUID id) {
-        return agendamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
+        Agendamento agendamento =
+                agendamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
+        // Não revela a existência de um agendamento confidencial para quem não pode vê-lo.
+        if (ocultarConfidenciaisParaUsuarioAtual() && isConfidencial(agendamento)) {
+            throw new ResourceNotFoundException("Agendamento", id);
+        }
+        return agendamento;
+    }
+
+    /**
+     * Decide se a regra de confidencialidade deve ser aplicada ao usuário autenticado:
+     * - Admin vê tudo;
+     * - O próprio profissional confidencial vê os seus;
+     * - Demais perfis têm os agendamentos confidenciais ocultados.
+     */
+    private boolean ocultarConfidenciaisParaUsuarioAtual() {
+        if (profissionalConfidencialEmail == null || profissionalConfidencialEmail.isBlank()) {
+            return false;
+        }
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) {
+            return false;
+        }
+        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        if (isAdmin) {
+            return false;
+        }
+        // A própria Caíssa (e-mail do usuário logado == e-mail confidencial) vê os seus.
+        return !profissionalConfidencialEmail.equalsIgnoreCase(auth.getName());
+    }
+
+    /** True se o agendamento é da atividade confidencial atendida pelo profissional confidencial. */
+    private boolean isConfidencial(Agendamento a) {
+        if (atividadeConfidencialNome == null
+                || atividadeConfidencialNome.isBlank()
+                || profissionalConfidencialEmail == null
+                || profissionalConfidencialEmail.isBlank()) {
+            return false;
+        }
+        boolean ehAtividade = a.getServico() != null
+                && a.getServico().getAtividade() != null
+                && atividadeConfidencialNome.equalsIgnoreCase(
+                        a.getServico().getAtividade().getNome());
+        boolean ehProfissional = a.getProfissional() != null
+                && a.getProfissional().getUser() != null
+                && profissionalConfidencialEmail.equalsIgnoreCase(
+                        a.getProfissional().getUser().getEmail());
+        return ehAtividade && ehProfissional;
+    }
+
+    /** Filtra a lista removendo confidenciais quando o usuário atual não pode vê-los. */
+    private List<Agendamento> aplicarConfidencialidade(List<Agendamento> lista) {
+        if (!ocultarConfidenciaisParaUsuarioAtual()) {
+            return lista;
+        }
+        return lista.stream().filter(a -> !isConfidencial(a)).collect(Collectors.toList());
     }
 
     public Page<Agendamento> getAllAgendamentos(
@@ -161,7 +227,11 @@ public class AgendamentoService {
                 AgendamentoSpecification.hasPacienteNome(pacienteNome),
                 AgendamentoSpecification.hasProfissional(profissionalId),
                 AgendamentoSpecification.hasAssinatura(assinaturaId),
-                AgendamentoSpecification.betweenDatas(dataInicio, dataFim));
+                AgendamentoSpecification.betweenDatas(dataInicio, dataFim),
+                AgendamentoSpecification.ocultarConfidencial(
+                        ocultarConfidenciaisParaUsuarioAtual(),
+                        atividadeConfidencialNome,
+                        profissionalConfidencialEmail));
         return agendamentoRepository.findAll(spec, comDesempate(pageable));
     }
 
@@ -182,7 +252,12 @@ public class AgendamentoService {
         LocalDateTime dtInicio = inicio != null ? inicio.atStartOfDay() : null;
         LocalDateTime dtFim = fim != null ? fim.atTime(LocalTime.MAX) : null;
         Specification<Agendamento> spec = Specification.allOf(
-                AgendamentoSpecification.hasStatus(status), AgendamentoSpecification.betweenDatas(dtInicio, dtFim));
+                AgendamentoSpecification.hasStatus(status),
+                AgendamentoSpecification.betweenDatas(dtInicio, dtFim),
+                AgendamentoSpecification.ocultarConfidencial(
+                        ocultarConfidenciaisParaUsuarioAtual(),
+                        atividadeConfidencialNome,
+                        profissionalConfidencialEmail));
         List<Agendamento> agendamentos = agendamentoRepository.findAll(spec);
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Paciente,Profissional,Servico,DataHora,Status,DuracaoMinutos\n");
@@ -215,15 +290,15 @@ public class AgendamentoService {
     }
 
     public List<Agendamento> getAgendamentosByPaciente(UUID pacienteId) {
-        return agendamentoRepository.findByPacienteId(pacienteId);
+        return aplicarConfidencialidade(agendamentoRepository.findByPacienteId(pacienteId));
     }
 
     public List<Agendamento> getAgendamentosByProfissional(UUID profissionalId) {
-        return agendamentoRepository.findByProfissionalId(profissionalId);
+        return aplicarConfidencialidade(agendamentoRepository.findByProfissionalId(profissionalId));
     }
 
     public List<Agendamento> getAgendamentosByPeriodo(LocalDateTime inicio, LocalDateTime fim) {
-        return agendamentoRepository.findByDataHoraBetween(inicio, fim);
+        return aplicarConfidencialidade(agendamentoRepository.findByDataHoraBetween(inicio, fim));
     }
 
     @Transactional
