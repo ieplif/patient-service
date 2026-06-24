@@ -18,6 +18,7 @@ import com.google.api.services.calendar.model.EventDateTime;
 
 import br.com.clinicahumaniza.patient_service.model.Agendamento;
 import br.com.clinicahumaniza.patient_service.repository.AgendamentoRepository;
+import br.com.clinicahumaniza.patient_service.util.NomeCurto;
 
 @Service
 @ConditionalOnProperty(name = "google.calendar.enabled", havingValue = "true")
@@ -147,33 +148,24 @@ public class GoogleCalendarService {
         String atividadeNome = agendamento.getServico().getAtividade().getNome();
         String planoNome = agendamento.getServico().getPlano().getNome();
         String pacienteNome = agendamento.getPaciente().getNomeCompleto();
-        String profissionalNome = agendamento.getProfissional() != null
-                ? agendamento.getProfissional().getNome()
-                : "Sem profissional";
 
-        String title = atividadeNome + " - " + planoNome + " | " + pacienteNome;
+        Event event = new Event();
+        // Privacidade: título mostra só primeiro + último nome da paciente.
+        // Sem nome de profissional e sem texto do serviço — o serviço é indicado pela COR.
+        event.setSummary(NomeCurto.primeiroEUltimo(pacienteNome));
 
-        StringBuilder description = new StringBuilder();
-        description.append("Profissional: ").append(profissionalNome).append("\n");
-        description.append("Paciente: ").append(pacienteNome).append("\n");
-        description
-                .append("Serviço: ")
-                .append(atividadeNome)
-                .append(" - ")
-                .append(planoNome)
-                .append("\n");
+        String colorId = corDoServico(atividadeNome, planoNome);
+        if (colorId != null) event.setColorId(colorId);
+
+        // Mantém apenas observações operacionais, se houver.
         if (agendamento.getObservacoes() != null
                 && !agendamento.getObservacoes().isBlank()) {
-            description.append("Observações: ").append(agendamento.getObservacoes());
+            event.setDescription(agendamento.getObservacoes());
         }
 
         ZonedDateTime start = agendamento.getDataHora().atZone(ZoneId.of(TIMEZONE));
         int duracaoMinutos = agendamento.getDuracaoMinutos() != null ? agendamento.getDuracaoMinutos() : 60;
         ZonedDateTime end = start.plusMinutes(duracaoMinutos);
-
-        Event event = new Event();
-        event.setSummary(title);
-        event.setDescription(description.toString());
 
         event.setStart(new EventDateTime()
                 .setDateTime(new DateTime(start.toInstant().toEpochMilli()))
@@ -184,5 +176,18 @@ public class GoogleCalendarService {
                 .setTimeZone(TIMEZONE));
 
         return event;
+    }
+
+    /**
+     * Cor do evento por serviço, espelhando os destaques da tabela de Agendamentos.
+     * IDs de cor do Google Calendar: 3=Grape (violeta), 7=Peacock (teal), 6=Tangerine
+     * (~ marrom/earth da Fisioterapia). Demais serviços ficam na cor padrão.
+     */
+    private String corDoServico(String atividadeNome, String planoNome) {
+        String descricao = (atividadeNome + " - " + planoNome).toLowerCase();
+        if (descricao.contains("abdômen 360") || descricao.contains("abdomen 360")) return "3";
+        if (descricao.startsWith("drenagem")) return "7";
+        if (descricao.contains("fisio")) return "6";
+        return null;
     }
 }

@@ -189,13 +189,16 @@ class GoogleCalendarServiceTest {
         // Só a agenda da clínica recebe o evento — sem NPE por profissional nulo
         verify(events, times(1)).insert(any(String.class), any(Event.class));
         verify(events).insert(eq(CLINIC_CALENDAR_ID), any(Event.class));
-        assertThat(eventCaptor.getValue().getDescription()).contains("Profissional: Sem profissional");
+        // Título minimalista (primeiro + último nome), sem profissional
+        assertThat(eventCaptor.getValue().getSummary()).isEqualTo("Maria Santos");
         assertThat(agendamento.getGoogleCalendarEventId()).isEqualTo("event123");
     }
 
     @Test
-    @DisplayName("Deve formatar evento com título correto: Atividade - Plano | Paciente")
-    void createEvent_CorrectEventFormat() throws IOException {
+    @DisplayName("Título = primeiro + último nome; sem profissional/serviço; Pilates sem cor")
+    void createEvent_TituloMinimalista() throws IOException {
+        agendamento.getPaciente().setNomeCompleto("Maria das Graças Silva");
+
         Event createdEvent = new Event();
         createdEvent.setId("event123");
 
@@ -209,10 +212,28 @@ class GoogleCalendarServiceTest {
         googleCalendarService.createEvent(agendamento);
 
         Event capturedEvent = eventCaptor.getValue();
-        assertThat(capturedEvent.getSummary()).isEqualTo("Pilates - Mensal | Maria Santos");
-        assertThat(capturedEvent.getDescription()).contains("Profissional: Dr. Ana");
-        assertThat(capturedEvent.getDescription()).contains("Paciente: Maria Santos");
+        assertThat(capturedEvent.getSummary()).isEqualTo("Maria Silva"); // ignora conectivo "das"
+        assertThat(capturedEvent.getColorId()).isNull(); // Pilates = cor padrão
         assertThat(capturedEvent.getStart()).isNotNull();
         assertThat(capturedEvent.getEnd()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Serviço define a cor do evento (Drenagem=teal/7, Fisio=6, Abdômen 360=3)")
+    void createEvent_CorPorServico() throws IOException {
+        agendamento.getServico().getAtividade().setNome("Drenagem");
+
+        Event createdEvent = new Event();
+        createdEvent.setId("event123");
+
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        when(calendar.events()).thenReturn(events);
+        when(events.insert(eq(CLINIC_CALENDAR_ID), eventCaptor.capture())).thenReturn(insert);
+        when(insert.execute()).thenReturn(createdEvent);
+        when(agendamentoRepository.save(any(Agendamento.class))).thenReturn(agendamento);
+
+        googleCalendarService.createEvent(agendamento);
+
+        assertThat(eventCaptor.getValue().getColorId()).isEqualTo("7");
     }
 }
