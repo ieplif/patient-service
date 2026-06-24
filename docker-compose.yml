@@ -33,6 +33,7 @@ services:
       GOOGLE_CALENDAR_ENABLED: ${GOOGLE_CALENDAR_ENABLED:-false}
       GOOGLE_CALENDAR_CREDENTIALS_PATH: ${GOOGLE_CALENDAR_CREDENTIALS_PATH:-/app/credentials/google-calendar.json}
       GOOGLE_CALENDAR_CLINIC_ID: ${GOOGLE_CALENDAR_CLINIC_ID:-}
+      GOOGLE_CALENDAR_BACKFILL: ${GOOGLE_CALENDAR_BACKFILL:-false}
       JAVA_OPTS: "-Xms256m -Xmx512m"
     volumes:
       # Credenciais da service account do Google (gitignored; só usado se habilitado)
