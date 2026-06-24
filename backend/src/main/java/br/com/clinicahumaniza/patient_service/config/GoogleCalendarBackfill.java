@@ -32,6 +32,9 @@ public class GoogleCalendarBackfill implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(GoogleCalendarBackfill.class);
 
+    // Pausa entre criações no backfill (~2/s) para respeitar o limite de uso do Google.
+    private static final long INTERVALO_MS = 500;
+
     private final AgendamentoRepository agendamentoRepository;
     private final Optional<GoogleCalendarService> googleCalendarService;
 
@@ -46,7 +49,26 @@ public class GoogleCalendarBackfill implements ApplicationRunner {
                         List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO), LocalDateTime.now());
 
         log.info("Backfill do Google Calendar: {} agendamento(s) futuro(s) a sincronizar.", futuros.size());
-        // createEvent é assíncrono (executor dedicado) — dispara e grava o eventId em cada um.
-        futuros.forEach(agendamento -> googleCalendarService.get().createEvent(agendamento));
+        if (futuros.isEmpty()) return;
+
+        GoogleCalendarService service = googleCalendarService.get();
+        // Roda em série, com pausa entre criações, para não estourar o limite de uso do
+        // Google Calendar (403 em rajada). Em thread de fundo para não travar a subida.
+        Thread worker = new Thread(
+                () -> {
+                    for (Agendamento agendamento : futuros) {
+                        service.createEventSync(agendamento);
+                        try {
+                            Thread.sleep(INTERVALO_MS);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
+                    }
+                    log.info("Backfill do Google Calendar concluído ({} processado[s]).", futuros.size());
+                },
+                "gcal-backfill");
+        worker.setDaemon(true);
+        worker.start();
     }
 }

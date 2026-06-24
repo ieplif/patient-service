@@ -40,6 +40,15 @@ public class GoogleCalendarService {
 
     @Async("googleCalendarExecutor")
     public void createEvent(Agendamento agendamento) {
+        doCreateEvent(agendamento);
+    }
+
+    /** Versão síncrona (sem @Async) — usada pelo backfill, que controla o ritmo das chamadas. */
+    public void createEventSync(Agendamento agendamento) {
+        doCreateEvent(agendamento);
+    }
+
+    private void doCreateEvent(Agendamento agendamento) {
         try {
             Event event = buildEvent(agendamento);
 

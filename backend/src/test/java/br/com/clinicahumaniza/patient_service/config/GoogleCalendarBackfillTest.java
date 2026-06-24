@@ -42,8 +42,9 @@ class GoogleCalendarBackfillTest {
                 new GoogleCalendarBackfill(agendamentoRepository, Optional.of(googleCalendarService));
         backfill.run(null);
 
-        verify(googleCalendarService).createEvent(a1);
-        verify(googleCalendarService).createEvent(a2);
+        // Roda em thread de fundo, em série com pausa — espera com timeout.
+        verify(googleCalendarService, timeout(3000)).createEventSync(a1);
+        verify(googleCalendarService, timeout(3000)).createEventSync(a2);
     }
 
     @Test
