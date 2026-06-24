@@ -26,7 +26,7 @@ public class AssinaturaSpecification {
     public static Specification<Assinatura> hasPacienteNome(String nome) {
         return (root, query, cb) -> {
             if (nome == null || nome.isBlank()) return null;
-            return cb.like(cb.lower(root.get("paciente").get("nomeCompleto")), "%" + nome.toLowerCase() + "%");
+            return NomeBusca.predicado(cb, root.get("paciente").get("nomeNormalizado"), nome);
         };
     }
 }

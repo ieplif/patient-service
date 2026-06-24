@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import jakarta.persistence.*;
 
+import br.com.clinicahumaniza.patient_service.util.BuscaNome;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,6 +28,11 @@ public class Patient {
             nullable = false,
             length = 255) // 8. Mapeia para uma coluna. `nullable = false` cria uma restrição NOT NULL.
     private String nomeCompleto;
+
+    // Versão normalizada do nome (sem acento, minúscula, espaços colapsados) usada
+    // pelas buscas flexíveis. Mantida automaticamente nos hooks de persistência.
+    @Column(length = 255)
+    private String nomeNormalizado;
 
     // Email opcional — quando informado, a unicidade ainda vale (PostgreSQL permite múltiplos NULLs em UNIQUE).
     @Column(unique = true, length = 255)
@@ -68,10 +74,12 @@ public class Patient {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        nomeNormalizado = BuscaNome.normalizar(nomeCompleto);
     }
 
     @PreUpdate // 14. Método executado antes de uma entidade existente ser atualizada.
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+        nomeNormalizado = BuscaNome.normalizar(nomeCompleto);
     }
 }

@@ -23,4 +23,7 @@ public interface PatientRepository
     // Pacientes ativos com data de nascimento preenchida — base para o cálculo dos
     // aniversariantes do mês (o filtro por mês/dia é feito em memória no service).
     List<Patient> findByStatusAtivoTrueAndDataNascimentoIsNotNull();
+
+    // Pacientes sem o nome normalizado — usados no backfill único da busca flexível.
+    List<Patient> findByNomeNormalizadoIsNull();
 }
