@@ -105,6 +105,7 @@ export function AgendamentosPage() {
   const [statusFilter, setStatusFilter] = useState<StatusAgendamento | "TODOS">("AGENDADO")
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [dateFilter, setDateFilter] = useState("")  // "yyyy-MM-dd" — filtra os agendamentos do dia
   const [sheetOpen, setSheetOpen] = useState(false)
 
   function handleSearch(value: string) {
@@ -131,7 +132,7 @@ export function AgendamentosPage() {
   const sort = statusFilter === "REALIZADO" ? "dataHora,desc" : "dataHora,asc"
 
   const { data, isLoading } = useQuery({
-    queryKey: ["agendamentos", page, statusFilter, debouncedSearch, sort],
+    queryKey: ["agendamentos", page, statusFilter, debouncedSearch, sort, dateFilter],
     queryFn: () =>
       getAgendamentos({
         page,
@@ -139,6 +140,7 @@ export function AgendamentosPage() {
         sort,
         status: statusFilter !== "TODOS" ? statusFilter : undefined,
         pacienteNome: debouncedSearch || undefined,
+        ...(dateFilter ? { dataInicio: dateFilter, dataFim: dateFilter } : {}),
       }),
   })
 
@@ -256,6 +258,26 @@ export function AgendamentosPage() {
                 placeholder="Buscar por paciente..."
                 className="pl-9 font-secondary text-sm"
               />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => { setDateFilter(e.target.value); setPage(0) }}
+                className="w-full sm:w-44 font-secondary text-sm"
+                title="Filtrar por data"
+              />
+              {dateFilter && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="font-secondary text-xs text-muted-foreground shrink-0"
+                  onClick={() => { setDateFilter(""); setPage(0) }}
+                >
+                  Limpar
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
