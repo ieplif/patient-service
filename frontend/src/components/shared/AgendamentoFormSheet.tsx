@@ -23,6 +23,7 @@ import { createAgendamento, updateAgendamento } from "@/api/agendamentos"
 import { getPatients } from "@/api/patients"
 import { getProfissionais } from "@/api/profissionais"
 import { getServicos } from "@/api/servicos"
+import { getAssinaturas } from "@/api/assinaturas"
 import type { Agendamento } from "@/types"
 
 interface AgendamentoFormSheetProps {
@@ -33,6 +34,8 @@ interface AgendamentoFormSheetProps {
 
 // Valor sentinela para "Sem profissional" no Select (Radix não aceita value vazio)
 const SEM_PROFISSIONAL = "__sem_profissional__"
+// Sentinela para "Sem assinatura" (sessão avulsa)
+const SEM_ASSINATURA = "__sem_assinatura__"
 
 function toLocalDateTimeInputs(iso: string) {
   const d = new Date(iso)
@@ -49,6 +52,7 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
   const [pacienteId, setPacienteId] = useState("")
   const [profissionalId, setProfissionalId] = useState("")
   const [servicoId, setServicoId] = useState("")
+  const [assinaturaId, setAssinaturaId] = useState("")
   const [date, setDate] = useState("")
   const [time, setTime] = useState("")
   const [duracaoMinutos, setDuracaoMinutos] = useState("")
@@ -73,6 +77,13 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
     enabled: open && !isReagendar,
   })
 
+  // Assinaturas ATIVAS da paciente selecionada — para vincular a sessão ao pacote
+  const { data: assinaturasPaciente } = useQuery({
+    queryKey: ["assinaturas-paciente-select", pacienteId],
+    queryFn: () => getAssinaturas({ pacienteId, status: "ATIVO", size: 100 }),
+    enabled: open && !isReagendar && !!pacienteId,
+  })
+
   useEffect(() => {
     if (agendamento) {
       const { date: d, time: t } = toLocalDateTimeInputs(agendamento.dataHora)
@@ -85,6 +96,7 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
       setPacienteId("")
       setProfissionalId("")
       setServicoId("")
+      setAssinaturaId("")
       setDate("")
       setTime("")
       setDuracaoMinutos("60")
@@ -109,6 +121,7 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
         pacienteId,
         ...(profissionalId ? { profissionalId } : {}),
         servicoId,
+        ...(assinaturaId && assinaturaId !== SEM_ASSINATURA ? { assinaturaId } : {}),
         dataHora,
         duracaoMinutos: duracaoMinutos ? parseInt(duracaoMinutos) : undefined,
         observacoes: observacoes || undefined,
@@ -172,7 +185,11 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
             <>
               <div className="space-y-1.5">
                 <Label className="font-primary text-sm">Paciente *</Label>
-                <Select value={pacienteId} onValueChange={setPacienteId} required>
+                <Select
+                  value={pacienteId}
+                  onValueChange={(v) => { setPacienteId(v); setAssinaturaId("") }}
+                  required
+                >
                   <SelectTrigger className="font-secondary text-sm">
                     <SelectValue placeholder="Selecione o paciente" />
                   </SelectTrigger>
@@ -219,6 +236,41 @@ export function AgendamentoFormSheet({ open, onOpenChange, agendamento }: Agenda
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="font-primary text-sm">Assinatura</Label>
+                <Select
+                  value={assinaturaId}
+                  onValueChange={(v) => {
+                    setAssinaturaId(v)
+                    if (v !== SEM_ASSINATURA) {
+                      const a = assinaturasPaciente?.content.find((x) => x.id === v)
+                      if (a) setServicoId(a.servicoId)
+                    }
+                  }}
+                  disabled={!pacienteId}
+                >
+                  <SelectTrigger className="font-secondary text-sm">
+                    <SelectValue
+                      placeholder={pacienteId ? "Vincular a um pacote (opcional)" : "Selecione a paciente primeiro"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SEM_ASSINATURA} className="font-secondary text-sm">
+                      Sem assinatura (sessão avulsa)
+                    </SelectItem>
+                    {assinaturasPaciente?.content.map((a) => (
+                      <SelectItem key={a.id} value={a.id} className="font-secondary text-sm">
+                        {a.servicoDescricao} ({a.sessoesRealizadas}/{a.sessoesContratadas})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground font-secondary">
+                  Vincule ao pacote da paciente para a sessão contar no progresso. Ao escolher, o serviço é
+                  preenchido automaticamente.
+                </p>
               </div>
             </>
           )}
