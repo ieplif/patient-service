@@ -25,3 +25,7 @@ frontend/dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Credenciais Google (service account) — nunca commitar
+credentials/
+*google-calendar*.json

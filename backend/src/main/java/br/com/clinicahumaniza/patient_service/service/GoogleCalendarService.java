@@ -54,7 +54,9 @@ public class GoogleCalendarService {
             log.info("Google Calendar event created: {} for agendamento {}", eventId, agendamento.getId());
 
             // Create on professional's calendar if configured
-            String profCalendarId = agendamento.getProfissional().getGoogleCalendarId();
+            String profCalendarId = agendamento.getProfissional() != null
+                    ? agendamento.getProfissional().getGoogleCalendarId()
+                    : null;
             if (profCalendarId != null && !profCalendarId.isBlank()) {
                 try {
                     calendar.events().insert(profCalendarId, event).execute();
@@ -88,7 +90,9 @@ public class GoogleCalendarService {
             log.info("Google Calendar event updated: {} for agendamento {}", eventId, agendamento.getId());
 
             // Update on professional's calendar if configured
-            String profCalendarId = agendamento.getProfissional().getGoogleCalendarId();
+            String profCalendarId = agendamento.getProfissional() != null
+                    ? agendamento.getProfissional().getGoogleCalendarId()
+                    : null;
             if (profCalendarId != null && !profCalendarId.isBlank()) {
                 try {
                     calendar.events().update(profCalendarId, eventId, event).execute();
@@ -119,7 +123,9 @@ public class GoogleCalendarService {
             log.info("Google Calendar event deleted: {} for agendamento {}", eventId, agendamento.getId());
 
             // Delete from professional's calendar if configured
-            String profCalendarId = agendamento.getProfissional().getGoogleCalendarId();
+            String profCalendarId = agendamento.getProfissional() != null
+                    ? agendamento.getProfissional().getGoogleCalendarId()
+                    : null;
             if (profCalendarId != null && !profCalendarId.isBlank()) {
                 try {
                     calendar.events().delete(profCalendarId, eventId).execute();
@@ -141,7 +147,9 @@ public class GoogleCalendarService {
         String atividadeNome = agendamento.getServico().getAtividade().getNome();
         String planoNome = agendamento.getServico().getPlano().getNome();
         String pacienteNome = agendamento.getPaciente().getNomeCompleto();
-        String profissionalNome = agendamento.getProfissional().getNome();
+        String profissionalNome = agendamento.getProfissional() != null
+                ? agendamento.getProfissional().getNome()
+                : "Sem profissional";
 
         String title = atividadeNome + " - " + planoNome + " | " + pacienteNome;
 

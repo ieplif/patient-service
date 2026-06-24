@@ -147,9 +147,8 @@ public class AgendamentoService {
         agendamento.setStatus(StatusAgendamento.AGENDADO);
 
         Agendamento saved = agendamentoRepository.save(agendamento);
-        if (saved.getProfissional() != null) {
-            googleCalendarService.ifPresent(g -> g.createEvent(saved));
-        }
+        // Sincroniza inclusive sem profissional (vai para a agenda da clínica).
+        googleCalendarService.ifPresent(g -> g.createEvent(saved));
         return saved;
     }
 
@@ -350,9 +349,7 @@ public class AgendamentoService {
         }
         agendamentoMapper.updateEntityFromDto(dto, agendamento);
         Agendamento saved = agendamentoRepository.save(agendamento);
-        if (saved.getProfissional() != null) {
-            googleCalendarService.ifPresent(g -> g.updateEvent(saved));
-        }
+        googleCalendarService.ifPresent(g -> g.updateEvent(saved));
         return saved;
     }
 
@@ -404,10 +401,8 @@ public class AgendamentoService {
         if (statusNovo == StatusAgendamento.CANCELADO && statusAnterior != StatusAgendamento.CANCELADO) {
             googleCalendarService.ifPresent(g -> g.deleteEvent(saved));
         }
-        // Saiu de CANCELADO → recriar evento (se tem profissional)
-        if (statusAnterior == StatusAgendamento.CANCELADO
-                && statusNovo != StatusAgendamento.CANCELADO
-                && saved.getProfissional() != null) {
+        // Saiu de CANCELADO → recriar evento
+        if (statusAnterior == StatusAgendamento.CANCELADO && statusNovo != StatusAgendamento.CANCELADO) {
             googleCalendarService.ifPresent(g -> g.createEvent(saved));
         }
 
@@ -418,9 +413,7 @@ public class AgendamentoService {
     public void deleteAgendamento(UUID id) {
         Agendamento agendamento =
                 agendamentoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Agendamento", id));
-        if (agendamento.getProfissional() != null) {
-            googleCalendarService.ifPresent(g -> g.deleteEvent(agendamento));
-        }
+        googleCalendarService.ifPresent(g -> g.deleteEvent(agendamento));
         agendamento.setAtivo(false);
         agendamentoRepository.save(agendamento);
     }
@@ -536,9 +529,7 @@ public class AgendamentoService {
         reposicao.setStatus(StatusAgendamento.AGENDADO);
 
         Agendamento saved = agendamentoRepository.save(reposicao);
-        if (saved.getProfissional() != null) {
-            googleCalendarService.ifPresent(g -> g.createEvent(saved));
-        }
+        googleCalendarService.ifPresent(g -> g.createEvent(saved));
         return saved;
     }
 

@@ -171,6 +171,29 @@ class GoogleCalendarServiceTest {
     }
 
     @Test
+    @DisplayName("Deve criar evento mesmo sem profissional (vai só para a agenda da clínica)")
+    void createEvent_SemProfissional() throws IOException {
+        agendamento.setProfissional(null);
+
+        Event createdEvent = new Event();
+        createdEvent.setId("event123");
+
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        when(calendar.events()).thenReturn(events);
+        when(events.insert(eq(CLINIC_CALENDAR_ID), eventCaptor.capture())).thenReturn(insert);
+        when(insert.execute()).thenReturn(createdEvent);
+        when(agendamentoRepository.save(any(Agendamento.class))).thenReturn(agendamento);
+
+        googleCalendarService.createEvent(agendamento);
+
+        // Só a agenda da clínica recebe o evento — sem NPE por profissional nulo
+        verify(events, times(1)).insert(any(String.class), any(Event.class));
+        verify(events).insert(eq(CLINIC_CALENDAR_ID), any(Event.class));
+        assertThat(eventCaptor.getValue().getDescription()).contains("Profissional: Sem profissional");
+        assertThat(agendamento.getGoogleCalendarEventId()).isEqualTo("event123");
+    }
+
+    @Test
     @DisplayName("Deve formatar evento com título correto: Atividade - Plano | Paciente")
     void createEvent_CorrectEventFormat() throws IOException {
         Event createdEvent = new Event();
