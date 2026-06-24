@@ -202,6 +202,12 @@ export function AgendamentosPage() {
       || ag.servicoDescricao.toLowerCase().includes("abdomen 360")
   }
 
+  // Começa com "drenagem" para casar só a atividade "Drenagem", sem pegar o combo
+  // "Pacote Pilates, Fisio e Drenagem" (que cai no destaque de Fisioterapia).
+  function isDrenagem(ag: Agendamento): boolean {
+    return ag.servicoDescricao.trim().toLowerCase().startsWith("drenagem")
+  }
+
   // Busca por paciente agora é server-side (parâmetro pacienteNome) — cobre todas as páginas
   const filteredContent = data?.content
 
@@ -287,12 +293,15 @@ export function AgendamentosPage() {
                       const transitions = nextStatuses[ag.status] ?? []
                       const fisio = isFisioterapia(ag)
                       const abdomen = isAbdomen360(ag)
-                      // Prioridade visual: Abdômen 360° (rose) > Fisioterapia (earth) > default
+                      const drenagem = isDrenagem(ag)
+                      // Prioridade visual: Abdômen 360° (violeta) > Drenagem (teal) > Fisioterapia (earth) > default
                       const rowClass = abdomen
                         ? "border-border/40 bg-violet-50 border-l-4 border-l-violet-400 hover:bg-violet-100"
-                        : fisio
-                          ? "border-border/40 bg-[#B47C64]/10 border-l-4 border-l-[#B47C64] hover:bg-[#B47C64]/20"
-                          : "border-border/40 hover:bg-muted/20"
+                        : drenagem
+                          ? "border-border/40 bg-teal-50 border-l-4 border-l-teal-400 hover:bg-teal-100"
+                          : fisio
+                            ? "border-border/40 bg-[#B47C64]/10 border-l-4 border-l-[#B47C64] hover:bg-[#B47C64]/20"
+                            : "border-border/40 hover:bg-muted/20"
                       return (
                         <TableRow key={ag.id} className={rowClass}>
                           <TableCell className="font-semibold font-primary text-sm text-foreground" title={ag.pacienteNome}>
