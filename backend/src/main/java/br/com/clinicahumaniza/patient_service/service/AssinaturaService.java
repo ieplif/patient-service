@@ -3,6 +3,7 @@ package br.com.clinicahumaniza.patient_service.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,7 @@ public class AssinaturaService {
     private final AssinaturaMapper assinaturaMapper;
     private final AgendamentoRepository agendamentoRepository;
     private final AgendamentoRecorrenteRepository recorrenteRepository;
+    private final Optional<GoogleCalendarService> googleCalendarService;
 
     @Autowired
     public AssinaturaService(
@@ -51,13 +53,15 @@ public class AssinaturaService {
             ServicoRepository servicoRepository,
             AssinaturaMapper assinaturaMapper,
             AgendamentoRepository agendamentoRepository,
-            AgendamentoRecorrenteRepository recorrenteRepository) {
+            AgendamentoRecorrenteRepository recorrenteRepository,
+            Optional<GoogleCalendarService> googleCalendarService) {
         this.assinaturaRepository = assinaturaRepository;
         this.patientRepository = patientRepository;
         this.servicoRepository = servicoRepository;
         this.assinaturaMapper = assinaturaMapper;
         this.agendamentoRepository = agendamentoRepository;
         this.recorrenteRepository = recorrenteRepository;
+        this.googleCalendarService = googleCalendarService;
     }
 
     @Transactional
@@ -121,8 +125,39 @@ public class AssinaturaService {
             throw new BusinessException("Não é possível alterar o status de uma assinatura finalizada");
         }
 
+        StatusAssinatura anterior = assinatura.getStatus();
         assinatura.setStatus(dto.getStatus());
-        return assinaturaRepository.save(assinatura);
+        Assinatura saved = assinaturaRepository.save(assinatura);
+
+        // Cancelar a assinatura também encerra a agenda futura dela (igual ao suspender):
+        // cancela agendamentos pendentes, desativa recorrências e remove os eventos do Google.
+        if (dto.getStatus() == StatusAssinatura.CANCELADO && anterior != StatusAssinatura.CANCELADO) {
+            encerrarAgendaFutura(id, "Cancelamento da assinatura");
+        }
+        return saved;
+    }
+
+    /**
+     * Encerra a agenda futura de uma assinatura: cancela os agendamentos pendentes
+     * (AGENDADO/CONFIRMADO) daqui pra frente, sem direito a reposição; desativa os
+     * templates de recorrência; e remove os eventos correspondentes do Google Calendar.
+     */
+    private void encerrarAgendaFutura(UUID assinaturaId, String motivo) {
+        List<Agendamento> futuros = agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
+                assinaturaId, LocalDateTime.now(), List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO));
+        for (Agendamento ag : futuros) {
+            ag.setStatus(StatusAgendamento.CANCELADO);
+            ag.setMotivoCancelamento(motivo);
+            ag.setDireitoReposicao(false);
+            agendamentoRepository.save(ag);
+            googleCalendarService.ifPresent(g -> g.deleteEvent(ag));
+        }
+
+        List<AgendamentoRecorrente> templates = recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId);
+        for (AgendamentoRecorrente t : templates) {
+            t.setAtivo(false);
+            recorrenteRepository.save(t);
+        }
     }
 
     @Transactional
@@ -196,22 +231,8 @@ public class AssinaturaService {
         assinatura.setMotivoSuspensao(dto.getMotivo());
         assinatura.setDataPrevistaRetomada(dto.getDataPrevistaRetomada());
 
-        // Cancelar agendamentos futuros pendentes
-        List<Agendamento> futuros = agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
-                id, LocalDateTime.now(), List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO));
-        for (Agendamento ag : futuros) {
-            ag.setStatus(StatusAgendamento.CANCELADO);
-            ag.setMotivoCancelamento("Suspensão da assinatura: " + dto.getMotivo());
-            ag.setDireitoReposicao(false);
-            agendamentoRepository.save(ag);
-        }
-
-        // Desativar templates recorrentes — a renovação não vai mais usá-los
-        List<AgendamentoRecorrente> templates = recorrenteRepository.findByAssinaturaIdAndAtivoTrue(id);
-        for (AgendamentoRecorrente t : templates) {
-            t.setAtivo(false);
-            recorrenteRepository.save(t);
-        }
+        // Encerra a agenda futura (cancela agendamentos pendentes + desativa recorrências + Google).
+        encerrarAgendaFutura(id, "Suspensão da assinatura: " + dto.getMotivo());
 
         return assinaturaRepository.save(assinatura);
     }

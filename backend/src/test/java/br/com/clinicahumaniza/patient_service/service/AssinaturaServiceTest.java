@@ -15,7 +15,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -60,7 +59,6 @@ class AssinaturaServiceTest {
     @Mock
     private AgendamentoRecorrenteRepository recorrenteRepository;
 
-    @InjectMocks
     private AssinaturaService assinaturaService;
 
     private Assinatura assinatura;
@@ -75,6 +73,15 @@ class AssinaturaServiceTest {
 
     @BeforeEach
     void setUp() {
+        assinaturaService = new AssinaturaService(
+                assinaturaRepository,
+                patientRepository,
+                servicoRepository,
+                assinaturaMapper,
+                agendamentoRepository,
+                recorrenteRepository,
+                Optional.empty());
+
         assinaturaId = UUID.randomUUID();
         pacienteId = UUID.randomUUID();
         servicoId = UUID.randomUUID();
@@ -263,6 +270,26 @@ class AssinaturaServiceTest {
         Assinatura result = assinaturaService.updateStatus(assinaturaId, statusDTO);
 
         assertThat(result.getStatus()).isEqualTo(StatusAssinatura.CANCELADO);
+    }
+
+    @Test
+    @DisplayName("Cancelar assinatura também cancela os agendamentos futuros pendentes")
+    void updateStatus_Cancelar_CancelaAgendamentosFuturos() {
+        Agendamento futuro = new Agendamento();
+        futuro.setId(UUID.randomUUID());
+        futuro.setStatus(StatusAgendamento.AGENDADO);
+
+        when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
+        when(assinaturaRepository.save(any(Assinatura.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(any(), any(), any()))
+                .thenReturn(List.of(futuro));
+        when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId)).thenReturn(List.of());
+
+        assinaturaService.updateStatus(assinaturaId, new AssinaturaStatusDTO(StatusAssinatura.CANCELADO));
+
+        assertThat(futuro.getStatus()).isEqualTo(StatusAgendamento.CANCELADO);
+        assertThat(futuro.getDireitoReposicao()).isFalse();
+        verify(agendamentoRepository).save(futuro);
     }
 
     @Test
