@@ -85,10 +85,19 @@ public class GoogleCalendarService {
 
     @Async("googleCalendarExecutor")
     public void updateEvent(Agendamento agendamento) {
+        doUpdateEvent(agendamento);
+    }
+
+    /** Versão síncrona (sem @Async) — usada pelo backfill/ressincronização. */
+    public void updateEventSync(Agendamento agendamento) {
+        doUpdateEvent(agendamento);
+    }
+
+    private void doUpdateEvent(Agendamento agendamento) {
         String eventId = agendamento.getGoogleCalendarEventId();
         if (eventId == null) {
             log.warn("No Google Calendar event ID for agendamento {}, creating new event", agendamento.getId());
-            createEvent(agendamento);
+            doCreateEvent(agendamento);
             return;
         }
 

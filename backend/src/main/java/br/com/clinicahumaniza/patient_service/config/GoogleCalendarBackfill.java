@@ -44,20 +44,24 @@ public class GoogleCalendarBackfill implements ApplicationRunner {
             log.warn("Backfill do Google Calendar solicitado, mas a integração está desligada. Ignorando.");
             return;
         }
-        List<Agendamento> futuros =
-                agendamentoRepository.findByGoogleCalendarEventIdIsNullAndStatusInAndDataHoraGreaterThanEqual(
-                        List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO), LocalDateTime.now());
+        List<Agendamento> futuros = agendamentoRepository.findByStatusInAndDataHoraGreaterThanEqual(
+                List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO), LocalDateTime.now());
 
-        log.info("Backfill do Google Calendar: {} agendamento(s) futuro(s) a sincronizar.", futuros.size());
+        log.info("Sincronização do Google Calendar: {} agendamento(s) futuro(s).", futuros.size());
         if (futuros.isEmpty()) return;
 
         GoogleCalendarService service = googleCalendarService.get();
-        // Roda em série, com pausa entre criações, para não estourar o limite de uso do
-        // Google Calendar (403 em rajada). Em thread de fundo para não travar a subida.
+        // Roda em série, com pausa entre chamadas, para não estourar o limite de uso do
+        // Google (403 em rajada). Em thread de fundo para não travar a subida. Cria os que
+        // ainda não têm evento e atualiza (repinta) os que já têm.
         Thread worker = new Thread(
                 () -> {
                     for (Agendamento agendamento : futuros) {
-                        service.createEventSync(agendamento);
+                        if (agendamento.getGoogleCalendarEventId() == null) {
+                            service.createEventSync(agendamento);
+                        } else {
+                            service.updateEventSync(agendamento);
+                        }
                         try {
                             Thread.sleep(INTERVALO_MS);
                         } catch (InterruptedException e) {
@@ -65,7 +69,7 @@ public class GoogleCalendarBackfill implements ApplicationRunner {
                             return;
                         }
                     }
-                    log.info("Backfill do Google Calendar concluído ({} processado[s]).", futuros.size());
+                    log.info("Sincronização do Google Calendar concluída ({} processado[s]).", futuros.size());
                 },
                 "gcal-backfill");
         worker.setDaemon(true);

@@ -28,23 +28,24 @@ class GoogleCalendarBackfillTest {
     private GoogleCalendarService googleCalendarService;
 
     @Test
-    @DisplayName("Chama createEvent para cada agendamento futuro sem evento")
+    @DisplayName("Cria os futuros sem evento e repinta (update) os que já têm")
     void backfill_sincronizaFuturos() {
-        Agendamento a1 = new Agendamento();
-        a1.setId(UUID.randomUUID());
-        Agendamento a2 = new Agendamento();
-        a2.setId(UUID.randomUUID());
-        when(agendamentoRepository.findByGoogleCalendarEventIdIsNullAndStatusInAndDataHoraGreaterThanEqual(
-                        anyList(), any()))
-                .thenReturn(List.of(a1, a2));
+        Agendamento semEvento = new Agendamento();
+        semEvento.setId(UUID.randomUUID());
+        Agendamento comEvento = new Agendamento();
+        comEvento.setId(UUID.randomUUID());
+        comEvento.setGoogleCalendarEventId("evt-existente");
+
+        when(agendamentoRepository.findByStatusInAndDataHoraGreaterThanEqual(anyList(), any()))
+                .thenReturn(List.of(semEvento, comEvento));
 
         GoogleCalendarBackfill backfill =
                 new GoogleCalendarBackfill(agendamentoRepository, Optional.of(googleCalendarService));
         backfill.run(null);
 
         // Roda em thread de fundo, em série com pausa — espera com timeout.
-        verify(googleCalendarService, timeout(3000)).createEventSync(a1);
-        verify(googleCalendarService, timeout(3000)).createEventSync(a2);
+        verify(googleCalendarService, timeout(3000)).createEventSync(semEvento);
+        verify(googleCalendarService, timeout(3000)).updateEventSync(comEvento);
     }
 
     @Test

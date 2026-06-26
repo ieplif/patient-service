@@ -37,7 +37,8 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, UUID>,
 
     List<Agendamento> findByPacienteIdAndDireitoReposicaoTrue(UUID pacienteId);
 
-    // Backfill do Google Calendar: futuros e ativos ainda sem evento criado.
-    List<Agendamento> findByGoogleCalendarEventIdIsNullAndStatusInAndDataHoraGreaterThanEqual(
+    // Ressincronização do Google Calendar: todos os futuros e ativos (cria os que faltam
+    // e repinta/atualiza os que já têm evento).
+    List<Agendamento> findByStatusInAndDataHoraGreaterThanEqual(
             List<StatusAgendamento> statuses, LocalDateTime dataHora);
 }
