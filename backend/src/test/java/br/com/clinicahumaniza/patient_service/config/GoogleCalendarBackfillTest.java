@@ -49,6 +49,26 @@ class GoogleCalendarBackfillTest {
     }
 
     @Test
+    @DisplayName("Apaga eventos órfãos (cancelados que ainda têm evento no Google)")
+    void backfill_apagaOrfaos() {
+        Agendamento orfao = new Agendamento();
+        orfao.setId(UUID.randomUUID());
+        orfao.setGoogleCalendarEventId("evt-orfao");
+
+        when(agendamentoRepository.findByStatusInAndDataHoraGreaterThanEqual(anyList(), any()))
+                .thenReturn(List.of());
+        when(agendamentoRepository.findByStatusAndDataHoraGreaterThanEqualAndGoogleCalendarEventIdIsNotNull(
+                        any(), any()))
+                .thenReturn(List.of(orfao));
+
+        GoogleCalendarBackfill backfill =
+                new GoogleCalendarBackfill(agendamentoRepository, Optional.of(googleCalendarService));
+        backfill.run(null);
+
+        verify(googleCalendarService, timeout(3000)).deleteEventSync(orfao);
+    }
+
+    @Test
     @DisplayName("Não faz nada quando a integração está desligada")
     void backfill_integracaoDesligada_naoFaz() {
         GoogleCalendarBackfill backfill = new GoogleCalendarBackfill(agendamentoRepository, Optional.empty());

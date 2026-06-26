@@ -11,6 +11,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
@@ -26,6 +28,8 @@ public class GoogleCalendarService {
 
     private static final Logger log = LoggerFactory.getLogger(GoogleCalendarService.class);
     private static final String TIMEZONE = "America/Sao_Paulo";
+    // Tentativas em caso de limite de uso do Google (403/429), com backoff exponencial.
+    private static final int MAX_TENTATIVAS = 4;
 
     private final Calendar calendar;
     private final AgendamentoRepository agendamentoRepository;
@@ -53,8 +57,7 @@ public class GoogleCalendarService {
             Event event = buildEvent(agendamento);
 
             // Create on clinic calendar
-            Event createdEvent =
-                    calendar.events().insert(clinicCalendarId, event).execute();
+            Event createdEvent = executarComRetry(calendar.events().insert(clinicCalendarId, event));
             String eventId = createdEvent.getId();
 
             // Save event ID on agendamento
@@ -105,7 +108,7 @@ public class GoogleCalendarService {
             Event event = buildEvent(agendamento);
 
             // Update on clinic calendar
-            calendar.events().update(clinicCalendarId, eventId, event).execute();
+            executarComRetry(calendar.events().update(clinicCalendarId, eventId, event));
             log.info("Google Calendar event updated: {} for agendamento {}", eventId, agendamento.getId());
 
             // Update on professional's calendar if configured
@@ -130,6 +133,15 @@ public class GoogleCalendarService {
 
     @Async("googleCalendarExecutor")
     public void deleteEvent(Agendamento agendamento) {
+        doDeleteEvent(agendamento);
+    }
+
+    /** Versão síncrona (sem @Async) — usada pela limpeza de órfãos no backfill. */
+    public void deleteEventSync(Agendamento agendamento) {
+        doDeleteEvent(agendamento);
+    }
+
+    private void doDeleteEvent(Agendamento agendamento) {
         String eventId = agendamento.getGoogleCalendarEventId();
         if (eventId == null) {
             log.warn("No Google Calendar event ID for agendamento {}, nothing to delete", agendamento.getId());
@@ -138,7 +150,7 @@ public class GoogleCalendarService {
 
         try {
             // Delete from clinic calendar
-            calendar.events().delete(clinicCalendarId, eventId).execute();
+            executarComRetry(calendar.events().delete(clinicCalendarId, eventId));
             log.info("Google Calendar event deleted: {} for agendamento {}", eventId, agendamento.getId());
 
             // Delete from professional's calendar if configured
@@ -154,11 +166,47 @@ public class GoogleCalendarService {
                             "Failed to delete event from professional calendar {}: {}", profCalendarId, e.getMessage());
                 }
             }
+
+            // Limpa o id após apagar — evita re-tentativas e identifica órfãos já resolvidos.
+            agendamento.setGoogleCalendarEventId(null);
+            agendamentoRepository.save(agendamento);
         } catch (IOException e) {
             log.error(
                     "Failed to delete Google Calendar event for agendamento {}: {}",
                     agendamento.getId(),
                     e.getMessage());
+        }
+    }
+
+    /**
+     * Executa uma requisição ao Google repetindo em caso de limite de uso (403/429),
+     * com backoff exponencial. Demais erros são propagados na hora.
+     */
+    private <T> T executarComRetry(AbstractGoogleClientRequest<T> requisicao) throws IOException {
+        long espera = 1000;
+        for (int tentativa = 1; ; tentativa++) {
+            try {
+                return requisicao.execute();
+            } catch (GoogleJsonResponseException e) {
+                int code = e.getStatusCode();
+                if ((code == 403 || code == 429) && tentativa < MAX_TENTATIVAS) {
+                    log.warn(
+                            "Limite do Google ({}). Tentativa {}/{} — aguardando {}ms.",
+                            code,
+                            tentativa,
+                            MAX_TENTATIVAS,
+                            espera);
+                    try {
+                        Thread.sleep(espera);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw e;
+                    }
+                    espera *= 2;
+                } else {
+                    throw e;
+                }
+            }
         }
     }
 

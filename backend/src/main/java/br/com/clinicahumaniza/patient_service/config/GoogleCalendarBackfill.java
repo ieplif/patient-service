@@ -18,12 +18,13 @@ import br.com.clinicahumaniza.patient_service.service.GoogleCalendarService;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Backfill único do Google Calendar: na subida, cria eventos para os agendamentos
- * FUTUROS e ativos (AGENDADO/CONFIRMADO) que ainda não foram sincronizados.
+ * Ressincronização do Google Calendar na subida. Acionada por
+ * google.calendar.backfill-on-startup=true (env GOOGLE_CALENDAR_BACKFILL). Faz, em série
+ * e pausado (limite do Google):
+ *  - futuros ATIVOS (AGENDADO/CONFIRMADO): cria os que faltam e repinta os que já têm;
+ *  - cancelados futuros que ainda têm evento (órfãos de delete que falhou): apaga do Google.
  *
- * Acionado por google.calendar.backfill-on-startup=true (env GOOGLE_CALENDAR_BACKFILL).
- * Idempotente: só processa quem está sem googleCalendarEventId, então pode rodar
- * mais de uma vez sem duplicar. Recomenda-se desligar a flag após o primeiro uso.
+ * Idempotente — pode rodar mais de uma vez. Recomenda-se desligar a flag após o uso.
  */
 @Component
 @ConditionalOnProperty(name = "google.calendar.backfill-on-startup", havingValue = "true")
@@ -44,35 +45,55 @@ public class GoogleCalendarBackfill implements ApplicationRunner {
             log.warn("Backfill do Google Calendar solicitado, mas a integração está desligada. Ignorando.");
             return;
         }
+        LocalDateTime agora = LocalDateTime.now();
         List<Agendamento> futuros = agendamentoRepository.findByStatusInAndDataHoraGreaterThanEqual(
-                List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO), LocalDateTime.now());
+                List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO), agora);
+        List<Agendamento> orfaos =
+                agendamentoRepository.findByStatusAndDataHoraGreaterThanEqualAndGoogleCalendarEventIdIsNotNull(
+                        StatusAgendamento.CANCELADO, agora);
 
-        log.info("Sincronização do Google Calendar: {} agendamento(s) futuro(s).", futuros.size());
-        if (futuros.isEmpty()) return;
+        log.info(
+                "Sincronização do Google Calendar: {} futuro(s) ativo(s), {} órfão(s) a remover.",
+                futuros.size(),
+                orfaos.size());
+        if (futuros.isEmpty() && orfaos.isEmpty()) return;
 
         GoogleCalendarService service = googleCalendarService.get();
-        // Roda em série, com pausa entre chamadas, para não estourar o limite de uso do
-        // Google (403 em rajada). Em thread de fundo para não travar a subida. Cria os que
-        // ainda não têm evento e atualiza (repinta) os que já têm.
+        // Roda em série, pausado (limite do Google), em thread de fundo para não travar a subida.
         Thread worker = new Thread(
                 () -> {
+                    // Futuros ativos: cria os que faltam e repinta/atualiza os que já têm.
                     for (Agendamento agendamento : futuros) {
                         if (agendamento.getGoogleCalendarEventId() == null) {
                             service.createEventSync(agendamento);
                         } else {
                             service.updateEventSync(agendamento);
                         }
-                        try {
-                            Thread.sleep(INTERVALO_MS);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            return;
-                        }
+                        if (!pausar()) return;
                     }
-                    log.info("Sincronização do Google Calendar concluída ({} processado[s]).", futuros.size());
+                    // Órfãos (cancelados com evento): apaga do Google.
+                    for (Agendamento agendamento : orfaos) {
+                        service.deleteEventSync(agendamento);
+                        if (!pausar()) return;
+                    }
+                    log.info(
+                            "Sincronização do Google Calendar concluída ({} futuro[s], {} órfão[s]).",
+                            futuros.size(),
+                            orfaos.size());
                 },
                 "gcal-backfill");
         worker.setDaemon(true);
         worker.start();
+    }
+
+    /** Pausa entre chamadas; retorna false se a thread foi interrompida. */
+    private boolean pausar() {
+        try {
+            Thread.sleep(INTERVALO_MS);
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 }

@@ -41,4 +41,8 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, UUID>,
     // e repinta/atualiza os que já têm evento).
     List<Agendamento> findByStatusInAndDataHoraGreaterThanEqual(
             List<StatusAgendamento> statuses, LocalDateTime dataHora);
+
+    // Órfãos do Google Calendar: cancelados futuros que ainda têm evento (delete falhou).
+    List<Agendamento> findByStatusAndDataHoraGreaterThanEqualAndGoogleCalendarEventIdIsNotNull(
+            StatusAgendamento status, LocalDateTime dataHora);
 }
