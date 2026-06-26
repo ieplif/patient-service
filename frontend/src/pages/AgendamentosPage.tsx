@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Calendar, Plus, Clock, MoreHorizontal, Search, RefreshCw } from "lucide-react"
+import { Calendar, CalendarDays, Plus, Clock, MoreHorizontal, Search, RefreshCw } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { getAgendamentos, updateAgendamentoStatus } from "@/api/agendamentos"
@@ -43,6 +43,7 @@ import {
 import { Pagination } from "@/components/shared/Pagination"
 import { AgendamentoFormSheet } from "@/components/shared/AgendamentoFormSheet"
 import { ReposicaoFormSheet } from "@/components/shared/ReposicaoFormSheet"
+import { AgendaSemanalDialog } from "@/components/shared/AgendaSemanalDialog"
 import { useToast } from "@/hooks/use-toast"
 import { shortenName } from "@/lib/names"
 
@@ -107,6 +108,7 @@ export function AgendamentosPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [dateFilter, setDateFilter] = useState("")  // "yyyy-MM-dd" — filtra os agendamentos do dia
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [agendaSemanalOpen, setAgendaSemanalOpen] = useState(false)
 
   function handleSearch(value: string) {
     setSearch(value)
@@ -225,10 +227,16 @@ export function AgendamentosPage() {
             {data ? `${data.totalElements} agendamentos` : "Carregando..."}
           </p>
         </div>
-        <Button onClick={handleNew} className="font-primary gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Agendamento
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setAgendaSemanalOpen(true)} className="font-primary gap-2">
+            <CalendarDays className="h-4 w-4" />
+            Agenda da semana
+          </Button>
+          <Button onClick={handleNew} className="font-primary gap-2">
+            <Plus className="h-4 w-4" />
+            Novo Agendamento
+          </Button>
+        </div>
       </div>
 
       <Card className="border border-border/60 shadow-soft">
@@ -425,6 +433,8 @@ export function AgendamentosPage() {
         onOpenChange={setReposicaoSheetOpen}
         agendamento={reposicaoAg}
       />
+
+      <AgendaSemanalDialog open={agendaSemanalOpen} onOpenChange={setAgendaSemanalOpen} />
 
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent>
