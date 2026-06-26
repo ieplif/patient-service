@@ -1,5 +1,6 @@
 package br.com.clinicahumaniza.patient_service.config;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,10 +20,11 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Ressincronização do Google Calendar na subida. Acionada por
- * google.calendar.backfill-on-startup=true (env GOOGLE_CALENDAR_BACKFILL). Faz, em série
- * e pausado (limite do Google):
- *  - futuros ATIVOS (AGENDADO/CONFIRMADO): cria os que faltam e repinta os que já têm;
- *  - cancelados futuros que ainda têm evento (órfãos de delete que falhou): apaga do Google.
+ * google.calendar.backfill-on-startup=true (env GOOGLE_CALENDAR_BACKFILL). Cobre do
+ * início do mês corrente em diante (semana atual + futuro) e faz, em série e pausado
+ * (limite do Google):
+ *  - AGENDADO/CONFIRMADO/REALIZADO: cria os que faltam e repinta os que já têm;
+ *  - CANCELADO que ainda tem evento (órfão de delete que falhou): apaga do Google.
  *
  * Idempotente — pode rodar mais de uma vez. Recomenda-se desligar a flag após o uso.
  */
@@ -45,25 +47,28 @@ public class GoogleCalendarBackfill implements ApplicationRunner {
             log.warn("Backfill do Google Calendar solicitado, mas a integração está desligada. Ignorando.");
             return;
         }
-        LocalDateTime agora = LocalDateTime.now();
-        List<Agendamento> futuros = agendamentoRepository.findByStatusInAndDataHoraGreaterThanEqual(
-                List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO), agora);
+        // Cobre do início do mês corrente em diante (semana atual + futuro). Inclui
+        // REALIZADO para repintar o histórico recente; CANCELADO entra na limpeza de órfãos.
+        LocalDateTime desde = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        List<Agendamento> aSincronizar = agendamentoRepository.findByStatusInAndDataHoraGreaterThanEqual(
+                List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO, StatusAgendamento.REALIZADO), desde);
         List<Agendamento> orfaos =
                 agendamentoRepository.findByStatusAndDataHoraGreaterThanEqualAndGoogleCalendarEventIdIsNotNull(
-                        StatusAgendamento.CANCELADO, agora);
+                        StatusAgendamento.CANCELADO, desde);
 
         log.info(
-                "Sincronização do Google Calendar: {} futuro(s) ativo(s), {} órfão(s) a remover.",
-                futuros.size(),
-                orfaos.size());
-        if (futuros.isEmpty() && orfaos.isEmpty()) return;
+                "Sincronização do Google Calendar: {} a sincronizar, {} órfão(s) a remover (desde {}).",
+                aSincronizar.size(),
+                orfaos.size(),
+                desde.toLocalDate());
+        if (aSincronizar.isEmpty() && orfaos.isEmpty()) return;
 
         GoogleCalendarService service = googleCalendarService.get();
         // Roda em série, pausado (limite do Google), em thread de fundo para não travar a subida.
         Thread worker = new Thread(
                 () -> {
-                    // Futuros ativos: cria os que faltam e repinta/atualiza os que já têm.
-                    for (Agendamento agendamento : futuros) {
+                    // Cria os que faltam e repinta/atualiza os que já têm.
+                    for (Agendamento agendamento : aSincronizar) {
                         if (agendamento.getGoogleCalendarEventId() == null) {
                             service.createEventSync(agendamento);
                         } else {
@@ -77,8 +82,8 @@ public class GoogleCalendarBackfill implements ApplicationRunner {
                         if (!pausar()) return;
                     }
                     log.info(
-                            "Sincronização do Google Calendar concluída ({} futuro[s], {} órfão[s]).",
-                            futuros.size(),
+                            "Sincronização do Google Calendar concluída ({} sincronizado[s], {} órfão[s]).",
+                            aSincronizar.size(),
                             orfaos.size());
                 },
                 "gcal-backfill");
