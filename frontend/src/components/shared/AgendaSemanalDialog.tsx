@@ -31,6 +31,17 @@ function isPelvica(ag: Agendamento) {
   return ag.servicoDescricao.toLowerCase().includes("pélvica") || ag.servicoDescricao.toLowerCase().includes("pelvica")
 }
 
+/**
+ * Serviço resumido para o resumo da semana: usa só a atividade (sem o plano após " - ");
+ * Pilates Clássico/Funcional viram apenas "Pilates"; demais mantêm a especificação
+ * (ex.: "Fisioterapia Pélvica", "Drenagem", "Abdômen 360°").
+ */
+function servicoResumido(servicoDescricao: string): string {
+  const atividade = servicoDescricao.split(" - ")[0].trim()
+  if (atividade.toLowerCase().startsWith("pilates")) return "Pilates"
+  return atividade
+}
+
 /** Monta o texto do resumo (formato WhatsApp, com *negrito*). */
 function montarTexto(lista: Agendamento[], periodo: string): string {
   if (lista.length === 0) return `📅 *Agenda da semana* (${periodo})\n\nNenhum agendamento.`
@@ -44,7 +55,7 @@ function montarTexto(lista: Agendamento[], periodo: string): string {
       linhas.push("")
       linhas.push(`*${dia}*`)
     }
-    linhas.push(`${format(d, "HH:mm")} — ${shortenName(ag.pacienteNome)} — ${ag.servicoDescricao}`)
+    linhas.push(`${format(d, "HH:mm")} — ${shortenName(ag.pacienteNome)} — ${servicoResumido(ag.servicoDescricao)}`)
   }
   return linhas.join("\n")
 }
