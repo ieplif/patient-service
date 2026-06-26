@@ -195,7 +195,7 @@ class GoogleCalendarServiceTest {
     }
 
     @Test
-    @DisplayName("Título = primeiro + último nome; sem profissional/serviço; Pilates sem cor")
+    @DisplayName("Título = primeiro + último nome; sem profissional/serviço; Pilates = azul (9)")
     void createEvent_TituloMinimalista() throws IOException {
         agendamento.getPaciente().setNomeCompleto("Maria das Graças Silva");
 
@@ -213,7 +213,7 @@ class GoogleCalendarServiceTest {
 
         Event capturedEvent = eventCaptor.getValue();
         assertThat(capturedEvent.getSummary()).isEqualTo("Maria Silva"); // ignora conectivo "das"
-        assertThat(capturedEvent.getColorId()).isNull(); // Pilates = cor padrão
+        assertThat(capturedEvent.getColorId()).isEqualTo("9"); // Pilates = azul (Blueberry)
         assertThat(capturedEvent.getStart()).isNotNull();
         assertThat(capturedEvent.getEnd()).isNotNull();
     }

@@ -188,14 +188,18 @@ public class GoogleCalendarService {
     }
 
     /**
-     * Cor do evento por serviço, espelhando os destaques da tabela de Agendamentos.
-     * IDs de cor do Google Calendar: 3=Grape (violeta), 7=Peacock (teal), 6=Tangerine
-     * (~ marrom/earth da Fisioterapia). Demais serviços ficam na cor padrão.
+     * Cor do evento por serviço. IDs de cor do Google Calendar:
+     * 3=Grape (violeta, Abdômen 360°), 7=Peacock (ciano, Drenagem), 9=Blueberry (azul,
+     * Pilates), 6=Tangerine (laranja, Fisioterapia). Demais serviços ficam na cor padrão.
+     *
+     * Pilates e Drenagem usam startsWith para não capturar o combo
+     * "Pacote Pilates, Fisio e Drenagem" (que cai na cor da Fisioterapia).
      */
     private String corDoServico(String atividadeNome, String planoNome) {
         String descricao = (atividadeNome + " - " + planoNome).toLowerCase();
         if (descricao.contains("abdômen 360") || descricao.contains("abdomen 360")) return "3";
         if (descricao.startsWith("drenagem")) return "7";
+        if (descricao.startsWith("pilates")) return "9";
         if (descricao.contains("fisio")) return "6";
         return null;
     }
