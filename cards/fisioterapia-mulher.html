@@ -4,135 +4,91 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Humaniza - Sa&uacute;de da Mulher</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
   @page { size: A4; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #fff; display: flex; justify-content: center; }
-  .card {
-    width: 794px; height: 1123px; background: #faf7f4;
-    position: relative; overflow: hidden;
-    font-family: 'Lato', sans-serif;
-  }
-  .header {
-    background: linear-gradient(135deg, #8B7B6F 0%, #7B8B6F 40%, #6B7B5E 100%);
-    padding: 20px 40px 16px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .logo-wrapper {
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 12px;
-    padding: 8px 16px;
-    display: flex; align-items: center;
-  }
-  .logo-img { height: 50px; filter: brightness(0) invert(1); }
-  .header-right { text-align: right; }
-  .title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 28px; font-weight: 700; color: #fff;
-    letter-spacing: 2px; line-height: 1.1;
-  }
-  .subtitle { font-size: 10px; color: rgba(255,255,255,0.8); letter-spacing: 2px; text-transform: uppercase; }
-  .content { padding: 10px 28px 8px; }
-  .highlight-section {
-    background: linear-gradient(135deg, #7B8B6F, #8B9B7F);
-    border-radius: 12px; padding: 10px 20px; text-align: center; margin-bottom: 10px;
-  }
-  .highlight-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 700; color: #fff; }
-  .highlight-desc { font-size: 10px; color: rgba(255,255,255,0.85); line-height: 1.4; margin-top: 2px; }
-  .activity-section { margin-bottom: 8px; }
-  .activity-title-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-  .activity-icon {
-    width: 26px; height: 26px; border-radius: 50%;
-    background: linear-gradient(135deg, #7B8B6F, #8B9B7F);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 12px; flex-shrink: 0;
-  }
-  .activity-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; color: #4a5a3e; }
-  .activity-desc { font-size: 9px; color: #999; letter-spacing: 1px; text-transform: uppercase; }
-  .price-table { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(123,139,111,0.08); }
-  .modalidade-badge {
-    display: inline-block; padding: 2px 12px; border-radius: 50px;
-    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
-    font-weight: 700; margin: 5px 0 2px 14px;
-  }
-  .badge-clinica { background: rgba(123,139,111,0.1); color: #7B8B6F; }
-  .price-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 4px 14px; border-bottom: 1px solid #f0ebe5;
-  }
-  .price-row:last-child { border-bottom: none; }
-  .item-name { font-size: 12px; color: #5a5a5a; font-weight: 300; }
-  .item-name strong { font-weight: 700; color: #3d3d3d; }
-  .item-price { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; color: #7B8B6F; }
-  .item-unit { font-size: 9px; color: #aaa; }
-  .divider { height: 1px; background: linear-gradient(to right, transparent, #d8d0c8, transparent); margin: 2px 0; }
-  .savings-note { text-align: center; padding: 2px 14px 5px; font-size: 9px; color: #7B8B6F; font-style: italic; }
-  .footer-note {
-    text-align: center; padding: 8px 28px; font-size: 10px; color: #999;
-    line-height: 1.5; border-top: 1px solid #ebe6e0;
-    position: absolute; bottom: 0; left: 0; right: 0;
-  }
-  .footer-note strong { color: #7B8B6F; }
+  :root { --green: #6B7B5E; --ink: #3d3d3d; --muted: #9a958e; --line: #e7e1d9; --bg: #fbf9f6; }
+  body { background: #fff; display: flex; justify-content: center; font-family: 'Lato', sans-serif; color: var(--ink); }
+  .card { width: 794px; height: 1123px; background: var(--bg); padding: 54px 56px; display: flex; flex-direction: column; }
+
+  .header { display: flex; align-items: center; gap: 22px; padding-bottom: 22px; border-bottom: 2px solid var(--green); }
+  .logo-img { height: 92px; }
+  .header-text { display: flex; flex-direction: column; }
+  .title { font-family: 'Cormorant Garamond', serif; font-size: 46px; font-weight: 700; color: var(--green); letter-spacing: 2px; line-height: 1.05; }
+  .subtitle { font-size: 12px; color: var(--muted); letter-spacing: 4px; text-transform: uppercase; margin-top: 8px; }
+
+  .intro { text-align: center; font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--green); margin-top: 26px; }
+  .intro span { display: block; font-family: 'Lato', sans-serif; font-size: 11px; color: var(--muted); font-weight: 400; letter-spacing: 1px; margin-top: 4px; }
+
+  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; flex: 1; margin-top: 24px; }
+  .col { background: #fff; border: 1px solid var(--line); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; }
+  .col-head { padding: 20px 16px 14px; border-bottom: 1px solid var(--line); text-align: center; }
+  .col-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--green); line-height: 1.1; }
+  .col-desc { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 6px; }
+  .col-body { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; padding: 8px 18px; }
+  .row { display: flex; align-items: baseline; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid #f3efe9; gap: 8px; }
+  .row:last-child { border-bottom: none; }
+  .label { font-size: 13px; color: #6a6a6a; }
+  .label strong { color: var(--ink); font-weight: 700; }
+  .unit { display: block; font-size: 9px; color: var(--muted); margin-top: 2px; }
+  .price { font-family: 'Cormorant Garamond', serif; font-size: 23px; font-weight: 700; color: var(--green); white-space: nowrap; }
+  .price small { font-size: 13px; color: var(--muted); }
+  .savings { text-align: center; font-size: 9px; color: var(--green); font-style: italic; padding: 8px 10px 12px; }
+
+  .footer-note { text-align: center; padding-top: 22px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .footer-note strong { color: var(--green); }
 </style>
 </head>
 <body>
 <div class="card">
   <div class="header">
-    <div class="logo-wrapper"><img src="./logo.png" class="logo-img" alt="Humaniza"></div>
-    <div class="header-right">
-      <div class="title">SA&Uacute;DE DA<br>MULHER</div>
+    <img src="./Vetor_H_VERDE.png" class="logo-img" alt="Humaniza">
+    <div class="header-text">
+      <div class="title">Sa&uacute;de da Mulher</div>
       <div class="subtitle">P&eacute;lvica &middot; Obstetr&iacute;cia &middot; Reab. Abdominal</div>
     </div>
   </div>
-  <div class="content">
-    <div class="highlight-section">
-      <div class="highlight-title">Cuidado Integral &amp; Especializado</div>
-      <div class="highlight-desc">Atendimento individualizado voltado &agrave; sa&uacute;de feminina. Avalia&ccedil;&atilde;o completa + plano de tratamento personalizado.</div>
-    </div>
+
+  <div class="intro">Cuidado Integral &amp; Especializado
+    <span>Atendimento individualizado &middot; avalia&ccedil;&atilde;o completa + plano de tratamento personalizado</span>
+  </div>
+
+  <div class="cols">
     <!-- PELVICA -->
-    <div class="activity-section">
-      <div class="activity-title-bar">
-        <div class="activity-icon">&#9792;</div>
-        <div><div class="activity-name">Fisioterapia P&eacute;lvica</div><div class="activity-desc">Assoalho P&eacute;lvico &amp; Sa&uacute;de &Iacute;ntima</div></div>
-      </div>
-      <div class="price-table">
-        <div class="price-row"><div><div class="item-name"><strong>Avalia&ccedil;&atilde;o</strong></div></div><div class="item-price">R$ 330</div></div>
-        <div class="price-row"><div><div class="item-name"><strong>Sess&atilde;o</strong> avulsa</div></div><div class="item-price">R$ 264</div></div>
-        <div class="price-row"><div><div class="item-name">Pacote <strong>5</strong> sess&otilde;es</div><div class="item-unit">R$ 220/sess&atilde;o</div></div><div class="item-price">R$ 1.100</div></div>
-        <div class="price-row"><div><div class="item-name">Pacote <strong>10</strong> sess&otilde;es</div><div class="item-unit">R$ 198/sess&atilde;o</div></div><div class="item-price">R$ 1.980</div></div>
+    <div class="col">
+      <div class="col-head"><div class="col-name">Fisioterapia P&eacute;lvica</div><div class="col-desc">Assoalho P&eacute;lvico</div></div>
+      <div class="col-body">
+        <div class="row"><span class="label"><strong>Avalia&ccedil;&atilde;o</strong></span><span class="price"><small>R$</small> 345</span></div>
+        <div class="row"><span class="label"><strong>Sess&atilde;o</strong> avulsa</span><span class="price"><small>R$</small> 275</span></div>
+        <div class="row"><span class="label">Pacote <strong>5</strong><span class="unit">R$ 231/sess&atilde;o</span></span><span class="price"><small>R$</small> 1.155</span></div>
+        <div class="row"><span class="label">Pacote <strong>10</strong><span class="unit">R$ 208/sess&atilde;o</span></span><span class="price"><small>R$</small> 2.080</span></div>
       </div>
     </div>
     <!-- OBSTETRICIA -->
-    <div class="activity-section">
-      <div class="activity-title-bar">
-        <div class="activity-icon">&#10043;</div>
-        <div><div class="activity-name">Obstetr&iacute;cia</div><div class="activity-desc">Acompanhamento Gestacional</div></div>
-      </div>
-      <div class="price-table">
-        <div class="price-row"><div><div class="item-name"><strong>Avalia&ccedil;&atilde;o</strong></div></div><div class="item-price">R$ 330</div></div>
-        <div class="price-row"><div><div class="item-name"><strong>Sess&atilde;o</strong> avulsa</div></div><div class="item-price">R$ 264</div></div>
-        <div class="price-row"><div><div class="item-name">Pacote <strong>5</strong> sess&otilde;es</div><div class="item-unit">R$ 220/sess&atilde;o</div></div><div class="item-price">R$ 1.100</div></div>
-        <div class="price-row"><div><div class="item-name">Pacote <strong>10</strong> sess&otilde;es</div><div class="item-unit">R$ 198/sess&atilde;o</div></div><div class="item-price">R$ 1.980</div></div>
+    <div class="col">
+      <div class="col-head"><div class="col-name">Obstetr&iacute;cia</div><div class="col-desc">Acompanhamento Gestacional</div></div>
+      <div class="col-body">
+        <div class="row"><span class="label"><strong>Avalia&ccedil;&atilde;o</strong></span><span class="price"><small>R$</small> 345</span></div>
+        <div class="row"><span class="label"><strong>Sess&atilde;o</strong> avulsa</span><span class="price"><small>R$</small> 275</span></div>
+        <div class="row"><span class="label">Pacote <strong>5</strong><span class="unit">R$ 231/sess&atilde;o</span></span><span class="price"><small>R$</small> 1.155</span></div>
+        <div class="row"><span class="label">Pacote <strong>10</strong><span class="unit">R$ 208/sess&atilde;o</span></span><span class="price"><small>R$</small> 2.080</span></div>
       </div>
     </div>
     <!-- REABILITACAO ABDOMINAL -->
-    <div class="activity-section">
-      <div class="activity-title-bar">
-        <div class="activity-icon">&#10022;</div>
-        <div><div class="activity-name">Reabilita&ccedil;&atilde;o Abdominal</div><div class="activity-desc">Di&aacute;stase &amp; Fortalecimento</div></div>
-      </div>
-      <div class="price-table">
-        <div class="price-row"><div><div class="item-name"><strong>Avalia&ccedil;&atilde;o</strong></div></div><div class="item-price">R$ 330</div></div>
-        <div class="price-row"><div><div class="item-name"><strong>Sess&atilde;o</strong> avulsa</div></div><div class="item-price">R$ 264</div></div>
-        <div class="price-row"><div><div class="item-name">Pacote <strong>5</strong> sess&otilde;es</div><div class="item-unit">R$ 220/sess&atilde;o</div></div><div class="item-price">R$ 1.100</div></div>
-        <div class="price-row"><div><div class="item-name">Pacote <strong>10</strong> sess&otilde;es</div><div class="item-unit">R$ 198/sess&atilde;o</div></div><div class="item-price">R$ 1.980</div></div>
-        <div class="savings-note">Mesmos valores da Fisioterapia P&eacute;lvica</div>
+    <div class="col">
+      <div class="col-head"><div class="col-name">Reabilita&ccedil;&atilde;o Abdominal</div><div class="col-desc">Di&aacute;stase &amp; Fortalecimento</div></div>
+      <div class="col-body">
+        <div class="row"><span class="label"><strong>Avalia&ccedil;&atilde;o</strong></span><span class="price"><small>R$</small> 345</span></div>
+        <div class="row"><span class="label"><strong>Sess&atilde;o</strong> avulsa</span><span class="price"><small>R$</small> 275</span></div>
+        <div class="row"><span class="label">Pacote <strong>5</strong><span class="unit">R$ 231/sess&atilde;o</span></span><span class="price"><small>R$</small> 1.155</span></div>
+        <div class="row"><span class="label">Pacote <strong>10</strong><span class="unit">R$ 208/sess&atilde;o</span></span><span class="price"><small>R$</small> 2.080</span></div>
+        <div class="savings">Mesmos valores da Fisioterapia P&eacute;lvica</div>
       </div>
     </div>
   </div>
-  <div class="footer-note">Pacotes podem ser parcelados em at&eacute; <strong>2x via transfer&ecirc;ncia banc&aacute;ria</strong> ou em at&eacute; <strong>10x no cart&atilde;o de cr&eacute;dito</strong> mediante juros da administradora.</div>
+
+  <div class="footer-note">Pacotes podem ser divididos em at&eacute; <strong>2x sem juros via Pix</strong>, ou no <strong>cart&atilde;o de cr&eacute;dito</strong> mediante juros da administradora.</div>
 </div>
 </body>
 </html>

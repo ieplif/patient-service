@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Humaniza - Fisioterapia P&eacute;lvica</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --green: #6B7B5E; --green-soft: #8B9B7F; --ink: #3d3d3d; --muted: #9a958e; --line: #e7e1d9; --bg: #fbf9f6; }
+  body { background: #fff; display: flex; justify-content: center; font-family: 'Lato', sans-serif; color: var(--ink); }
+  .card { width: 794px; height: 1123px; background: var(--bg); padding: 54px 56px; display: flex; flex-direction: column; }
+
+  .header { display: flex; align-items: center; gap: 22px; padding-bottom: 22px; border-bottom: 2px solid var(--green); }
+  .logo-img { height: 92px; }
+  .header-text { display: flex; flex-direction: column; }
+  .title { font-family: 'Cormorant Garamond', serif; font-size: 46px; font-weight: 700; color: var(--green); letter-spacing: 2px; line-height: 1.05; }
+  .subtitle { font-size: 12px; color: var(--muted); letter-spacing: 4px; text-transform: uppercase; margin-top: 8px; }
+
+  .main { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 40px; }
+
+  .intro { text-align: center; font-size: 14px; color: #5a5a5a; line-height: 1.6; margin: 0 10px; }
+  .intro strong { color: var(--green); }
+
+  .section-label { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--green); text-align: center; margin-bottom: 16px; }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .chip { border: 1.5px solid var(--green); color: var(--green); border-radius: 50px; padding: 9px 20px; font-size: 13px; font-weight: 700; background: #fff; }
+
+  .secondary { display: flex; gap: 20px; }
+  .box { flex: 1; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .box-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; color: var(--green); }
+  .box-price { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 700; color: var(--green); white-space: nowrap; }
+  .box-price small { font-size: 17px; }
+
+  .packs { display: flex; gap: 20px; }
+  .pack { flex: 1; border-radius: 16px; padding: 24px 26px; display: flex; align-items: center; justify-content: space-between; }
+  .pack.p5 { background: #fff; border: 1.5px solid var(--green); }
+  .pack.p10 { background: var(--green); color: #fff; }
+  .pack-label { font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; }
+  .pack.p5 .pack-label { color: var(--green); }
+  .pack-sub { font-size: 11px; margin-top: 3px; }
+  .pack.p5 .pack-sub { color: var(--muted); }
+  .pack.p10 .pack-sub { color: rgba(255,255,255,0.8); }
+  .pack-price { font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 700; white-space: nowrap; }
+  .pack.p5 .pack-price { color: var(--green); }
+  .pack.p10 .pack-price { color: #fff; }
+  .pack-price small { font-size: 19px; }
+
+  .footer-note { text-align: center; padding-top: 22px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .footer-note strong { color: var(--green); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <img src="./Vetor_H_VERDE.png" class="logo-img" alt="Humaniza">
+    <div class="header-text">
+      <div class="title">Fisioterapia P&eacute;lvica</div>
+      <div class="subtitle">Assoalho P&eacute;lvico &amp; Sa&uacute;de &Iacute;ntima</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="intro">Avalia&ccedil;&atilde;o e tratamento das <strong>disfun&ccedil;&otilde;es do assoalho p&eacute;lvico</strong> e da sa&uacute;de &iacute;ntima, com plano individualizado e acompanhamento especializado.</div>
+
+    <div>
+      <div class="section-label">&Aacute;reas de atua&ccedil;&atilde;o</div>
+      <div class="chips">
+        <span class="chip">Incontin&ecirc;ncia urin&aacute;ria</span>
+        <span class="chip">Dores p&eacute;lvicas</span>
+        <span class="chip">Gesta&ccedil;&atilde;o &amp; p&oacute;s-parto</span>
+        <span class="chip">Pr&eacute; &amp; p&oacute;s-operat&oacute;rio</span>
+        <span class="chip">Sa&uacute;de sexual</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Valores</div>
+      <div class="secondary">
+        <div class="box"><span class="box-label">Avalia&ccedil;&atilde;o</span><span class="box-price"><small>R$</small> 345</span></div>
+        <div class="box"><span class="box-label">Sess&atilde;o avulsa</span><span class="box-price"><small>R$</small> 275</span></div>
+      </div>
+    </div>
+
+    <div class="packs">
+      <div class="pack p5">
+        <div>
+          <div class="pack-label">Pacote 5 sess&otilde;es</div>
+          <div class="pack-sub">R$ 231/sess&atilde;o</div>
+        </div>
+        <div class="pack-price"><small>R$</small> 1.155</div>
+      </div>
+      <div class="pack p10">
+        <div>
+          <div class="pack-label">Pacote 10 sess&otilde;es</div>
+          <div class="pack-sub">R$ 208/sess&atilde;o &middot; melhor pre&ccedil;o</div>
+        </div>
+        <div class="pack-price"><small>R$</small> 2.080</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">Pacotes podem ser divididos em at&eacute; <strong>2x sem juros via Pix</strong>, ou no <strong>cart&atilde;o de cr&eacute;dito</strong> mediante juros da administradora.</div>
+</div>
+</body>
+</html>

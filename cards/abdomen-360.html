@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Humaniza - Abd&ocirc;men 360&deg;</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --green: #6B7B5E; --green-soft: #8B9B7F; --ink: #3d3d3d; --muted: #9a958e; --line: #e7e1d9; --bg: #fbf9f6; }
+  body { background: #fff; display: flex; justify-content: center; font-family: 'Lato', sans-serif; color: var(--ink); }
+  .card { width: 794px; height: 1123px; background: var(--bg); padding: 54px 56px; display: flex; flex-direction: column; }
+
+  .header { display: flex; align-items: center; gap: 22px; padding-bottom: 22px; border-bottom: 2px solid var(--green); }
+  .logo-img { height: 92px; }
+  .header-text { display: flex; flex-direction: column; }
+  .title { font-family: 'Cormorant Garamond', serif; font-size: 50px; font-weight: 700; color: var(--green); letter-spacing: 2px; line-height: 1; }
+  .subtitle { font-size: 12px; color: var(--muted); letter-spacing: 4px; text-transform: uppercase; margin-top: 8px; }
+
+  /* bloco central centralizado verticalmente */
+  .main { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 40px; }
+
+  .lead { text-align: center; }
+  .intro { font-size: 14px; color: #5a5a5a; line-height: 1.6; margin: 0 8px 10px; }
+  .intro strong { color: var(--green); }
+  .tech { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+
+  .section-label { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--green); text-align: center; margin-bottom: 16px; }
+  .phases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .phase { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 30px 18px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; }
+  .phase-num { width: 50px; height: 50px; border-radius: 50%; background: var(--green); color: #fff; font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .phase-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1.2; min-height: 54px; display: flex; align-items: center; }
+  .phase-sessions { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+  .prices { display: flex; gap: 20px; }
+  .price-box { border-radius: 16px; padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; }
+  .price-box.pacote { flex: 2; background: var(--green); color: #fff; }
+  .price-box.avulsa { flex: 1; background: #fff; border: 1.5px solid var(--green); }
+  .pb-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; }
+  .price-box.pacote .pb-label { color: rgba(255,255,255,0.9); }
+  .price-box.avulsa .pb-label { color: var(--green); }
+  .pb-sub { font-size: 11px; margin-top: 3px; }
+  .price-box.pacote .pb-sub { color: rgba(255,255,255,0.8); }
+  .price-box.avulsa .pb-sub { color: var(--muted); }
+  .pb-value { font-family: 'Cormorant Garamond', serif; font-size: 46px; font-weight: 700; color: #fff; white-space: nowrap; }
+  .price-box.avulsa .pb-value { color: var(--green); font-size: 38px; }
+  .pb-value small { font-size: 21px; }
+
+  .footer-note { text-align: center; padding-top: 22px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .footer-note strong { color: var(--green); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <img src="./Vetor_H_VERDE.png" class="logo-img" alt="Humaniza">
+    <div class="header-text">
+      <div class="title">Abd&ocirc;men 360&deg;</div>
+      <div class="subtitle">Reestrutura&ccedil;&atilde;o Abdominal Integrada</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="lead">
+      <div class="intro">Protocolo em <strong>12 sess&otilde;es progressivas</strong>, combinando radiofrequ&ecirc;ncia, eletroestimula&ccedil;&atilde;o, bioestimuladores de col&aacute;geno e exerc&iacute;cios para o core.</div>
+      <div class="tech">Radiofrequ&ecirc;ncia &middot; Eletroestimula&ccedil;&atilde;o &middot; Bioestimuladores &middot; Core</div>
+    </div>
+
+    <div>
+      <div class="section-label">As 3 fases do protocolo</div>
+      <div class="phases">
+        <div class="phase">
+          <div class="phase-num">1</div>
+          <div class="phase-name">Prepara&ccedil;&atilde;o &amp; Ativa&ccedil;&atilde;o</div>
+          <div class="phase-sessions">Sess&otilde;es 1 a 3</div>
+        </div>
+        <div class="phase">
+          <div class="phase-num">2</div>
+          <div class="phase-name">Est&iacute;mulo de Col&aacute;geno</div>
+          <div class="phase-sessions">Sess&otilde;es 4 a 8</div>
+        </div>
+        <div class="phase">
+          <div class="phase-num">3</div>
+          <div class="phase-name">Reestrutura&ccedil;&atilde;o &amp; Sustenta&ccedil;&atilde;o</div>
+          <div class="phase-sessions">Sess&otilde;es 9 a 12</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="prices">
+      <div class="price-box pacote">
+        <div>
+          <div class="pb-label">Pacote 12 sess&otilde;es</div>
+          <div class="pb-sub">R$ 208/sess&atilde;o &middot; protocolo completo</div>
+        </div>
+        <div class="pb-value"><small>R$</small> 2.495</div>
+      </div>
+      <div class="price-box avulsa">
+        <div>
+          <div class="pb-label">Sess&atilde;o</div>
+          <div class="pb-sub">avulsa</div>
+        </div>
+        <div class="pb-value"><small>R$</small> 275</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">Pacotes podem ser divididos em at&eacute; <strong>2x sem juros via Pix</strong>, ou no <strong>cart&atilde;o de cr&eacute;dito</strong> mediante juros da administradora.</div>
+</div>
+</body>
+</html>

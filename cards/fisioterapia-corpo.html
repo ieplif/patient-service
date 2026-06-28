@@ -4,123 +4,83 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Humaniza - Fisioterapia &amp; Bem-Estar</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
   @page { size: A4; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #fff; display: flex; justify-content: center; }
-  .card {
-    width: 794px; height: 1123px; background: #faf7f4;
-    position: relative; overflow: hidden;
-    font-family: 'Lato', sans-serif;
-  }
-  .header {
-    background: linear-gradient(135deg, #7B8B6F 0%, #6B7B5E 50%, #8B9B7F 100%);
-    padding: 20px 40px 16px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .logo-wrapper {
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 12px;
-    padding: 8px 16px;
-    display: flex; align-items: center;
-  }
-  .logo-img { height: 50px; filter: brightness(0) invert(1); }
-  .header-right { text-align: right; }
-  .title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 28px; font-weight: 700; color: #fff;
-    letter-spacing: 2px; line-height: 1.1;
-  }
-  .subtitle { font-size: 10px; color: rgba(255,255,255,0.8); letter-spacing: 2px; text-transform: uppercase; }
-  .content { padding: 12px 28px 8px; }
-  .activity-section { margin-bottom: 10px; }
-  .activity-title-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .activity-icon {
-    width: 28px; height: 28px; border-radius: 50%;
-    background: linear-gradient(135deg, #7B8B6F, #8B9B7F);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 13px; flex-shrink: 0;
-  }
-  .activity-name { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-weight: 700; color: #4a5a3e; }
-  .activity-desc { font-size: 9px; color: #999; letter-spacing: 1px; text-transform: uppercase; }
-  .price-table { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(123,139,111,0.08); }
-  .modalidade-badge {
-    display: inline-block; padding: 2px 12px; border-radius: 50px;
-    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
-    font-weight: 700; margin: 6px 0 2px 14px;
-  }
-  .badge-clinica { background: rgba(123,139,111,0.1); color: #7B8B6F; }
-  .price-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 5px 14px; border-bottom: 1px solid #f0ebe5;
-  }
-  .price-row:last-child { border-bottom: none; }
-  .item-name { font-size: 12px; color: #5a5a5a; font-weight: 300; }
-  .item-name strong { font-weight: 700; color: #3d3d3d; }
-  .item-price { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 700; color: #7B8B6F; }
-  .item-unit { font-size: 9px; color: #aaa; }
-  .divider { height: 1px; background: linear-gradient(to right, transparent, #d8d0c8, transparent); margin: 2px 0; }
-  .savings-note { text-align: center; padding: 3px 14px 6px; font-size: 9px; color: #7B8B6F; font-style: italic; }
-  .footer-note {
-    text-align: center; padding: 10px 28px; font-size: 10px; color: #999;
-    line-height: 1.5; border-top: 1px solid #ebe6e0;
-    position: absolute; bottom: 0; left: 0; right: 0;
-  }
-  .footer-note strong { color: #7B8B6F; }
+  :root { --green: #6B7B5E; --ink: #3d3d3d; --muted: #9a958e; --line: #e7e1d9; --bg: #fbf9f6; }
+  body { background: #fff; display: flex; justify-content: center; font-family: 'Lato', sans-serif; color: var(--ink); }
+  .card { width: 794px; height: 1123px; background: var(--bg); padding: 54px 56px; display: flex; flex-direction: column; }
+
+  .header { display: flex; align-items: center; gap: 22px; padding-bottom: 22px; border-bottom: 2px solid var(--green); }
+  .logo-img { height: 92px; }
+  .header-text { display: flex; flex-direction: column; }
+  .title { font-family: 'Cormorant Garamond', serif; font-size: 46px; font-weight: 700; color: var(--green); letter-spacing: 2px; line-height: 1.05; }
+  .subtitle { font-size: 12px; color: var(--muted); letter-spacing: 4px; text-transform: uppercase; margin-top: 8px; }
+
+  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; flex: 1; margin-top: 30px; }
+  .col { background: #fff; border: 1px solid var(--line); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; }
+  .col-head { padding: 20px 18px 14px; border-bottom: 1px solid var(--line); text-align: center; }
+  .col-name { font-family: 'Cormorant Garamond', serif; font-size: 23px; font-weight: 700; color: var(--green); line-height: 1.1; }
+  .col-desc { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 6px; }
+  .col-body { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; padding: 8px 18px; }
+  .row { display: flex; align-items: baseline; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid #f3efe9; gap: 8px; }
+  .row:last-child { border-bottom: none; }
+  .label { font-size: 13px; color: #6a6a6a; }
+  .label strong { color: var(--ink); font-weight: 700; }
+  .unit { display: block; font-size: 9px; color: var(--muted); margin-top: 2px; }
+  .price { font-family: 'Cormorant Garamond', serif; font-size: 23px; font-weight: 700; color: var(--green); white-space: nowrap; }
+  .price small { font-size: 13px; color: var(--muted); }
+  .savings { text-align: center; font-size: 9px; color: var(--green); font-style: italic; padding: 8px 10px 12px; }
+
+  .footer-note { text-align: center; padding-top: 22px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .footer-note strong { color: var(--green); }
 </style>
 </head>
 <body>
 <div class="card">
   <div class="header">
-    <div class="logo-wrapper"><img src="./logo.png" class="logo-img" alt="Humaniza"></div>
-    <div class="header-right">
-      <div class="title">FISIOTERAPIA<br>&amp; BEM-ESTAR</div>
+    <img src="./Vetor_H_VERDE.png" class="logo-img" alt="Humaniza">
+    <div class="header-text">
+      <div class="title">Fisioterapia<br>&amp; Bem-Estar</div>
       <div class="subtitle">Traumato &middot; Drenagem &middot; Massagem</div>
     </div>
   </div>
-  <div class="content">
+
+  <div class="cols">
     <!-- TRAUMATO -->
-    <div class="activity-section">
-      <div class="activity-title-bar">
-        <div class="activity-icon">&#10022;</div>
-        <div><div class="activity-name">Fisioterapia Traumato</div><div class="activity-desc">Reabilita&ccedil;&atilde;o Ortop&eacute;dica</div></div>
-      </div>
-      <div class="price-table">
-        <div class="price-row"><div><div class="item-name"><strong>Avalia&ccedil;&atilde;o</strong></div></div><div class="item-price">R$ 198</div></div>
-        <div class="price-row"><div><div class="item-name"><strong>Sess&atilde;o</strong> avulsa</div></div><div class="item-price">R$ 154</div></div>
-        <div class="price-row"><div><div class="item-name">Pacote <strong>5</strong> sess&otilde;es</div><div class="item-unit">R$ 132/sess&atilde;o</div></div><div class="item-price">R$ 660</div></div>
-        <div class="price-row"><div><div class="item-name">Pacote <strong>10</strong> sess&otilde;es</div><div class="item-unit">R$ 110/sess&atilde;o</div></div><div class="item-price">R$ 1.100</div></div>
+    <div class="col">
+      <div class="col-head"><div class="col-name">Fisioterapia Traumato</div><div class="col-desc">Reabilita&ccedil;&atilde;o Ortop&eacute;dica</div></div>
+      <div class="col-body">
+        <div class="row"><span class="label"><strong>Avalia&ccedil;&atilde;o</strong></span><span class="price"><small>R$</small> 210</span></div>
+        <div class="row"><span class="label"><strong>Sess&atilde;o</strong> avulsa</span><span class="price"><small>R$</small> 160</span></div>
+        <div class="row"><span class="label">Pacote <strong>5</strong><span class="unit">R$ 139/sess&atilde;o</span></span><span class="price"><small>R$</small> 695</span></div>
+        <div class="row"><span class="label">Pacote <strong>10</strong><span class="unit">R$ 116/sess&atilde;o</span></span><span class="price"><small>R$</small> 1.155</span></div>
       </div>
     </div>
     <!-- DRENAGEM -->
-    <div class="activity-section">
-      <div class="activity-title-bar">
-        <div class="activity-icon">&#10043;</div>
-        <div><div class="activity-name">Drenagem Linf&aacute;tica</div><div class="activity-desc">Est&iacute;mulo ao Sistema Linf&aacute;tico</div></div>
-      </div>
-      <div class="price-table">
-        <div class="price-row"><div><div class="item-name"><strong>Sess&atilde;o</strong> avulsa</div></div><div class="item-price">R$ 198</div></div>
-        <div class="price-row"><div><div class="item-name">Pacote <strong>5</strong> sess&otilde;es</div><div class="item-unit">R$ 132/sess&atilde;o</div></div><div class="item-price">R$ 660</div></div>
-        <div class="price-row"><div><div class="item-name">Pacote <strong>10</strong> sess&otilde;es</div><div class="item-unit">R$ 110/sess&atilde;o</div></div><div class="item-price">R$ 1.100</div></div>
+    <div class="col">
+      <div class="col-head"><div class="col-name">Drenagem Linf&aacute;tica</div><div class="col-desc">Sistema Linf&aacute;tico</div></div>
+      <div class="col-body">
+        <div class="row"><span class="label"><strong>Sess&atilde;o</strong> avulsa</span><span class="price"><small>R$</small> 210</span></div>
+        <div class="row"><span class="label">Pacote <strong>5</strong><span class="unit">R$ 139/sess&atilde;o</span></span><span class="price"><small>R$</small> 695</span></div>
+        <div class="row"><span class="label">Pacote <strong>10</strong><span class="unit">R$ 116/sess&atilde;o</span></span><span class="price"><small>R$</small> 1.155</span></div>
+        <div class="savings">Economize at&eacute; 45% no pacote de 10</div>
       </div>
     </div>
     <!-- MASSAGEM -->
-    <div class="activity-section">
-      <div class="activity-title-bar">
-        <div class="activity-icon">&#10047;</div>
-        <div><div class="activity-name">Massagem</div><div class="activity-desc">Massoterapia &amp; Relaxamento</div></div>
-      </div>
-      <div class="price-table">
-        <div class="price-row"><div><div class="item-name"><strong>Sess&atilde;o</strong> avulsa</div></div><div class="item-price">R$ 198</div></div>
-        <div class="price-row"><div><div class="item-name">Pacote <strong>5</strong> sess&otilde;es</div><div class="item-unit">R$ 132/sess&atilde;o</div></div><div class="item-price">R$ 660</div></div>
-        <div class="price-row"><div><div class="item-name">Pacote <strong>10</strong> sess&otilde;es</div><div class="item-unit">R$ 110/sess&atilde;o</div></div><div class="item-price">R$ 1.100</div></div>
-        <div class="savings-note">Economize at&eacute; 44% no pacote de 10 sess&otilde;es</div>
+    <div class="col">
+      <div class="col-head"><div class="col-name">Massagem</div><div class="col-desc">Massoterapia &amp; Relaxamento</div></div>
+      <div class="col-body">
+        <div class="row"><span class="label"><strong>Sess&atilde;o</strong> avulsa</span><span class="price"><small>R$</small> 210</span></div>
+        <div class="row"><span class="label">Pacote <strong>5</strong><span class="unit">R$ 139/sess&atilde;o</span></span><span class="price"><small>R$</small> 695</span></div>
+        <div class="row"><span class="label">Pacote <strong>10</strong><span class="unit">R$ 116/sess&atilde;o</span></span><span class="price"><small>R$</small> 1.155</span></div>
+        <div class="savings">Economize at&eacute; 45% no pacote de 10</div>
       </div>
     </div>
   </div>
-  <div class="footer-note">Pacotes podem ser parcelados em at&eacute; <strong>2x via transfer&ecirc;ncia banc&aacute;ria</strong> ou em at&eacute; <strong>10x no cart&atilde;o de cr&eacute;dito</strong> mediante juros da administradora.</div>
+
+  <div class="footer-note">Pacotes podem ser divididos em at&eacute; <strong>2x sem juros via Pix</strong>, ou no <strong>cart&atilde;o de cr&eacute;dito</strong> mediante juros da administradora.</div>
 </div>
 </body>
 </html>
