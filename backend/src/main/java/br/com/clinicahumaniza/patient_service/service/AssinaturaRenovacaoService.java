@@ -3,8 +3,11 @@ package br.com.clinicahumaniza.patient_service.service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -86,21 +89,30 @@ public class AssinaturaRenovacaoService {
     }
 
     private void renovarAssinatura(Assinatura assinatura) {
-        List<AgendamentoRecorrente> templates = recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinatura.getId());
+        List<AgendamentoRecorrente> templatesAtivos =
+                recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinatura.getId());
 
-        if (templates.isEmpty()) {
+        if (templatesAtivos.isEmpty()) {
             log.warn(
                     "Assinatura {} nao possui agendamentos recorrentes vinculados, pulando renovacao",
                     assinatura.getId());
             return;
         }
 
-        Servico servico = assinatura.getServico();
-        Plano plano = servico.getPlano();
-        int validadeDias = plano.getValidadeDias() != null ? plano.getValidadeDias() : 30;
+        // Deduplica por slot (dias da semana + hora): renovações anteriores podiam ter
+        // deixado templates repetidos ativos. Sem isso, cada ciclo geraria um novo template
+        // por template ativo — dobrando os agendamentos a cada renovação.
+        Map<String, AgendamentoRecorrente> slotsDistintos = new LinkedHashMap<>();
+        for (AgendamentoRecorrente t : templatesAtivos) {
+            slotsDistintos.putIfAbsent(t.getDiasSemana() + "|" + t.getHoraInicio(), t);
+        }
+        List<AgendamentoRecorrente> templates = new ArrayList<>(slotsDistintos.values());
 
         LocalDate novaDataInicio = assinatura.getDataVencimento().plusDays(1);
-        LocalDate novaDataVencimento = novaDataInicio.plusDays(validadeDias - 1);
+        // Avança por mês de calendário (não +30 dias fixos): mantém o vencimento no mesmo
+        // dia do mês e evita o deslize acumulado a cada renovação.
+        LocalDate novaDataVencimento = novaDataInicio.plusMonths(1).minusDays(1);
+        int diasNoPeriodo = (int) (novaDataVencimento.toEpochDay() - novaDataInicio.toEpochDay()) + 1;
 
         // Pré-calcula quantas sessões o próximo ciclo vai gerar (somando todos os slots).
         int totalNovasSessoesPrevistas = 0;
@@ -108,7 +120,7 @@ public class AssinaturaRenovacaoService {
             List<DayOfWeek> diasSemana = Arrays.stream(template.getDiasSemana().split(","))
                     .map(DayOfWeek::valueOf)
                     .collect(Collectors.toList());
-            totalNovasSessoesPrevistas += contarDiasDaSemanaNoPeríodo(novaDataInicio, validadeDias, diasSemana);
+            totalNovasSessoesPrevistas += contarDiasDaSemanaNoPeríodo(novaDataInicio, diasNoPeriodo, diasSemana);
         }
         if (totalNovasSessoesPrevistas == 0) {
             log.warn(
@@ -137,7 +149,7 @@ public class AssinaturaRenovacaoService {
                     .map(DayOfWeek::valueOf)
                     .collect(Collectors.toList());
 
-            int sessoesParaEsteSlot = contarDiasDaSemanaNoPeríodo(novaDataInicio, validadeDias, diasSemana);
+            int sessoesParaEsteSlot = contarDiasDaSemanaNoPeríodo(novaDataInicio, diasNoPeriodo, diasSemana);
             if (sessoesParaEsteSlot == 0) continue;
 
             AgendamentoRecorrenteRequestDTO dto = new AgendamentoRecorrenteRequestDTO();
@@ -181,6 +193,13 @@ public class AssinaturaRenovacaoService {
         }
 
         if (totalAgendamentosCriados > 0) {
+            // Desativa os templates do ciclo anterior — os novos (criados acima) assumem.
+            // Impede que a próxima renovação some templates e volte a duplicar.
+            for (AgendamentoRecorrente antigo : templatesAtivos) {
+                antigo.setAtivo(false);
+                recorrenteRepository.save(antigo);
+            }
+
             assinatura.setDataVencimento(novaDataVencimento);
             // Reconcilia as sessões contratadas com o que realmente foi criado — algumas datas
             // podem ter sido ignoradas por conflito de horário (menos que o previsto).

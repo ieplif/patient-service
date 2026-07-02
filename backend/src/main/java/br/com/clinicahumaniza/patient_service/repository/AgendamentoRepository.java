@@ -35,6 +35,10 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, UUID>,
 
     boolean existsByReposicaoOrigemIdAndStatusIn(UUID origemId, List<StatusAgendamento> statuses);
 
+    // Guard de duplicata exata (mesmo paciente + serviço + horário, ainda não cancelado).
+    boolean existsByPacienteIdAndServicoIdAndDataHoraAndStatusIn(
+            UUID pacienteId, UUID servicoId, LocalDateTime dataHora, List<StatusAgendamento> statuses);
+
     List<Agendamento> findByPacienteIdAndDireitoReposicaoTrue(UUID pacienteId);
 
     // Ressincronização do Google Calendar: todos os futuros e ativos (cria os que faltam

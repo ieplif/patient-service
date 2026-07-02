@@ -143,6 +143,17 @@ public class AgendamentoService {
             validarConflitoHorario(profissional.getId(), dto.getDataHora(), dto.getDuracaoMinutos(), capacidade);
         }
 
+        // Guard de duplicata exata: sem profissional a validação de conflito acima não roda,
+        // então isto evita agendamentos idênticos silenciosos (ex.: geração recorrente repetida).
+        boolean duplicado = agendamentoRepository.existsByPacienteIdAndServicoIdAndDataHoraAndStatusIn(
+                dto.getPacienteId(),
+                dto.getServicoId(),
+                dto.getDataHora(),
+                List.of(StatusAgendamento.AGENDADO, StatusAgendamento.CONFIRMADO, StatusAgendamento.REALIZADO));
+        if (duplicado) {
+            throw new BusinessException("Já existe um agendamento para este paciente neste horário");
+        }
+
         Agendamento agendamento = agendamentoMapper.toEntity(dto, paciente, profissional, servico, assinatura);
         agendamento.setStatus(StatusAgendamento.AGENDADO);
 

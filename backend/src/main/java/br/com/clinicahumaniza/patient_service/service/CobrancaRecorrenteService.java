@@ -101,7 +101,11 @@ public class CobrancaRecorrenteService {
             return false;
         }
 
-        if (pagamentoRepository.existsByAssinaturaAndVencimento(assinatura.getId(), venc)) {
+        // A cobrança vence no mesmo dia do mês da adesão (início do período), não no fim
+        // do ciclo — assim o vencimento não desliza para o fim do mês entre renovações.
+        LocalDate vencimentoCobranca = diaDaAdesaoNoMes(assinatura, venc);
+
+        if (pagamentoRepository.existsByAssinaturaAndVencimento(assinatura.getId(), vencimentoCobranca)) {
             return false;
         }
 
@@ -111,14 +115,25 @@ public class CobrancaRecorrenteService {
             return false;
         }
 
-        pagamentoService.gerarCobrancaPendente(assinatura, valor, venc);
+        pagamentoService.gerarCobrancaPendente(assinatura, valor, vencimentoCobranca);
         log.info(
                 "Cobranca gerada: assinatura={}, paciente={}, vencimento={}, valor={}",
                 assinatura.getId(),
                 assinatura.getPaciente().getNomeCompleto(),
-                venc,
+                vencimentoCobranca,
                 valor);
         return true;
+    }
+
+    /**
+     * Data de vencimento da cobrança: o dia do mês da adesão (data de início da assinatura),
+     * projetado no mês do ciclo corrente. Se o mês não tiver esse dia (ex.: adesão dia 31 em
+     * fevereiro), usa o último dia do mês. Cai para o dia do vencimento se não houver data de início.
+     */
+    private LocalDate diaDaAdesaoNoMes(Assinatura assinatura, LocalDate referencia) {
+        LocalDate inicio = assinatura.getDataInicio();
+        int dia = inicio != null ? inicio.getDayOfMonth() : referencia.getDayOfMonth();
+        return referencia.withDayOfMonth(Math.min(dia, referencia.lengthOfMonth()));
     }
 
     private boolean isPilatesRecorrente(Assinatura assinatura) {
