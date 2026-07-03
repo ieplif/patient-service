@@ -299,10 +299,12 @@ public class AgendamentoRecorrenteService {
 
         int cancelados = 0;
         for (Agendamento ag : futurosPendentes) {
+            // gerarReposicao=false: a sessão é recriada no novo horário logo abaixo —
+            // conceder reposição aqui daria crédito duplo à paciente.
             agendamentoService.updateStatus(
                     ag.getId(),
                     new AgendamentoStatusDTO(
-                            StatusAgendamento.CANCELADO, "Cancelado por regeneração de horários da assinatura", null));
+                            StatusAgendamento.CANCELADO, "Cancelado por regeneração de horários da assinatura", false));
             cancelados++;
         }
 

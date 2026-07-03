@@ -619,6 +619,37 @@ class AgendamentoRecorrenteServiceTest {
     }
 
     @Test
+    @DisplayName("Regressão: cancelamento por regeneração não concede direito a reposição")
+    void regenerarHorarios_CanceladosSemDireitoReposicao() {
+        // A sessão cancelada é recriada no novo horário — conceder reposição daria crédito duplo.
+        assinatura.setStatus(StatusAssinatura.ATIVO);
+        assinatura.setDataVencimento(LocalDate.now().plusDays(30));
+
+        Agendamento futuro = createMockAgendamento(UUID.randomUUID());
+        futuro.setDataHora(LocalDate.now().plusDays(7).atTime(8, 0));
+
+        when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
+        when(agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(any(), any(), any()))
+                .thenReturn(List.of(futuro));
+        when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId)).thenReturn(List.of());
+
+        AgendamentoRecorrenteService spy = spy(service);
+        doReturn(new AgendamentoRecorrenteResponseDTO()).when(spy).createRecorrente(any());
+
+        RegenerarHorariosRequestDTO dto = new RegenerarHorariosRequestDTO();
+        dto.setHorariosFixos(
+                List.of(new RegenerarHorariosRequestDTO.HorarioFixoDTO(DayOfWeek.MONDAY, LocalTime.of(7, 0))));
+
+        spy.regenerarHorarios(assinaturaId, dto);
+
+        org.mockito.ArgumentCaptor<AgendamentoStatusDTO> statusCaptor =
+                org.mockito.ArgumentCaptor.forClass(AgendamentoStatusDTO.class);
+        verify(agendamentoService).updateStatus(eq(futuro.getId()), statusCaptor.capture());
+        assertThat(statusCaptor.getValue().getStatus()).isEqualTo(StatusAgendamento.CANCELADO);
+        assertThat(statusCaptor.getValue().getGerarReposicao()).isFalse();
+    }
+
+    @Test
     @DisplayName("Regressão: regenerarHorarios gera a partir da data de regeneração, não da dataInicio original")
     void regenerarHorarios_NaoGeraRetroativos() {
         // Cenário do bug: assinatura antiga (dataInicio no passado) tem o horário editado.
