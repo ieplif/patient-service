@@ -348,6 +348,45 @@ class AgendamentoServiceTest {
     }
 
     @Test
+    @DisplayName("Regressão: sem profissional, duplicata exata (paciente+serviço+horário) é bloqueada")
+    void createAgendamento_SemProfissional_BloqueiaDuplicataExata() {
+        // Cenário do bug: sem profissional a validação de conflito não roda, e geração
+        // recorrente repetida criava agendamentos idênticos silenciosamente.
+        requestDTO.setProfissionalId(null);
+
+        when(patientRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
+        when(servicoRepository.findById(servicoId)).thenReturn(Optional.of(servico));
+        when(agendamentoRepository.existsByPacienteIdAndServicoIdAndDataHoraAndStatusIn(
+                        eq(pacienteId), eq(servicoId), eq(requestDTO.getDataHora()), any()))
+                .thenReturn(true);
+
+        assertThatThrownBy(() -> agendamentoService.createAgendamento(requestDTO))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Já existe um agendamento");
+
+        verify(agendamentoRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Sem profissional e sem duplicata, agendamento é criado normalmente")
+    void createAgendamento_SemProfissional_SemDuplicata() {
+        requestDTO.setProfissionalId(null);
+        agendamento.setProfissional(null);
+
+        when(patientRepository.findById(pacienteId)).thenReturn(Optional.of(paciente));
+        when(servicoRepository.findById(servicoId)).thenReturn(Optional.of(servico));
+        when(agendamentoRepository.existsByPacienteIdAndServicoIdAndDataHoraAndStatusIn(any(), any(), any(), any()))
+                .thenReturn(false);
+        when(agendamentoMapper.toEntity(any(), any(), any(), any(), any())).thenReturn(agendamento);
+        when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
+
+        Agendamento result = agendamentoService.createAgendamento(requestDTO);
+
+        assertThat(result).isNotNull();
+        verify(agendamentoRepository).save(agendamento);
+    }
+
+    @Test
     @DisplayName("Deve lançar exceção quando há conflito de horário")
     void createAgendamento_ConflitoHorario() {
         Agendamento existente = new Agendamento();

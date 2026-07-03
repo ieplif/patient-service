@@ -166,4 +166,60 @@ class CobrancaRecorrenteServiceTest {
                 .gerarCobrancaPendente(
                         eq(assinatura), eq(new BigDecimal("250.00")), eq(assinatura.getDataVencimento()));
     }
+
+    // --- Regressão: vencimento da cobrança deslizava para o fim do mês ---
+
+    @Test
+    @DisplayName("Regressão: cobrança vence no dia do mês da adesão, não no fim do ciclo")
+    void vencimentoCobranca_DiaDaAdesao() {
+        // Ciclo vencendo no fim do mês, mas a adesão foi num dia 3 -> cobrança deve vencer no dia 3
+        LocalDate fimDoMes = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+        Assinatura assinatura = pilatesMensal(fimDoMes);
+        assinatura.setDataInicio(fimDoMes.minusMonths(2).withDayOfMonth(3));
+
+        when(assinaturaRepository.findByStatusIn(any())).thenReturn(List.of(assinatura));
+        when(pagamentoRepository.existsByAssinaturaAndVencimento(eq(assinatura.getId()), any(LocalDate.class)))
+                .thenReturn(false);
+
+        int geradas = cobrancaService.gerarCobrancasPilatesDoMes();
+
+        assertThat(geradas).isEqualTo(1);
+        LocalDate esperado = fimDoMes.withDayOfMonth(3);
+        verify(pagamentoService).gerarCobrancaPendente(eq(assinatura), any(BigDecimal.class), eq(esperado));
+        // A idempotência também deve ser checada contra a data ajustada
+        verify(pagamentoRepository).existsByAssinaturaAndVencimento(assinatura.getId(), esperado);
+    }
+
+    @Test
+    @DisplayName("Regressão: idempotência bloqueia pela data ajustada (dia da adesão)")
+    void vencimentoCobranca_IdempotentePelaDataAjustada() {
+        LocalDate fimDoMes = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+        Assinatura assinatura = pilatesMensal(fimDoMes);
+        assinatura.setDataInicio(fimDoMes.minusMonths(1).withDayOfMonth(3));
+
+        when(assinaturaRepository.findByStatusIn(any())).thenReturn(List.of(assinatura));
+        // Já existe cobrança para o dia da adesão neste mês
+        when(pagamentoRepository.existsByAssinaturaAndVencimento(assinatura.getId(), fimDoMes.withDayOfMonth(3)))
+                .thenReturn(true);
+
+        int geradas = cobrancaService.gerarCobrancasPilatesDoMes();
+
+        assertThat(geradas).isZero();
+        verify(pagamentoService, never()).gerarCobrancaPendente(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Regressão: sem data de início, cobrança cai no próprio vencimento do ciclo")
+    void vencimentoCobranca_FallbackSemDataInicio() {
+        LocalDate venc = LocalDate.now().withDayOfMonth(15);
+        Assinatura assinatura = pilatesMensal(venc); // dataInicio null
+        when(assinaturaRepository.findByStatusIn(any())).thenReturn(List.of(assinatura));
+        when(pagamentoRepository.existsByAssinaturaAndVencimento(eq(assinatura.getId()), any(LocalDate.class)))
+                .thenReturn(false);
+
+        int geradas = cobrancaService.gerarCobrancasPilatesDoMes();
+
+        assertThat(geradas).isEqualTo(1);
+        verify(pagamentoService).gerarCobrancaPendente(eq(assinatura), any(BigDecimal.class), eq(venc));
+    }
 }

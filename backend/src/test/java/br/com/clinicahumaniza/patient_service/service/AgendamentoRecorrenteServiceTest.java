@@ -617,4 +617,38 @@ class AgendamentoRecorrenteServiceTest {
         assertThat(templateAntigo.isAtivo()).isFalse();
         verify(recorrenteRepository).save(templateAntigo);
     }
+
+    @Test
+    @DisplayName("Regressão: regenerarHorarios gera a partir da data de regeneração, não da dataInicio original")
+    void regenerarHorarios_NaoGeraRetroativos() {
+        // Cenário do bug: assinatura antiga (dataInicio no passado) tem o horário editado.
+        // Sem dataInicio explícito no request, createRecorrente caía no fallback
+        // assinatura.getDataInicio() e recriava agendamentos retroativos no novo horário.
+        assinatura.setStatus(StatusAssinatura.ATIVO);
+        assinatura.setDataInicio(LocalDate.now().minusMonths(2));
+        assinatura.setDataVencimento(LocalDate.now().plusDays(30));
+
+        when(assinaturaRepository.findById(assinaturaId)).thenReturn(Optional.of(assinatura));
+        when(agendamentoRepository.findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(any(), any(), any()))
+                .thenReturn(List.of());
+        when(recorrenteRepository.findByAssinaturaIdAndAtivoTrue(assinaturaId)).thenReturn(List.of());
+
+        AgendamentoRecorrenteService spy = spy(service);
+        doReturn(new AgendamentoRecorrenteResponseDTO()).when(spy).createRecorrente(any());
+
+        RegenerarHorariosRequestDTO dto = new RegenerarHorariosRequestDTO();
+        dto.setHorariosFixos(
+                List.of(new RegenerarHorariosRequestDTO.HorarioFixoDTO(DayOfWeek.MONDAY, LocalTime.of(7, 0))));
+
+        spy.regenerarHorarios(assinaturaId, dto);
+
+        org.mockito.ArgumentCaptor<AgendamentoRecorrenteRequestDTO> captor =
+                org.mockito.ArgumentCaptor.forClass(AgendamentoRecorrenteRequestDTO.class);
+        verify(spy).createRecorrente(captor.capture());
+
+        // dataInicio explícito = data de regeneração (padrão: amanhã), nunca o passado
+        LocalDate dataInicioGerada = captor.getValue().getDataInicio();
+        assertThat(dataInicioGerada).isEqualTo(LocalDate.now().plusDays(1));
+        assertThat(dataInicioGerada).isAfter(LocalDate.now().minusDays(1));
+    }
 }
