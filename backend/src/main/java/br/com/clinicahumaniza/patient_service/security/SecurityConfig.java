@@ -2,6 +2,7 @@ package br.com.clinicahumaniza.patient_service.security;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,6 +28,14 @@ public class SecurityConfig {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+
+    /**
+     * Origens permitidas no CORS. Em produção vem do application-prod.properties
+     * (somente o domínio da aplicação); o default cobre o dev local (Vite).
+     * Como a autenticação usa cookie (allowCredentials), NUNCA usar "*" aqui.
+     */
+    @Value("${cors.allowed-origins:http://localhost:5173}")
+    private List<String> allowedOrigins;
 
     public SecurityConfig(JwtService jwtService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
@@ -80,7 +89,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
