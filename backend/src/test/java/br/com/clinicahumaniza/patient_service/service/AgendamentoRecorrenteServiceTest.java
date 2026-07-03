@@ -493,6 +493,45 @@ class AgendamentoRecorrenteServiceTest {
     }
 
     @Test
+    @DisplayName("Regressão: cancelarRecorrencia nunca concede direito a reposição automaticamente")
+    void cancelarRecorrencia_NuncaConcedeReposicao() {
+        // Reposição é decisão humana (checkbox do cancelamento individual na tela).
+        // Cancelamento em lote/administrativo com gerarReposicao=null cairia na regra
+        // padrão que concede — cada sessão futura viraria crédito silencioso.
+        UUID agendamentoId = UUID.randomUUID();
+        UUID recorrenteId = UUID.randomUUID();
+
+        AgendamentoRecorrente recorrente = new AgendamentoRecorrente();
+        recorrente.setId(recorrenteId);
+
+        Agendamento agendamento = createMockAgendamento(agendamentoId);
+        agendamento.setDataHora(LocalDateTime.of(2025, 6, 9, 10, 0));
+        agendamento.setAgendamentoRecorrente(recorrente);
+
+        Agendamento futuro = createMockAgendamento(UUID.randomUUID());
+        futuro.setDataHora(LocalDateTime.of(2025, 6, 16, 10, 0));
+
+        when(agendamentoRepository.findById(agendamentoId)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.findByAgendamentoRecorrenteIdAndDataHoraGreaterThanEqualAndStatusIn(
+                        eq(recorrenteId), any(), any()))
+                .thenReturn(List.of(futuro));
+        when(agendamentoService.updateStatus(any(UUID.class), any(AgendamentoStatusDTO.class)))
+                .thenReturn(futuro);
+        when(agendamentoMapper.toResponseDTO(any(Agendamento.class))).thenReturn(new AgendamentoResponseDTO());
+
+        // Ramo em lote (cancelarFuturos=true)
+        service.cancelarRecorrencia(agendamentoId, true);
+        // Ramo individual (cancelarFuturos=false)
+        service.cancelarRecorrencia(agendamentoId, false);
+
+        org.mockito.ArgumentCaptor<AgendamentoStatusDTO> captor =
+                org.mockito.ArgumentCaptor.forClass(AgendamentoStatusDTO.class);
+        verify(agendamentoService, times(2)).updateStatus(any(UUID.class), captor.capture());
+        assertThat(captor.getAllValues())
+                .allSatisfy(dto -> assertThat(dto.getGerarReposicao()).isFalse());
+    }
+
+    @Test
     @DisplayName("Deve lançar exceção ao cancelar futuros sem recorrência")
     void cancelarRecorrencia_SemRecorrencia() {
         UUID agendamentoId = UUID.randomUUID();

@@ -240,9 +240,12 @@ public class AgendamentoRecorrenteService {
                 .findById(agendamentoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento", agendamentoId));
 
+        // Direito a reposição é decisão humana caso a caso (checkbox no cancelamento
+        // individual da tela). Cancelamento em lote/administrativo NUNCA concede
+        // automaticamente — senão cada sessão futura viraria crédito silencioso.
         if (!cancelarFuturos) {
             agendamentoService.updateStatus(
-                    agendamentoId, new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null, null));
+                    agendamentoId, new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null, false));
             return List.of(agendamentoMapper.toResponseDTO(agendamento));
         }
 
@@ -261,7 +264,7 @@ public class AgendamentoRecorrenteService {
         List<AgendamentoResponseDTO> cancelados = new ArrayList<>();
         for (Agendamento futuro : futuros) {
             agendamentoService.updateStatus(
-                    futuro.getId(), new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null, null));
+                    futuro.getId(), new AgendamentoStatusDTO(StatusAgendamento.CANCELADO, null, false));
             cancelados.add(agendamentoMapper.toResponseDTO(futuro));
         }
 
