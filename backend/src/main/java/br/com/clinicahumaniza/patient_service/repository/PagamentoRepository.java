@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import br.com.clinicahumaniza.patient_service.model.Pagamento;
-import br.com.clinicahumaniza.patient_service.model.StatusPagamento;
 
 @Repository
 public interface PagamentoRepository extends JpaRepository<Pagamento, UUID>, JpaSpecificationExecutor<Pagamento> {
@@ -20,8 +19,6 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, UUID>, Jpa
     List<Pagamento> findByAssinaturasId(UUID assinaturaId);
 
     List<Pagamento> findByAgendamentoId(UUID agendamentoId);
-
-    List<Pagamento> findByStatus(StatusPagamento status);
 
     List<Pagamento> findByDataVencimentoBetween(LocalDate inicio, LocalDate fim);
 
@@ -34,7 +31,4 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, UUID>, Jpa
             + "WHERE a.id = :assinaturaId AND p.dataVencimento = :dataVencimento "
             + "AND p.status <> br.com.clinicahumaniza.patient_service.model.StatusPagamento.CANCELADO")
     boolean existsByAssinaturaAndVencimento(UUID assinaturaId, LocalDate dataVencimento);
-
-    @Query(value = "SELECT * FROM pagamentos", nativeQuery = true)
-    List<Pagamento> findAllIncludingInactive();
 }

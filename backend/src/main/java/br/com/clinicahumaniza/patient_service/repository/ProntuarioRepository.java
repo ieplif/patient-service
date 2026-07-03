@@ -15,6 +15,4 @@ public interface ProntuarioRepository extends JpaRepository<Prontuario, UUID> {
     Page<Prontuario> findByPacienteId(UUID pacienteId, Pageable pageable);
 
     Page<Prontuario> findByPacienteIdAndTipo(UUID pacienteId, TipoDocumento tipo, Pageable pageable);
-
-    long countByPacienteId(UUID pacienteId);
 }

@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import br.com.clinicahumaniza.patient_service.model.Agendamento;
@@ -29,9 +28,6 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, UUID>,
 
     List<Agendamento> findByAssinaturaIdAndDataHoraGreaterThanEqualAndStatusIn(
             UUID assinaturaId, LocalDateTime dataHora, List<StatusAgendamento> statuses);
-
-    @Query(value = "SELECT * FROM agendamentos", nativeQuery = true)
-    List<Agendamento> findAllIncludingInactive();
 
     boolean existsByReposicaoOrigemIdAndStatusIn(UUID origemId, List<StatusAgendamento> statuses);
 
