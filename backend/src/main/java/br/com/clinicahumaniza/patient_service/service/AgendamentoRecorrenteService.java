@@ -338,6 +338,10 @@ public class AgendamentoRecorrenteService {
             recorrenteReq.setDiasSemana(List.of(slot.getDiaSemana()));
             recorrenteReq.setHoraInicio(slot.getHoraInicio());
             recorrenteReq.setTotalSessoes(sessoesEsteSlot);
+            // Gera a partir da data de regeneração (padrão: amanhã), NÃO da dataInicio
+            // original da assinatura — sem isto, createRecorrente usaria a data de início
+            // original e recriaria agendamentos retroativos no novo horário.
+            recorrenteReq.setDataInicio(dataInicio);
             recorrenteReq.setDataFim(assinatura.getDataVencimento());
 
             try {
