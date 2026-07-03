@@ -153,11 +153,13 @@ completa.** Resumo do que mudou desde a versao inicial:
 
 ```bash
 cd backend
-./mvnw test                # 285+ testes, ~30s
+./mvnw test                # 336 testes, ~30s
 ```
 
-Status atual: **285 testes passando, 0 falhas**. Frontend ainda sem testes
-automatizados (planejamento futuro).
+Status atual: **336 testes passando, 0 falhas**. Inclui regressao dos bugs de
+renovacao (templates duplicados), cobranca (vencimento no dia da adesao) e
+regeneracao de horarios (retroativos). Frontend ainda sem testes automatizados
+(planejamento futuro).
 
 ## Deploy AWS Lightsail
 
@@ -234,3 +236,21 @@ das features grandes:
 17. **Suspender/Reativar assinatura** (SUSPENSO + campos de suspensao)
 18. **Editar pagamento**: PUT exposto na UI
 19. **Status do paciente derivado** das assinaturas
+20. **Pagamentos refinados**: default "Pendente" por vencimento; "Pago" por data
+    de pagamento desc + coluna "Pago em"; parcela aberta de PARCIALMENTE_PAGO
+    aparece em Pendente
+21. **Busca flexivel de nomes** (acentos/espacos/ordem) + paginacao com
+    desempate por id
+22. **Aniversariantes do mes** no Dashboard (sem idade)
+23. **Google Calendar (one-way push)**: evento minimalista (nome curto, sem
+    profissional), servico identificado por cor, resync semanal com backfill e
+    limpeza de orfaos, retry em 403/429
+24. **Agenda semanal WhatsApp**: dialogo com 2 versoes (com/sem Fisio Pelvica),
+    compartilhar via wa.me/copiar/imprimir
+25. **Seletor de assinatura** no form de Novo Agendamento
+26. **Cards de precos** (`cards/`): HTML+PDF+PNG standalone com reajuste ~5%
+    proposto (banco ainda nao reajustado)
+27. **Fixes de recorrencia** (jul/2026): renovacao nao duplica templates,
+    vencimento da cobranca no dia da adesao (avanca por mes de calendario),
+    regenerar horarios nao recria retroativos, guarda de duplicata exata sem
+    profissional + testes de regressao
