@@ -73,11 +73,19 @@ const statusOptions: { value: StatusPagamento | "TODOS"; label: string }[] = [
   { value: "REEMBOLSADO", label: "Reembolsado" },
 ]
 
+const formaOptions: { value: FormaPagamento | "TODAS"; label: string }[] = [
+  { value: "TODAS", label: "Todas as formas" },
+  ...(Object.entries(formaPagamentoLabel) as [FormaPagamento, string][]).map(
+    ([value, label]) => ({ value, label })
+  ),
+]
+
 export function PagamentosPage() {
   const [page, setPage] = useState(0)
   // Default "PENDENTE" — assim como Agendamentos abre em "Agendado", a recepção
   // quase sempre quer ver o que ainda está em aberto. Troque para "TODOS" no filtro.
   const [statusFilter, setStatusFilter] = useState<StatusPagamento | "TODOS">("PENDENTE")
+  const [formaFilter, setFormaFilter] = useState<FormaPagamento | "TODAS">("TODAS")
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -114,7 +122,7 @@ export function PagamentosPage() {
   const fetchSize = isPendenteView ? 500 : PAGE_SIZE
 
   const { data, isLoading } = useQuery({
-    queryKey: ["pagamentos", fetchPage, fetchSize, statusFilter, debouncedSearch, sort],
+    queryKey: ["pagamentos", fetchPage, fetchSize, statusFilter, formaFilter, debouncedSearch, sort],
     queryFn: () =>
       getPagamentos({
         page: fetchPage,
@@ -125,6 +133,7 @@ export function PagamentosPage() {
           : statusFilter !== "TODOS"
             ? { status: statusFilter }
             : {}),
+        formaPagamento: formaFilter !== "TODAS" ? formaFilter : undefined,
         pacienteNome: debouncedSearch || undefined,
       }),
   })
@@ -288,6 +297,21 @@ export function PagamentosPage() {
               </SelectTrigger>
               <SelectContent>
                 {statusOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value} className="font-secondary text-sm">
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={formaFilter}
+              onValueChange={(v) => { setFormaFilter(v as FormaPagamento | "TODAS"); setPage(0) }}
+            >
+              <SelectTrigger className="w-full sm:w-48 bg-background border-border/70 font-secondary text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {formaOptions.map((o) => (
                   <SelectItem key={o.value} value={o.value} className="font-secondary text-sm">
                     {o.label}
                   </SelectItem>
